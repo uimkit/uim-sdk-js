@@ -36,14 +36,14 @@ Make a request to any UIM API endpoint.
 
 ```js
 ;(async () => {
-  const listIMAccountsResponse = await uim.imAccounts.list({})
+  const response = await uim.imAccounts.list({})
 })()
 ```
 
 Each method returns a `Promise` which resolves the response.
 
 ```js
-console.log(listIMAccountsResponse)
+console.log(response)
 ```
 
 ```
