@@ -11,7 +11,7 @@ import {
   isUIMClientError,
   RequestTimeoutError,
 } from "./errors"
-import { assertNever, pick } from "./helpers"
+import { pick } from "./helpers"
 import {
   GetIMAccountParameters,
   GetIMAccountResponse,
@@ -75,6 +75,11 @@ export interface ClientOptions {
   pubsubOptions?: PubSubOptions
 }
 
+const defaultPubSubOptions: PubSubOptions = {
+  subscribeKey: "",
+  uuid: "",
+}
+
 export interface RequestParameters {
   path: string
   method: Method
@@ -111,12 +116,16 @@ export default class Client {
     this.#agent = options?.agent
     this.#userAgent = `uim-client/${PACKAGE_VERSION}`
     this.#handlers = {}
-    this.#pubsub = options?.pubsub ?? new PubSub(options?.pubsubOptions!)
-    this.#pubsub.on(this.onEvent.bind(this))
+    this.#pubsub =
+      options?.pubsub ??
+      new PubSub(options?.pubsubOptions ?? defaultPubSubOptions)
+    this.#pubsub.addListener(this.onMessage.bind(this))
   }
 
   /**
    * Sends a request.
+   *
+   * TODO using flyio instead of fetch
    *
    * @param path
    * @param method
@@ -200,12 +209,12 @@ export default class Client {
 
   /**
    * Handle im account's events
-   * 
-   * @param channel 
-   * @param evt 
-   * @param extra 
+   *
+   * @param channel
+   * @param evt
+   * @param extra
    */
-  private onEvent(channel: string, evt: any, _extra?: any) {
+  private onMessage(channel: string, evt: any, _extra?: any) {
     const accountId = this.idOfChannel(channel)
     const subEvent = evt as SubscribeEvent
     switch (subEvent.type) {
@@ -216,10 +225,9 @@ export default class Client {
   }
 
   public readonly events = {
-
     onNewMessage: (handler: EventHandler): void => {
       this.#handlers[SubscribeEventType.NewMessage] = handler
-    }
+    },
   }
 
   /*
@@ -265,76 +273,6 @@ export default class Client {
       }
       return resp
     },
-
-    contacts: {
-      /**
-       * List im accounts' contacts
-       */
-      list: (
-        args: WithAuth<ListIMAccountContactsParameters>
-      ): Promise<ListIMAccountContactsResponse> => {
-        return this.request<ListIMAccountContactsResponse>({
-          path: listIMAccountContacts.path(args),
-          method: listIMAccountContacts.method,
-          query: pick(args, listIMAccountContacts.queryParams),
-          body: pick(args, listIMAccountContacts.bodyParams),
-          auth: args?.auth,
-        })
-      },
-    },
-
-    groups: {
-      /**
-       * List im accounts' groups
-       */
-      list: (
-        args: WithAuth<ListIMAccountGroupsParameters>
-      ): Promise<ListIMAccountGroupsResponse> => {
-        return this.request<ListIMAccountGroupsResponse>({
-          path: listIMAccountGroups.path(args),
-          method: listIMAccountGroups.method,
-          query: pick(args, listIMAccountGroups.queryParams),
-          body: pick(args, listIMAccountGroups.bodyParams),
-          auth: args?.auth,
-        })
-      },
-    },
-
-    conversations: {
-      /**
-       * List im accounts' conversations
-       */
-      list: (
-        args: WithAuth<ListIMAccountConversationsParameters>
-      ): Promise<ListIMAccountConversationsResponse> => {
-        return this.request<ListIMAccountConversationsResponse>({
-          path: listIMAccountConversations.path(args),
-          method: listIMAccountConversations.method,
-          query: pick(args, listIMAccountConversations.queryParams),
-          body: pick(args, listIMAccountConversations.bodyParams),
-          auth: args?.auth,
-        })
-      },
-    },
-  }
-
-  public readonly imUsers = {
-    moments: {
-      /**
-       * List im user's moments
-       */
-      list: (
-        args: WithAuth<ListIMUserMomentsParameters>
-      ): Promise<ListIMUserMomentsResponse> => {
-        return this.request<ListIMUserMomentsResponse>({
-          path: listIMUserMoments.path(args),
-          method: listIMUserMoments.method,
-          query: pick(args, listIMUserMoments.queryParams),
-          body: pick(args, listIMUserMoments.bodyParams),
-          auth: args?.auth,
-        })
-      },
-    },
   }
 
   public readonly contacts = {
@@ -354,6 +292,21 @@ export default class Client {
     },
 
     /**
+     * List contacts
+     */
+    list: (
+      args: WithAuth<ListIMAccountContactsParameters>
+    ): Promise<ListIMAccountContactsResponse> => {
+      return this.request<ListIMAccountContactsResponse>({
+        path: listIMAccountContacts.path(args),
+        method: listIMAccountContacts.method,
+        query: pick(args, listIMAccountContacts.queryParams),
+        body: pick(args, listIMAccountContacts.bodyParams),
+        auth: args?.auth,
+      })
+    },
+
+    /**
      * Send message to contact
      */
     sendMessage: (args: SendPrivateMessageParameters): Promise<void> => {
@@ -364,8 +317,8 @@ export default class Client {
           conversation_type: ConversationType.Private,
           from: args.account_id,
           to: args.user_id,
-          ...pick(args, ["mentioned_type", "mentioned_user_ids", "payload"])
-        }
+          ...pick(args, ["mentioned_type", "mentioned_user_ids", "payload"]),
+        },
       }
       return this.#pubsub.publish(channel, evt)
     },
@@ -388,6 +341,21 @@ export default class Client {
     },
 
     /**
+     * List groups
+     */
+    list: (
+      args: WithAuth<ListIMAccountGroupsParameters>
+    ): Promise<ListIMAccountGroupsResponse> => {
+      return this.request<ListIMAccountGroupsResponse>({
+        path: listIMAccountGroups.path(args),
+        method: listIMAccountGroups.method,
+        query: pick(args, listIMAccountGroups.queryParams),
+        body: pick(args, listIMAccountGroups.bodyParams),
+        auth: args?.auth,
+      })
+    },
+
+    /**
      * Send message to group
      */
     sendMessage: (args: SendGroupMessageParameters): Promise<void> => {
@@ -398,59 +366,95 @@ export default class Client {
           conversation_type: ConversationType.Group,
           from: args.account_id,
           to: args.group_id,
-          ...pick(args, ["mentioned_type", "mentioned_user_ids", "payload"])
-        }
+          ...pick(args, ["mentioned_type", "mentioned_user_ids", "payload"]),
+        },
       }
       return this.#pubsub.publish(channel, evt)
     },
+  }
 
-    members: {
-      /**
-       * List group's members
-       */
-      list: (
-        args: WithAuth<ListGroupMembersParameters>
-      ): Promise<ListGroupMembersResponse> => {
-        return this.request<ListGroupMembersResponse>({
-          path: listGroupMembers.path(args),
-          method: listGroupMembers.method,
-          query: pick(args, listGroupMembers.queryParams),
-          body: pick(args, listGroupMembers.bodyParams),
-          auth: args?.auth,
-        })
-      },
+  public readonly groupMembers = {
+    /**
+     * List group's members
+     */
+    list: (
+      args: WithAuth<ListGroupMembersParameters>
+    ): Promise<ListGroupMembersResponse> => {
+      return this.request<ListGroupMembersResponse>({
+        path: listGroupMembers.path(args),
+        method: listGroupMembers.method,
+        query: pick(args, listGroupMembers.queryParams),
+        body: pick(args, listGroupMembers.bodyParams),
+        auth: args?.auth,
+      })
     },
   }
 
   public readonly conversations = {
+    /**
+     * List conversations
+     */
+    list: (
+      args: WithAuth<ListIMAccountConversationsParameters>
+    ): Promise<ListIMAccountConversationsResponse> => {
+      return this.request<ListIMAccountConversationsResponse>({
+        path: listIMAccountConversations.path(args),
+        method: listIMAccountConversations.method,
+        query: pick(args, listIMAccountConversations.queryParams),
+        body: pick(args, listIMAccountConversations.bodyParams),
+        auth: args?.auth,
+      })
+    },
 
     /**
-     * Send message to conversation 
+     * Send message to conversation
      */
     sendMessage: (args: SendConversationMessageParameters): Promise<void> => {
       const channel = this.channelOfId(args.account_id)
       const evt: SendMessageEvent = {
         type: PublishEventType.SendMessage,
-        payload: pick(args, ["conversation_id", "mentioned_type", "mentioned_user_ids", "payload"])
+        payload: pick(args, [
+          "conversation_id",
+          "mentioned_type",
+          "mentioned_user_ids",
+          "payload",
+        ]),
       }
       return this.#pubsub.publish(channel, evt)
     },
+  }
 
-    messages: {
-      /**
-       * List conversation's message histories
-       */
-      list: (
-        args: WithAuth<ListConversationMessagesParameters>
-      ): Promise<ListConversationMessagesResponse> => {
-        return this.request<ListConversationMessagesResponse>({
-          path: listConversationMessages.path(args),
-          method: listConversationMessages.method,
-          query: pick(args, listConversationMessages.queryParams),
-          body: pick(args, listConversationMessages.bodyParams),
-          auth: args?.auth,
-        })
-      },
+  public readonly messages = {
+    /**
+     * List conversation's message histories
+     */
+    list: (
+      args: WithAuth<ListConversationMessagesParameters>
+    ): Promise<ListConversationMessagesResponse> => {
+      return this.request<ListConversationMessagesResponse>({
+        path: listConversationMessages.path(args),
+        method: listConversationMessages.method,
+        query: pick(args, listConversationMessages.queryParams),
+        body: pick(args, listConversationMessages.bodyParams),
+        auth: args?.auth,
+      })
+    },
+  }
+
+  public readonly moments = {
+    /**
+     * List moments
+     */
+    list: (
+      args: WithAuth<ListIMUserMomentsParameters>
+    ): Promise<ListIMUserMomentsResponse> => {
+      return this.request<ListIMUserMomentsResponse>({
+        path: listIMUserMoments.path(args),
+        method: listIMUserMoments.method,
+        query: pick(args, listIMUserMoments.queryParams),
+        body: pick(args, listIMUserMoments.bodyParams),
+        auth: args?.auth,
+      })
     },
   }
 

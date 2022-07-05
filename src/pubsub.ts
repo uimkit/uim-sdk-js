@@ -5,7 +5,7 @@ type SubscribeOptions = Omit<
   Webpubsub.SubscribeParameters,
   "channels" | "channelGroups"
 >
-type EventHandler = (channel: string, evt: any, extra?: any) => void
+type Listener = (channel: string, evt: any, extra?: any) => void
 
 export interface SupportedPubSub {
   publish: (
@@ -14,7 +14,7 @@ export interface SupportedPubSub {
     options?: PublishOptions
   ) => Promise<void>
   subscribe: (channels: Array<string>, options?: SubscribeOptions) => void
-  on: (handler: EventHandler) => void
+  addListener: (listener: Listener) => void
 }
 
 export type PubSubOptions = Webpubsub.WebpubsubConfig
@@ -49,11 +49,11 @@ export default class PubSub {
     this.#client.subscribe({ channels, ...(options ?? {}) })
   }
 
-  on(handler: EventHandler): void {
+  addListener(listener: Listener): void {
     this.#client.addListener({
       message: ({ channel, message, ...extra }) => {
         try {
-          handler(channel, message, extra)
+          listener(channel, message, extra)
         } catch (e: unknown) {
           // TODO
         }

@@ -144,7 +144,7 @@ export enum ConversationType {
   Group = 2,
   Discussion = 3,
   System = 4,
-  CustomerService = 5
+  CustomerService = 5,
 }
 
 type Conversation = Model<{
@@ -177,10 +177,10 @@ type Message = Model<{
   mentioned_type?: MentionedType
   mentioned_users?: Array<IMUser>
   payload:
-  | TextMessagePayload
-  | ImageMessagePayload
-  | VoiceMessagePayload
-  | VideoMessagePayload
+    | TextMessagePayload
+    | ImageMessagePayload
+    | VoiceMessagePayload
+    | VideoMessagePayload
 }>
 
 type TextMessagePayload = {
@@ -314,7 +314,8 @@ type GetIMAccountOptions = {
   subscribe?: boolean
 }
 
-export type GetIMAccountParameters = GetIMAccountPathParameters & GetIMAccountOptions
+export type GetIMAccountParameters = GetIMAccountPathParameters &
+  GetIMAccountOptions
 
 export type GetIMAccountResponse = IMAccount
 
@@ -335,7 +336,8 @@ type ListIMAccountsOptions = {
 }
 
 export type ListIMAccountsParameters = ListIMAccountsPathParameters &
-  ListIMAccountsQueryParameters & ListIMAccountsOptions
+  ListIMAccountsQueryParameters &
+  ListIMAccountsOptions
 
 export type ListIMAccountsResponse = PageListResponse<IMAccount>
 
@@ -397,7 +399,7 @@ type ListIMAccountConversationsQueryParameters =
 
 export type ListIMAccountConversationsParameters =
   ListIMAccountConversationsPathParameters &
-  ListIMAccountConversationsQueryParameters
+    ListIMAccountConversationsQueryParameters
 
 export type ListIMAccountConversationsResponse =
   CursorListResponse<Conversation>
@@ -504,7 +506,7 @@ type ListConversationMessagesQueryParameters =
 
 export type ListConversationMessagesParameters =
   ListConversationMessagesPathParameters &
-  ListConversationMessagesQueryParameters
+    ListConversationMessagesQueryParameters
 
 export type ListConversationMessagesResponse = CursorListResponse<Message>
 
@@ -521,10 +523,10 @@ type SendMessageParameters = {
   mentioned_type?: MentionedType
   mentioned_user_ids?: Array<string>
   payload:
-  | TextMessagePayload
-  | ImageMessagePayload
-  | VoiceMessagePayload
-  | VideoMessagePayload
+    | TextMessagePayload
+    | ImageMessagePayload
+    | VoiceMessagePayload
+    | VideoMessagePayload
 }
 
 export type SendConversationMessageParameters = SendMessageParameters & {
@@ -543,11 +545,10 @@ export type SendPrivateMessageParameters = SendMessageParameters & {
 }
 
 export enum PublishEventType {
-  SendMessage = "send_message"
+  SendMessage = "send_message",
 }
 
-export type PublishEvent =
-  | SendMessageEvent
+export type PublishEvent = SendMessageEvent
 
 export type SendMessageEvent = {
   type: "send_message"
@@ -560,11 +561,10 @@ export type SendMessageEvent = {
 }
 
 export enum SubscribeEventType {
-  NewMessage = "new_message"
+  NewMessage = "new_message",
 }
 
-export type SubscribeEvent =
-  | NewMessageEvent
+export type SubscribeEvent = NewMessageEvent
 
 export type NewMessageEvent = {
   type: "new_message"
