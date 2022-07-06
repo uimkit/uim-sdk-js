@@ -1,23 +1,28 @@
 import * as Webpubsub from "webpubsub-js"
 
-type PublishOptions = Omit<Webpubsub.PublishParameters, "channel" | "message">
-type SubscribeOptions = Omit<
+export type PublishOptions = Omit<
+  Webpubsub.PublishParameters,
+  "channel" | "message"
+>
+
+export type SubscribeOptions = Omit<
   Webpubsub.SubscribeParameters,
   "channels" | "channelGroups"
 >
-type Listener = (channel: string, evt: any, extra?: any) => void
+
+export type Listener = (channel: string, message: any, extra?: any) => void
+
+export type PubSubOptions = Webpubsub.WebpubsubConfig
 
 export interface SupportedPubSub {
   publish: (
     channel: string,
-    evt: any,
+    message: any,
     options?: PublishOptions
   ) => Promise<void>
   subscribe: (channels: Array<string>, options?: SubscribeOptions) => void
   addListener: (listener: Listener) => void
 }
-
-export type PubSubOptions = Webpubsub.WebpubsubConfig
 
 export default class PubSub {
   #client: Webpubsub
@@ -28,13 +33,14 @@ export default class PubSub {
 
   async publish(
     channel: string,
-    evt: any,
+    message: any,
     options?: PublishOptions
   ): Promise<void> {
     return new Promise((resolve, reject) => {
       this.#client.publish(
-        { channel, message: evt, ...(options ?? {}) },
+        { channel, message, ...(options ?? {}) },
         (status, _resp) => {
+          // TODO error handling
           if (status.error) {
             reject(status.errorData?.message)
           } else {
@@ -55,7 +61,7 @@ export default class PubSub {
         try {
           listener(channel, message, extra)
         } catch (e: unknown) {
-          // TODO
+          // TODO error handling
         }
       },
     })
