@@ -43,13 +43,6 @@ import {
   ListMessagesParameters,
   ListMessagesResponse,
   listMessages,
-  SendConversationMessageParameters,
-  SendMessageEvent,
-  SendPrivateMessageParameters,
-  SendGroupMessageParameters,
-  PublishEventType,
-  SubscribeEvent,
-  SubscribeEventType,
 } from "./api-endpoints"
 import nodeFetch from "node-fetch"
 import {
@@ -59,6 +52,15 @@ import {
 import { SupportedFetch } from "./fetch-types"
 import { SupportedPubSub, PubSubOptions, default as PubSub } from "./pubsub"
 import { ConversationType } from "./models"
+import {
+  SendConversationMessageParameters,
+  SendMessageEvent,
+  SendPrivateMessageParameters,
+  SendGroupMessageParameters,
+  PublishEventType,
+  SubscribeEvent,
+  SubscribeEventType,
+} from "./pubsub-messages"
 
 export interface ClientOptions {
   auth?: string
@@ -208,15 +210,15 @@ export default class Client {
   }
 
   /**
-   * Handle im account's events
+   * Handle messages from pubsub
    *
    * @param channel
-   * @param evt
-   * @param extra
+   * @param message
+   * @param _extra
    */
-  private onMessage(channel: string, evt: any, _extra?: any) {
+  private onMessage(channel: string, message: any, _extra?: any) {
     const accountId = this.idOfChannel(channel)
-    const subEvent = evt as SubscribeEvent
+    const subEvent = message as SubscribeEvent
     switch (subEvent.type) {
       case SubscribeEventType.NewMessage:
         const handler = this.#handlers[subEvent.type]
