@@ -1,314 +1,33 @@
 // cspell:disable-file
 
-type PageListQueryParameters<T> = T & {
-  offset?: number
-  limit?: number
-}
-
-const pageListQueryParams = ["offset", "limit"]
-
-type PageListExtra = {
-  offset: number
-  limit: number
-  total: number
-}
-
-type PageListResponse<T> = {
-  extra: PageListExtra
-  data: Array<T>
-}
-
-type Cursor = string | number
-
-type CursorDirection = "after" | "before"
-
-type CursorListQueryParameters<T> = T & {
-  cursor?: Cursor
-  direction?: CursorDirection
-  limit?: number
-}
-
-const cursorListQueryParams = ["cursor", "direction", "limit"]
-
-type CursorListExtra = {
-  hasPrevious: boolean
-  hasNext: boolean
-  start_cursor: Cursor
-  end_cursor: Cursor
-}
-
-type CursorListResponse<T> = {
-  extra: CursorListExtra
-  data: Array<T>
-}
-
-type EmptyObject = Record<string, never>
-
-type WithMetadata<T> = T & {
-  metadata?: Record<string, unknown>
-}
-
-type WithTimestamps<T> = T & {
-  created_at: Date
-  updated_at?: Date
-}
-
-type Model<T> = WithTimestamps<WithMetadata<T>>
-
-type UnknownGender = 0
-type Male = 1
-type Female = 2
-type Gender = UnknownGender | Male | Female
-
-type IMIdentity = {
-  id: string
-  user_id: string
-  open_id: string
-  provider: string
-}
-
-type IMUser = Model<{
-  id: string
-  user_id: string
-  custom_id?: string
-  username?: string
-  name?: string
-  mobile?: string
-  email?: string
-  avatar?: string
-  qrcode?: string
-  gender?: Gender
-  country?: string
-  province?: string
-  city?: string
-  district?: string
-  address?: string
-  signature?: string
-  birthday?: Date
-  language?: string
-  identities?: Array<IMIdentity>
-}>
-
-type PresenceOnline = 1
-type PresenceOffline = 2
-type PresenceLogout = 3
-type PresenceDisabled = 4
-type PresenceDisabledByProvider = 5
-type Presence =
-  | PresenceOnline
-  | PresenceOffline
-  | PresenceLogout
-  | PresenceDisabled
-  | PresenceDisabledByProvider
-
-type IMAccount = Model<{
-  id: string
-  user: IMUser
-  precense: Presence
-}>
-
-type Contact = Model<{
-  id: string
-  account_id: string
-  user: IMUser
-  alias?: string
-  remark?: string
-  tags?: Array<string>
-  blocked?: boolean
-  marked?: boolean
-}>
-
-type Group = Model<{
-  id: string
-  group_id: string
-  owner?: IMUser
-  name?: string
-  avatar?: string
-  announcement?: string
-  description?: string
-  member_count: number
-}>
-
-type GroupMember = Model<{
-  id: string
-  member_id: string
-  group_id: string
-  user: IMUser
-  is_owner?: boolean
-  is_admin?: boolean
-  alias?: string
-}>
-
-export enum ConversationType {
-  Private = 1,
-  Group = 2,
-  Discussion = 3,
-  System = 4,
-  CustomerService = 5,
-}
-
-type Conversation = Model<{
-  id: string
-  type: ConversationType
-  to: {
-    id: string
-    name?: string
-    avatar?: string
-  }
-  lastMessage?: Message
-  lastMessageAt?: Date
-  unread: number
-  pinned: boolean
-}>
-
-type MentionedTypeAll = 1
-type MentionedTypeSingle = 2
-type MentionedType = MentionedTypeAll | MentionedTypeSingle
-
-type Message = Model<{
-  id: string
-  message_id: string
-  conversation_type: ConversationType
-  seq: number
-  from: string
-  to: string
-  sent_at: Date
-  revoked?: boolean
-  mentioned_type?: MentionedType
-  mentioned_users?: Array<IMUser>
-  payload:
-    | TextMessagePayload
-    | ImageMessagePayload
-    | VoiceMessagePayload
-    | VideoMessagePayload
-}>
-
-type TextMessagePayload = {
-  type: 1
-  body: {
-    content: string
-  }
-}
-
-type ImageMessagePayload = {
-  type: 2
-  body: {
-    url: string
-    width?: number
-    height?: number
-    size?: number
-    ext?: string
-    md5?: string
-    thumb?: {
-      url: string
-      width?: number
-      height?: number
-      ext?: string
-    }
-  }
-}
-
-type VoiceMessagePayload = {
-  type: 3
-  body: {
-    url: string
-    duration?: number
-    size?: number
-    ext?: string
-    md5?: string
-  }
-}
-
-type VideoMessagePayload = {
-  type: 4
-  body: {
-    url: string
-    duration?: number
-    width?: number
-    height?: number
-    size?: number
-    ext?: string
-    md5?: string
-    thumb?: {
-      url: string
-      width?: number
-      height?: number
-      ext?: string
-    }
-  }
-}
-
-type Moment = Model<{
-  id: string
-  moment_id: string
-  user: IMUser
-  published_at: Date
-  is_private?: boolean
-  tags?: Array<string>
-  location?: {
-    latitude?: number
-    longitude?: number
-    altitude?: number
-    accuracy?: number
-    city?: string
-    place_name?: string
-    poi_name?: string
-    poi_address?: string
-  }
-  content: TextMomentContent | ImagesMomentContent | VideoMomentContent
-}>
-
-type TextMomentContent = {
-  type: 1
-  body: {
-    content: string
-  }
-}
-
-type ImagesMomentContent = {
-  type: 2
-  body: {
-    text?: string
-    images?: Array<{
-      url: string
-      width?: number
-      height?: number
-      size?: number
-      ext?: string
-      md5?: string
-      thumb?: {
-        url: string
-        width?: number
-        height?: number
-        ext?: string
-      }
-    }>
-  }
-}
-
-type VideoMomentContent = {
-  type: 3
-  body: {
-    text?: string
-    url: string
-    duration?: number
-    width?: number
-    height?: number
-    size?: number
-    ext?: string
-    md5?: string
-    thumb?: {
-      url: string
-      width?: number
-      height?: number
-      ext?: string
-    }
-  }
-}
+import {
+  Contact,
+  Conversation,
+  ConversationType,
+  CursorListQueryParameters,
+  cursorListQueryParams,
+  CursorListResponse,
+  EmptyObject,
+  Group,
+  GroupMember,
+  IMAccount,
+  ImageMessagePayload,
+  MentionedType,
+  Message,
+  Moment,
+  PageListQueryParameters,
+  pageListQueryParams,
+  PageListResponse,
+  TextMessagePayload,
+  VideoMessagePayload,
+  VoiceMessagePayload,
+} from "./models"
 
 type GetIMAccountPathParameters = {
-  id: string
+  account_id: string
 }
+
+const getIMAccountPathParams = ["account_id"]
 
 type GetIMAccountOptions = {
   subscribe?: boolean
@@ -321,10 +40,11 @@ export type GetIMAccountResponse = IMAccount
 
 export const getIMAccount = {
   method: "get",
-  pathParams: ["id"],
+  pathParams: [...getIMAccountPathParams],
   queryParams: [],
   bodyParams: [],
-  path: (p: GetIMAccountPathParameters): string => `im_accounts/${p.id}`,
+  path: (p: GetIMAccountPathParameters): string =>
+    `im_accounts/${p.account_id}`,
 } as const
 
 type ListIMAccountsPathParameters = EmptyObject
@@ -346,76 +66,70 @@ export const listIMAccounts = {
   pathParams: [],
   queryParams: [...pageListQueryParams],
   bodyParams: [],
-  path: (_p: ListIMAccountsPathParameters): string => "im_accounts",
+  path: (_: ListIMAccountsPathParameters): string => "im_accounts",
 } as const
 
-type IMAccountPathParameters = {
-  im_account_id: string
-}
+type ListContactsPathParameters = Partial<GetIMAccountPathParameters>
 
-const imAccountPathParams = ["im_account_id"]
+type ListContactsQueryParameters = CursorListQueryParameters<EmptyObject>
 
-type ListIMAccountContactsPathParameters = IMAccountPathParameters
+export type ListContactsParameters = ListContactsPathParameters &
+  ListContactsQueryParameters
 
-type ListIMAccountContactsQueryParameters =
-  CursorListQueryParameters<EmptyObject>
+export type ListContactsResponse = CursorListResponse<Contact>
 
-export type ListIMAccountContactsParameters =
-  ListIMAccountContactsPathParameters & ListIMAccountContactsQueryParameters
-
-export type ListIMAccountContactsResponse = CursorListResponse<Contact>
-
-export const listIMAccountContacts = {
+export const listContacts = {
   method: "get",
-  pathParams: [...imAccountPathParams],
+  pathParams: [...getIMAccountPathParams],
   queryParams: [...cursorListQueryParams],
   bodyParams: [],
-  path: (p: ListIMAccountContactsPathParameters): string =>
-    `im_accounts/${p.im_account_id}/contacts`,
+  path: (p: ListContactsPathParameters): string =>
+    p.account_id ? `im_accounts/${p.account_id}/contacts` : "contacts",
 } as const
 
-type ListIMAccountGroupsPathParameters = IMAccountPathParameters
+type ListGroupsPathParameters = Partial<GetIMAccountPathParameters>
 
-type ListIMAccountGroupsQueryParameters = PageListQueryParameters<EmptyObject>
+type ListGroupsQueryParameters = PageListQueryParameters<EmptyObject>
 
-export type ListIMAccountGroupsParameters = ListIMAccountGroupsPathParameters &
-  ListIMAccountGroupsQueryParameters
+export type ListGroupsParameters = ListGroupsPathParameters &
+  ListGroupsQueryParameters
 
-export type ListIMAccountGroupsResponse = PageListResponse<Group>
+export type ListGroupsResponse = PageListResponse<Group>
 
-export const listIMAccountGroups = {
+export const listGroups = {
   method: "get",
-  pathParams: [...imAccountPathParams],
+  pathParams: [...getIMAccountPathParams],
   queryParams: [...pageListQueryParams],
   bodyParams: [],
-  path: (p: ListIMAccountGroupsPathParameters): string =>
-    `im_accounts/${p.im_account_id}/groups`,
+  path: (p: ListGroupsPathParameters): string =>
+    p.account_id ? `im_accounts/${p.account_id}/groups` : "groups",
 } as const
 
-type ListIMAccountConversationsPathParameters = IMAccountPathParameters
+type ListConversationsPathParameters = Partial<GetIMAccountPathParameters>
 
-type ListIMAccountConversationsQueryParameters =
-  CursorListQueryParameters<EmptyObject>
+type ListConversationsQueryParameters = CursorListQueryParameters<EmptyObject>
 
-export type ListIMAccountConversationsParameters =
-  ListIMAccountConversationsPathParameters &
-    ListIMAccountConversationsQueryParameters
+export type ListConversationsParameters = ListConversationsPathParameters &
+  ListConversationsQueryParameters
 
-export type ListIMAccountConversationsResponse =
-  CursorListResponse<Conversation>
+export type ListConversationsResponse = CursorListResponse<Conversation>
 
-export const listIMAccountConversations = {
+export const listConversations = {
   method: "get",
-  pathParams: [...imAccountPathParams],
+  pathParams: [...getIMAccountPathParams],
   queryParams: [...cursorListQueryParams],
   bodyParams: [],
-  path: (p: ListIMAccountConversationsPathParameters): string =>
-    `im_accounts/${p.im_account_id}/conversations`,
+  path: (p: ListConversationsPathParameters): string =>
+    p.account_id
+      ? `im_accounts/${p.account_id}/conversations`
+      : "conversations",
 } as const
 
 type GetContactPathParameters = {
-  id: string
+  contact_id: string
 }
+
+const getContactPathParams = ["contact_id"]
 
 export type GetContactParameters = GetContactPathParameters
 
@@ -423,15 +137,17 @@ export type GetContactResponse = Contact
 
 export const getContact = {
   method: "get",
-  pathParams: ["id"],
+  pathParams: [...getContactPathParams],
   queryParams: [],
   bodyParams: [],
-  path: (p: GetContactPathParameters): string => `contacts/${p.id}`,
+  path: (p: GetContactPathParameters): string => `contacts/${p.contact_id}`,
 } as const
 
 type GetGroupPathParameters = {
-  id: string
+  group_id: string
 }
+
+const getGroupPathParams = ["group_id"]
 
 export type GetGroupParameters = GetGroupPathParameters
 
@@ -439,84 +155,77 @@ export type GetGroupResponse = Group
 
 export const getGroup = {
   method: "get",
-  pathParams: ["id"],
+  pathParams: [...getGroupPathParams],
   queryParams: [],
   bodyParams: [],
-  path: (p: GetGroupPathParameters): string => `groups/${p.id}`,
+  path: (p: GetGroupPathParameters): string => `groups/${p.group_id}`,
 } as const
 
-type GroupPathParameters = {
-  group_id: string
-}
-
-const groupPathParams = ["group_id"]
-
-type ListGroupMembersPathParameters = GroupPathParameters
+type ListGroupMembersPathParameters = Partial<GetGroupPathParameters>
 
 type ListGroupMembersQueryParameters = PageListQueryParameters<EmptyObject>
 
-export type ListGroupMembersParameters = ListGroupMembersPathParameters &
-  ListGroupMembersQueryParameters
+export type ListGroupMembersParameters = ListGroupMembersPathParameters & ListGroupMembersQueryParameters
 
 export type ListGroupMembersResponse = PageListResponse<GroupMember>
 
 export const listGroupMembers = {
   method: "get",
-  pathParams: [...groupPathParams],
+  pathParams: [...getGroupPathParams],
   queryParams: [...pageListQueryParams],
   bodyParams: [],
   path: (p: ListGroupMembersPathParameters): string =>
-    `groups/${p.group_id}/members`,
+    p.group_id ? `groups/${p.group_id}/members` : "group_members",
 } as const
 
-type IMUserPathParameters = {
+type GetIMUserPathParameters = {
   user_id: string
 }
 
-const imUserPathParams = ["user_id"]
+const getIMUserPathParams = ["user_id"]
 
-type ListIMUserMomentsPathParameters = IMUserPathParameters
+type ListMomentsPathParameters = Partial<GetIMUserPathParameters>
 
-type ListIMUserMomentsQueryParameters = CursorListQueryParameters<EmptyObject>
+type ListMomentsQueryParameters = CursorListQueryParameters<EmptyObject>
 
-export type ListIMUserMomentsParameters = ListIMUserMomentsPathParameters &
-  ListIMUserMomentsQueryParameters
+export type ListMomentsParameters = ListMomentsPathParameters &
+  ListMomentsQueryParameters
 
-export type ListIMUserMomentsResponse = CursorListResponse<Moment>
+export type ListMomentsResponse = CursorListResponse<Moment>
 
-export const listIMUserMoments = {
+export const listMoments = {
   method: "get",
-  pathParams: [...imUserPathParams],
+  pathParams: [...getIMUserPathParams],
   queryParams: [...cursorListQueryParams],
   bodyParams: [],
-  path: (p: ListIMUserMomentsPathParameters): string =>
-    `im_users/${p.user_id}/moments`,
+  path: (p: ListMomentsPathParameters): string =>
+    p.user_id ? `im_users/${p.user_id}/moments` : "moments",
 } as const
 
-type ConversationPathParameters = {
+type GetConversationPathParameters = {
   conversation_id: string
 }
 
-const conversationPathParams = ["conversation_id"]
+const getConversationPathParams = ["conversation_id"]
 
-type ListConversationMessagesPathParameters = ConversationPathParameters
+type ListMessagesPathParameters = Partial<GetConversationPathParameters>
 
-type ListConversationMessagesQueryParameters =
-  CursorListQueryParameters<EmptyObject>
+type ListMessagesQueryParameters = CursorListQueryParameters<EmptyObject>
 
-export type ListConversationMessagesParameters =
-  ListConversationMessagesPathParameters &
-    ListConversationMessagesQueryParameters
+export type ListMessagesParameters = ListMessagesPathParameters &
+  ListMessagesQueryParameters
 
-export type ListConversationMessagesResponse = CursorListResponse<Message>
+export type ListMessagesResponse = CursorListResponse<Message>
 
-export const listConversationMessages = {
+export const listMessages = {
   method: "get",
-  pathParams: [...conversationPathParams],
+  pathParams: [...getConversationPathParams],
   queryParams: [...cursorListQueryParams],
   bodyParams: [],
-  path: (p: ListConversationMessagesPathParameters): string =>
-    `conversations/${p.conversation_id}/messages`,
+  path: (p: ListMessagesPathParameters): string =>
+    p.conversation_id
+      ? `conversations/${p.conversation_id}/messages`
+      : "messages",
 } as const
 
 type SendMessageParameters = {

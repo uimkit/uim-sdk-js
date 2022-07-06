@@ -19,15 +19,15 @@ import {
   ListIMAccountsParameters,
   ListIMAccountsResponse,
   listIMAccounts,
-  ListIMAccountContactsParameters,
-  ListIMAccountContactsResponse,
-  listIMAccountContacts,
-  ListIMAccountGroupsParameters,
-  ListIMAccountGroupsResponse,
-  listIMAccountGroups,
-  ListIMAccountConversationsParameters,
-  ListIMAccountConversationsResponse,
-  listIMAccountConversations,
+  ListContactsParameters,
+  ListContactsResponse,
+  listContacts,
+  ListGroupsParameters,
+  ListGroupsResponse,
+  listGroups,
+  ListConversationsParameters,
+  ListConversationsResponse,
+  listConversations,
   GetContactParameters,
   GetContactResponse,
   getContact,
@@ -37,18 +37,17 @@ import {
   ListGroupMembersParameters,
   ListGroupMembersResponse,
   listGroupMembers,
-  ListIMUserMomentsParameters,
-  ListIMUserMomentsResponse,
-  listIMUserMoments,
-  ListConversationMessagesParameters,
-  ListConversationMessagesResponse,
-  listConversationMessages,
+  ListMomentsParameters,
+  ListMomentsResponse,
+  listMoments,
+  ListMessagesParameters,
+  ListMessagesResponse,
+  listMessages,
   SendConversationMessageParameters,
   SendMessageEvent,
   SendPrivateMessageParameters,
   SendGroupMessageParameters,
   PublishEventType,
-  ConversationType,
   SubscribeEvent,
   SubscribeEventType,
 } from "./api-endpoints"
@@ -59,6 +58,7 @@ import {
 } from "../package.json"
 import { SupportedFetch } from "./fetch-types"
 import { SupportedPubSub, PubSubOptions, default as PubSub } from "./pubsub"
+import { ConversationType } from "./models"
 
 export interface ClientOptions {
   auth?: string
@@ -295,13 +295,13 @@ export default class Client {
      * List contacts
      */
     list: (
-      args: WithAuth<ListIMAccountContactsParameters>
-    ): Promise<ListIMAccountContactsResponse> => {
-      return this.request<ListIMAccountContactsResponse>({
-        path: listIMAccountContacts.path(args),
-        method: listIMAccountContacts.method,
-        query: pick(args, listIMAccountContacts.queryParams),
-        body: pick(args, listIMAccountContacts.bodyParams),
+      args: WithAuth<ListContactsParameters>
+    ): Promise<ListContactsResponse> => {
+      return this.request<ListContactsResponse>({
+        path: listContacts.path(args),
+        method: listContacts.method,
+        query: pick(args, listContacts.queryParams),
+        body: pick(args, listContacts.bodyParams),
         auth: args?.auth,
       })
     },
@@ -344,13 +344,13 @@ export default class Client {
      * List groups
      */
     list: (
-      args: WithAuth<ListIMAccountGroupsParameters>
-    ): Promise<ListIMAccountGroupsResponse> => {
-      return this.request<ListIMAccountGroupsResponse>({
-        path: listIMAccountGroups.path(args),
-        method: listIMAccountGroups.method,
-        query: pick(args, listIMAccountGroups.queryParams),
-        body: pick(args, listIMAccountGroups.bodyParams),
+      args: WithAuth<ListGroupsParameters>
+    ): Promise<ListGroupsResponse> => {
+      return this.request<ListGroupsResponse>({
+        path: listGroups.path(args),
+        method: listGroups.method,
+        query: pick(args, listGroups.queryParams),
+        body: pick(args, listGroups.bodyParams),
         auth: args?.auth,
       })
     },
@@ -395,13 +395,13 @@ export default class Client {
      * List conversations
      */
     list: (
-      args: WithAuth<ListIMAccountConversationsParameters>
-    ): Promise<ListIMAccountConversationsResponse> => {
-      return this.request<ListIMAccountConversationsResponse>({
-        path: listIMAccountConversations.path(args),
-        method: listIMAccountConversations.method,
-        query: pick(args, listIMAccountConversations.queryParams),
-        body: pick(args, listIMAccountConversations.bodyParams),
+      args: WithAuth<ListConversationsParameters>
+    ): Promise<ListConversationsResponse> => {
+      return this.request<ListConversationsResponse>({
+        path: listConversations.path(args),
+        method: listConversations.method,
+        query: pick(args, listConversations.queryParams),
+        body: pick(args, listConversations.bodyParams),
         auth: args?.auth,
       })
     },
@@ -429,13 +429,13 @@ export default class Client {
      * List conversation's message histories
      */
     list: (
-      args: WithAuth<ListConversationMessagesParameters>
-    ): Promise<ListConversationMessagesResponse> => {
-      return this.request<ListConversationMessagesResponse>({
-        path: listConversationMessages.path(args),
-        method: listConversationMessages.method,
-        query: pick(args, listConversationMessages.queryParams),
-        body: pick(args, listConversationMessages.bodyParams),
+      args: WithAuth<ListMessagesParameters>
+    ): Promise<ListMessagesResponse> => {
+      return this.request<ListMessagesResponse>({
+        path: listMessages.path(args),
+        method: listMessages.method,
+        query: pick(args, listMessages.queryParams),
+        body: pick(args, listMessages.bodyParams),
         auth: args?.auth,
       })
     },
@@ -446,13 +446,13 @@ export default class Client {
      * List moments
      */
     list: (
-      args: WithAuth<ListIMUserMomentsParameters>
-    ): Promise<ListIMUserMomentsResponse> => {
-      return this.request<ListIMUserMomentsResponse>({
-        path: listIMUserMoments.path(args),
-        method: listIMUserMoments.method,
-        query: pick(args, listIMUserMoments.queryParams),
-        body: pick(args, listIMUserMoments.bodyParams),
+      args: WithAuth<ListMomentsParameters>
+    ): Promise<ListMomentsResponse> => {
+      return this.request<ListMomentsResponse>({
+        path: listMoments.path(args),
+        method: listMoments.method,
+        query: pick(args, listMoments.queryParams),
+        body: pick(args, listMoments.bodyParams),
         auth: args?.auth,
       })
     },
