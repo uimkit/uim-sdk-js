@@ -165,7 +165,8 @@ type ListGroupMembersPathParameters = Partial<GetGroupPathParameters>
 
 type ListGroupMembersQueryParameters = PageListQueryParameters<EmptyObject>
 
-export type ListGroupMembersParameters = ListGroupMembersPathParameters & ListGroupMembersQueryParameters
+export type ListGroupMembersParameters = ListGroupMembersPathParameters &
+  ListGroupMembersQueryParameters
 
 export type ListGroupMembersResponse = PageListResponse<GroupMember>
 
