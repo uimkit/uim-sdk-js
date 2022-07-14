@@ -25,9 +25,7 @@ Import and initialize a client using an **integration token** or an OAuth **acce
 const { Client } = require("@uimkit/client")
 
 // Initializing a client
-const uim = new Client({
-  auth: process.env.ACCESS_TOKEN,
-})
+const client = new Client(process.env.ACCESS_TOKEN, {})
 ```
 
 Make a request to any UIM API endpoint.
@@ -36,7 +34,7 @@ Make a request to any UIM API endpoint.
 
 ```js
 ;(async () => {
-  const response = await uim.imAccounts.list({})
+  const response = await client.imAccounts.list({})
 })()
 ```
 
@@ -68,7 +66,7 @@ console.log(response)
 Endpoint parameters are grouped into a single object. You don't need to remember which parameters go in the path, query, or body.
 
 ```js
-const response = await uim.contacts.list({
+const response = await client.contacts.list({
   im_account_id: "897e5a76-ae52-4b48-9fdf-e71f5945d1af",
 })
 ```
@@ -78,7 +76,7 @@ Send accounts' commands to UIM API
 > See the complete list of commands in the [API reference](https://docs.uimkit.chat/reference).
 
 ```js
-await uim.conversations.sendMessage({
+await client.conversations.sendMessage({
   account_id: "897e5a76-ae52-4b48-9fdf-e71f5945d1af",
   conversation_id: "897e5a76-ae52-4b48-9fdf-e71f5945d1af",
   payload: {
@@ -95,10 +93,8 @@ Handle accounts' events from UIM API.
 > See the complete list of events in the [API reference](https://docs.uimkit.chat/reference).
 
 ```js
-uim.events.onNewMessage((accountId, evt) => {
-  console.log(`account is: ${accountId}`)
-  const nme = evt as NewMessageEvent
-  console.log(`new message id: ${nme.payload.id}`)
+client.conversations.onNewMessage((evt: NewMessage) => {
+  console.log(`new message id: ${evt.payload.id}`)
 })
 ```
 
@@ -112,7 +108,7 @@ The error contains properties from the response, and the most helpful is `code`.
 const { Client, APIErrorCode } = require("@uimkit/client")
 
 try {
-  const response = await uim.contacts.list({
+  const response = await client.contacts.list({
     im_account_id: "897e5a76-ae52-4b48-9fdf-e71f5945d1af",
   })
 } catch (error) {
@@ -136,10 +132,7 @@ If you're debugging an application, and would like the client to log response bo
 ```js
 const { Client, LogLevel } = require("@uimkit/client")
 
-const uim = new Client({
-  auth: process.env.ACCESS_TOKEN,
-  logLevel: LogLevel.DEBUG,
-})
+const client = new Client(process.env.ACCESS_TOKEN, { logLevel: LogLevel.DEBUG })
 ```
 
 You may also set a custom `logger` to emit logs to a destination other than `stdout`. A custom logger is a function which is called with 3 parameters: `logLevel`, `message`, and `extraInfo`. The custom logger should not return a value.
@@ -150,7 +143,6 @@ The `Client` supports the following options on initialization. These options are
 
 | Option      | Default value               | Type         | Description                                                                                                                                                  |
 | ----------- | --------------------------- | ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `auth`      | `undefined`                 | `string`     | Bearer token for authentication. If left undefined, the `auth` parameter should be set on each request.                                                      |
 | `logLevel`  | `LogLevel.WARN`             | `LogLevel`   | Verbosity of logs the instance will produce. By default, logs are written to `stdout`.                                                                       |
 | `timeoutMs` | `60_000`                    | `number`     | Number of milliseconds to wait before emitting a `RequestTimeoutError`                                                                                       |
 | `baseUrl`   | `"https://api.uimkit.chat"` | `string`     | The root URL for sending API requests. This can be changed to test with a mock server.                                                                       |
@@ -169,7 +161,7 @@ the `APIErrorCode` enum are returned from the server. Codes in the
 
 ```ts
 try {
-  const response = await uim.contacts.list({
+  const response = await client.contacts.list({
     /* ... */
   })
 } catch (error: unknown) {

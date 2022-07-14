@@ -51,19 +51,20 @@ import {
 } from "../package.json"
 import { SupportedFetch } from "./fetch-types"
 import { SupportedPubSub, PubSubOptions, default as PubSub } from "./pubsub"
-import { ConversationType } from "./models"
 import {
   SendConversationMessageParameters,
-  SendMessageEvent,
+  sendConversationMessage,
   SendPrivateMessageParameters,
+  sendPrivateMessage,
   SendGroupMessageParameters,
-  PublishEventType,
-  SubscribeEvent,
-  SubscribeEventType,
+  sendGroupMessage,
+  NewMessageHandler,
+  SubscribeMessage,
+  SubscribeMessageType,
+  SubscribeMessageHandler,
 } from "./pubsub-messages"
 
 export interface ClientOptions {
-  auth?: string
   timeoutMs?: number
   baseUrl?: string
   logLevel?: LogLevel
@@ -90,8 +91,6 @@ export interface RequestParameters {
   auth?: string
 }
 
-export type EventHandler = (accountId: string, evt: any) => void
-
 export default class Client {
   #auth?: string
   #logLevel: LogLevel
@@ -103,12 +102,12 @@ export default class Client {
   #pubsub: SupportedPubSub
   #agent: Agent | undefined
   #userAgent: string
-  #handlers: Record<string, EventHandler>
+  #handlers: Record<string, SubscribeMessageHandler>
 
   static readonly defaultUIMVersion = "2022-02-22"
 
-  public constructor(options?: ClientOptions) {
-    this.#auth = options?.auth
+  public constructor(token: string, options?: ClientOptions) {
+    this.#auth = token
     this.#logLevel = options?.logLevel ?? LogLevel.WARN
     this.#logger = options?.logger ?? makeConsoleLogger(PACKAGE_NAME)
     this.#prefixUrl = (options?.baseUrl ?? "https://api.uimkit.chat") + "/v1/"
@@ -212,24 +211,22 @@ export default class Client {
   /**
    * Handle messages from pubsub
    *
-   * @param channel
+   * @param _channel
    * @param message
    * @param _extra
    */
-  private onMessage(channel: string, message: any, _extra?: any) {
-    const accountId = this.idOfChannel(channel)
-    const subEvent = message as SubscribeEvent
-    switch (subEvent.type) {
-      case SubscribeEventType.NewMessage:
-        const handler = this.#handlers[subEvent.type]
-        handler && handler(accountId, subEvent)
-    }
+  private onMessage(_channel: string, message: any, _extra?: any) {
+    const subscribeMessage = message as SubscribeMessage
+    const messageType = subscribeMessage.type
+    const handler = this.#handlers[messageType]
+    handler && handler(subscribeMessage)
   }
 
-  public readonly events = {
-    onNewMessage: (handler: EventHandler): void => {
-      this.#handlers[SubscribeEventType.NewMessage] = handler
-    },
+  /**
+   * Add message handlers 
+   */
+  public on(type: SubscribeMessageType, handler: SubscribeMessageHandler) {
+    this.#handlers[type] = handler
   }
 
   /*
@@ -251,7 +248,7 @@ export default class Client {
         auth: args?.auth,
       })
       if (args.subscribe) {
-        this.#pubsub.subscribe([this.channelOfId(resp.id)])
+        this.#pubsub.subscribe([this.channelName(resp.id)])
       }
       return resp
     },
@@ -270,7 +267,7 @@ export default class Client {
         auth: args?.auth,
       })
       if (args.subscribe && resp.data.length > 0) {
-        const channels = resp.data.map(it => this.channelOfId(it.id))
+        const channels = resp.data.map(it => this.channelName(it.id))
         this.#pubsub.subscribe(channels)
       }
       return resp
@@ -312,17 +309,9 @@ export default class Client {
      * Send message to contact
      */
     sendMessage: (args: SendPrivateMessageParameters): Promise<void> => {
-      const channel = this.channelOfId(args.account_id)
-      const evt: SendMessageEvent = {
-        type: PublishEventType.SendMessage,
-        payload: {
-          conversation_type: ConversationType.Private,
-          from: args.account_id,
-          to: args.user_id,
-          ...pick(args, ["mentioned_type", "mentioned_user_ids", "payload"]),
-        },
-      }
-      return this.#pubsub.publish(channel, evt)
+      const channel = this.channelName(args.account_id)
+      const message = sendPrivateMessage.toMessage(args)
+      return this.#pubsub.publish(channel, message)
     },
   }
 
@@ -361,17 +350,9 @@ export default class Client {
      * Send message to group
      */
     sendMessage: (args: SendGroupMessageParameters): Promise<void> => {
-      const channel = this.channelOfId(args.account_id)
-      const evt: SendMessageEvent = {
-        type: PublishEventType.SendMessage,
-        payload: {
-          conversation_type: ConversationType.Group,
-          from: args.account_id,
-          to: args.group_id,
-          ...pick(args, ["mentioned_type", "mentioned_user_ids", "payload"]),
-        },
-      }
-      return this.#pubsub.publish(channel, evt)
+      const channel = this.channelName(args.account_id)
+      const message = sendGroupMessage.toMessage(args)
+      return this.#pubsub.publish(channel, message)
     },
   }
 
@@ -412,17 +393,18 @@ export default class Client {
      * Send message to conversation
      */
     sendMessage: (args: SendConversationMessageParameters): Promise<void> => {
-      const channel = this.channelOfId(args.account_id)
-      const evt: SendMessageEvent = {
-        type: PublishEventType.SendMessage,
-        payload: pick(args, [
-          "conversation_id",
-          "mentioned_type",
-          "mentioned_user_ids",
-          "payload",
-        ]),
-      }
-      return this.#pubsub.publish(channel, evt)
+      const channel = this.channelName(args.account_id)
+      const message = sendConversationMessage.toMessage(args)
+      return this.#pubsub.publish(channel, message)
+    },
+
+    /**
+     * Listen new messages
+     * 
+     * @param handler 
+     */
+    onNewMessage: (handler: NewMessageHandler): void => {
+      this.on(SubscribeMessageType.NewMessage, handler)
     },
   }
 
@@ -494,12 +476,8 @@ export default class Client {
     return headers
   }
 
-  private channelOfId(id: string): string {
+  private channelName(id: string): string {
     return `account-${id}`
-  }
-
-  private idOfChannel(channel: string): string {
-    return channel.split("-")[1] ?? ""
   }
 }
 

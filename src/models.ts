@@ -174,12 +174,14 @@ export type Message = Model<{
   revoked?: boolean
   mentioned_type?: MentionedType
   mentioned_users?: Array<IMUser>
-  payload:
-    | TextMessagePayload
-    | ImageMessagePayload
-    | VoiceMessagePayload
-    | VideoMessagePayload
+  payload: MessagePayload
 }>
+
+export type MessagePayload =
+  | TextMessagePayload
+  | ImageMessagePayload
+  | VoiceMessagePayload
+  | VideoMessagePayload
 
 export type TextMessagePayload = {
   type: 1
