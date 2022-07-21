@@ -15,12 +15,9 @@ export enum SubscribeMessageType {
   NewMessage = "new_message",
 }
 
-export type PublishMessage =
-  | SendMessage
+export type PublishMessage = SendMessage
 
-
-export type SubscribeMessage =
-  | NewMessage
+export type SubscribeMessage = NewMessage
 
 export type SendMessage = {
   type: "send_message"
@@ -60,10 +57,10 @@ export const sendConversationMessage = {
         conversation_id: p.conversation_id,
         mentioned_type: p.mentioned_type,
         mentioned_user_ids: p.mentioned_user_ids,
-        payload: p.payload
-      }
+        payload: p.payload,
+      },
     } as SendMessage
-  }
+  },
 } as const
 
 export type SendGroupMessageParameters = {
@@ -84,10 +81,10 @@ export const sendGroupMessage = {
         to: p.group_id,
         mentioned_type: p.mentioned_type,
         mentioned_user_ids: p.mentioned_user_ids,
-        payload: p.payload
-      }
+        payload: p.payload,
+      },
     } as SendMessage
-  }
+  },
 } as const
 
 export type SendPrivateMessageParameters = {
@@ -104,8 +101,8 @@ export const sendPrivateMessage = {
         conversation_type: ConversationType.Private,
         from: p.account_id,
         to: p.user_id,
-        payload: p.payload
-      }
+        payload: p.payload,
+      },
     } as SendMessage
-  }
+  },
 } as const

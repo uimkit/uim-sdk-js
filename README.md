@@ -132,7 +132,9 @@ If you're debugging an application, and would like the client to log response bo
 ```js
 const { Client, LogLevel } = require("@uimkit/client")
 
-const client = new Client(process.env.ACCESS_TOKEN, { logLevel: LogLevel.DEBUG })
+const client = new Client(process.env.ACCESS_TOKEN, {
+  logLevel: LogLevel.DEBUG,
+})
 ```
 
 You may also set a custom `logger` to emit logs to a destination other than `stdout`. A custom logger is a function which is called with 3 parameters: `logLevel`, `message`, and `extraInfo`. The custom logger should not return a value.

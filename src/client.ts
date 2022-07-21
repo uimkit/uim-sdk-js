@@ -223,7 +223,7 @@ export default class Client {
   }
 
   /**
-   * Add message handlers 
+   * Add message handlers
    */
   public on(type: SubscribeMessageType, handler: SubscribeMessageHandler) {
     this.#handlers[type] = handler
@@ -400,8 +400,8 @@ export default class Client {
 
     /**
      * Listen new messages
-     * 
-     * @param handler 
+     *
+     * @param handler
      */
     onNewMessage: (handler: NewMessageHandler): void => {
       this.on(SubscribeMessageType.NewMessage, handler)
