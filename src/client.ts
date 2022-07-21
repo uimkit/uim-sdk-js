@@ -45,10 +45,7 @@ import {
   listMessages,
 } from "./api-endpoints"
 import nodeFetch from "node-fetch"
-import {
-  version as PACKAGE_VERSION,
-  name as PACKAGE_NAME,
-} from "../package.json"
+import packageInfo from "../package.json"
 import { SupportedFetch } from "./fetch-types"
 import { SupportedPubSub, PubSubOptions, default as PubSub } from "./pubsub"
 import {
@@ -91,36 +88,39 @@ export interface RequestParameters {
   auth?: string
 }
 
+const PACKAGE_VERSION = packageInfo.version
+const PACKAGE_NAME = packageInfo.name
+
 export default class Client {
-  #auth?: string
-  #logLevel: LogLevel
-  #logger: Logger
-  #prefixUrl: string
-  #timeoutMs: number
-  #uimVersion: string
-  #fetch: SupportedFetch
-  #pubsub: SupportedPubSub
-  #agent: Agent | undefined
-  #userAgent: string
-  #handlers: Record<string, SubscribeMessageHandler>
+  _auth?: string
+  _logLevel: LogLevel
+  _logger: Logger
+  _prefixUrl: string
+  _timeoutMs: number
+  _uimVersion: string
+  _fetch: SupportedFetch
+  _pubsub: SupportedPubSub
+  _agent: Agent | undefined
+  _userAgent: string
+  _handlers: Record<string, SubscribeMessageHandler>
 
   static readonly defaultUIMVersion = "2022-02-22"
 
   public constructor(token: string, options?: ClientOptions) {
-    this.#auth = token
-    this.#logLevel = options?.logLevel ?? LogLevel.WARN
-    this.#logger = options?.logger ?? makeConsoleLogger(PACKAGE_NAME)
-    this.#prefixUrl = (options?.baseUrl ?? "https://api.uimkit.chat") + "/v1/"
-    this.#timeoutMs = options?.timeoutMs ?? 60_000
-    this.#uimVersion = options?.uimVersion ?? Client.defaultUIMVersion
-    this.#fetch = options?.fetch ?? nodeFetch
-    this.#agent = options?.agent
-    this.#userAgent = `uim-client/${PACKAGE_VERSION}`
-    this.#handlers = {}
-    this.#pubsub =
+    this._auth = token
+    this._logLevel = options?.logLevel ?? LogLevel.WARN
+    this._logger = options?.logger ?? makeConsoleLogger(PACKAGE_NAME)
+    this._prefixUrl = (options?.baseUrl ?? "https://api.uimkit.chat") + "/v1/"
+    this._timeoutMs = options?.timeoutMs ?? 60_000
+    this._uimVersion = options?.uimVersion ?? Client.defaultUIMVersion
+    this._fetch = options?.fetch ?? nodeFetch
+    this._agent = options?.agent
+    this._userAgent = `uim-client/${PACKAGE_VERSION}`
+    this._handlers = {}
+    this._pubsub =
       options?.pubsub ??
       new PubSub(options?.pubsubOptions ?? defaultPubSubOptions)
-    this.#pubsub.addListener(this.onMessage.bind(this))
+    this._pubsub.addListener(this.onMessage.bind(this))
   }
 
   /**
@@ -149,7 +149,7 @@ export default class Client {
         ? undefined
         : JSON.stringify(body)
 
-    const url = new URL(`${this.#prefixUrl}${path}`)
+    const url = new URL(`${this._prefixUrl}${path}`)
     if (query) {
       for (const [key, value] of Object.entries(query)) {
         if (value !== undefined) {
@@ -160,8 +160,8 @@ export default class Client {
 
     const headers: Record<string, string> = {
       ...this.authAsHeaders(auth),
-      "UIM-Version": this.#uimVersion,
-      "user-agent": this.#userAgent,
+      "UIM-Version": this._uimVersion,
+      "user-agent": this._userAgent,
     }
 
     if (bodyAsJsonString !== undefined) {
@@ -169,13 +169,13 @@ export default class Client {
     }
     try {
       const response = await RequestTimeoutError.rejectAfterTimeout(
-        this.#fetch(url.toString(), {
+        this._fetch(url.toString(), {
           method,
           headers,
           body: bodyAsJsonString,
-          agent: this.#agent,
+          agent: this._agent,
         }),
-        this.#timeoutMs
+        this._timeoutMs
       )
 
       const responseText = await response.text()
@@ -218,7 +218,7 @@ export default class Client {
   private onMessage(_channel: string, message: any, _extra?: any) {
     const subscribeMessage = message as SubscribeMessage
     const messageType = subscribeMessage.type
-    const handler = this.#handlers[messageType]
+    const handler = this._handlers[messageType]
     handler && handler(subscribeMessage)
   }
 
@@ -226,7 +226,7 @@ export default class Client {
    * Add message handlers
    */
   public on(type: SubscribeMessageType, handler: SubscribeMessageHandler) {
-    this.#handlers[type] = handler
+    this._handlers[type] = handler
   }
 
   /*
@@ -248,7 +248,7 @@ export default class Client {
         auth: args?.auth,
       })
       if (args.subscribe) {
-        this.#pubsub.subscribe([this.channelName(resp.id)])
+        this._pubsub.subscribe([this.channelName(resp.id)])
       }
       return resp
     },
@@ -268,7 +268,7 @@ export default class Client {
       })
       if (args.subscribe && resp.data.length > 0) {
         const channels = resp.data.map(it => this.channelName(it.id))
-        this.#pubsub.subscribe(channels)
+        this._pubsub.subscribe(channels)
       }
       return resp
     },
@@ -311,7 +311,7 @@ export default class Client {
     sendMessage: (args: SendPrivateMessageParameters): Promise<void> => {
       const channel = this.channelName(args.account_id)
       const message = sendPrivateMessage.toMessage(args)
-      return this.#pubsub.publish(channel, message)
+      return this._pubsub.publish(channel, message)
     },
   }
 
@@ -352,7 +352,7 @@ export default class Client {
     sendMessage: (args: SendGroupMessageParameters): Promise<void> => {
       const channel = this.channelName(args.account_id)
       const message = sendGroupMessage.toMessage(args)
-      return this.#pubsub.publish(channel, message)
+      return this._pubsub.publish(channel, message)
     },
   }
 
@@ -395,7 +395,7 @@ export default class Client {
     sendMessage: (args: SendConversationMessageParameters): Promise<void> => {
       const channel = this.channelName(args.account_id)
       const message = sendConversationMessage.toMessage(args)
-      return this.#pubsub.publish(channel, message)
+      return this._pubsub.publish(channel, message)
     },
 
     /**
@@ -453,8 +453,8 @@ export default class Client {
     message: string,
     extraInfo: Record<string, unknown>
   ) {
-    if (logLevelSeverity(level) >= logLevelSeverity(this.#logLevel)) {
-      this.#logger(level, message, extraInfo)
+    if (logLevelSeverity(level) >= logLevelSeverity(this._logLevel)) {
+      this._logger(level, message, extraInfo)
     }
   }
 
@@ -469,7 +469,7 @@ export default class Client {
    */
   private authAsHeaders(auth?: string): Record<string, string> {
     const headers: Record<string, string> = {}
-    const authHeaderValue = auth ?? this.#auth
+    const authHeaderValue = auth ?? this._auth
     if (authHeaderValue !== undefined) {
       headers["authorization"] = `Bearer ${authHeaderValue}`
     }
