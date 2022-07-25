@@ -41,7 +41,7 @@ export const getIMAccount = {
     `im_accounts/${p.account_id}`,
 } as const
 
-type ListIMAccountsPathParameters = EmptyObject
+type ListIMAccountsPathParameters = {}
 
 type ListIMAccountsQueryParameters = PageListQueryParameters<EmptyObject>
 
