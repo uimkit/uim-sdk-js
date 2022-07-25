@@ -1,4 +1,6 @@
 import type { Agent } from "http"
+import { isBrowser, isNode } from "browser-or-node"
+import 'unfetch/polyfill'
 import {
   Logger,
   LogLevel,
@@ -113,7 +115,7 @@ export default class Client {
     this._prefixUrl = (options?.baseUrl ?? "https://api.uimkit.chat") + "/v1/"
     this._timeoutMs = options?.timeoutMs ?? 60_000
     this._uimVersion = options?.uimVersion ?? Client.defaultUIMVersion
-    this._fetch = options?.fetch ?? nodeFetch
+    this._fetch = options?.fetch ?? (isNode ? nodeFetch : window.fetch.bind(window))
     this._agent = options?.agent
     this._userAgent = `uim-client/${PACKAGE_VERSION}`
     this._handlers = {}

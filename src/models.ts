@@ -1,6 +1,6 @@
 // cspell:disable-file
 
-export type EmptyObject = Record<string, never>
+export type EmptyObject = Record<string, any>
 
 export type PageListQueryParameters<T> = T & {
   offset?: number
