@@ -1,5 +1,5 @@
 import type { Agent } from "http"
-import { isBrowser, isNode } from "browser-or-node"
+import { isNode } from "browser-or-node"
 import 'unfetch/polyfill'
 import {
   Logger,
