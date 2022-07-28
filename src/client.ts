@@ -112,7 +112,7 @@ export default class Client {
     this._auth = token
     this._logLevel = options?.logLevel ?? LogLevel.WARN
     this._logger = options?.logger ?? makeConsoleLogger(PACKAGE_NAME)
-    this._prefixUrl = (options?.baseUrl ?? "https://api.uimkit.chat") + "/v1/"
+    this._prefixUrl = options?.baseUrl ?? "https://api.uimkit.chat/client/v1"
     this._timeoutMs = options?.timeoutMs ?? 60_000
     this._uimVersion = options?.uimVersion ?? Client.defaultUIMVersion
     this._fetch = options?.fetch ?? (isNode ? nodeFetch : window.fetch.bind(window))

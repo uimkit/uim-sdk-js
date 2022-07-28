@@ -147,7 +147,7 @@ The `Client` supports the following options on initialization. These options are
 | ----------- | --------------------------- | ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `logLevel`  | `LogLevel.WARN`             | `LogLevel`   | Verbosity of logs the instance will produce. By default, logs are written to `stdout`.                                                                       |
 | `timeoutMs` | `60_000`                    | `number`     | Number of milliseconds to wait before emitting a `RequestTimeoutError`                                                                                       |
-| `baseUrl`   | `"https://api.uimkit.chat"` | `string`     | The root URL for sending API requests. This can be changed to test with a mock server.                                                                       |
+| `baseUrl`   | `"https://api.uimkit.chat/client/v1"` | `string`     | The root URL for sending API requests. This can be changed to test with a mock server.                                                                       |
 | `logger`    | Log to console              | `Logger`     | A custom logging function. This function is only called when the client emits a log that is equal or greater severity than `logLevel`.                       |
 | `agent`     | Default node agent          | `http.Agent` | Used to control creation of TCP sockets. A common use is to proxy requests with [`https-proxy-agent`](https://github.com/TooTallNate/node-https-proxy-agent) |
 
