@@ -177,6 +177,13 @@ export type Message = Model<{
   payload: MessagePayload
 }>
 
+export enum MessageType {
+  Text = 1,
+  Image = 2,
+  Voice = 3,
+  Video = 4
+}
+
 export type MessagePayload =
   | TextMessagePayload
   | ImageMessagePayload
@@ -184,14 +191,14 @@ export type MessagePayload =
   | VideoMessagePayload
 
 export type TextMessagePayload = {
-  type: 1
+  type: MessageType.Text
   body: {
     content: string
   }
 }
 
 export type ImageMessagePayload = {
-  type: 2
+  type: MessageType.Image
   body: {
     url: string
     width?: number
@@ -209,7 +216,7 @@ export type ImageMessagePayload = {
 }
 
 export type VoiceMessagePayload = {
-  type: 3
+  type: MessageType.Voice
   body: {
     url: string
     duration?: number
@@ -220,7 +227,7 @@ export type VoiceMessagePayload = {
 }
 
 export type VideoMessagePayload = {
-  type: 4
+  type: MessageType.Video
   body: {
     url: string
     duration?: number
