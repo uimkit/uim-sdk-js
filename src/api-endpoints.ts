@@ -119,6 +119,25 @@ export const listConversations = {
       : "conversations",
 } as const
 
+type GetConversationPathParameters = {
+  conversation_id: string
+}
+
+const getConversationPathParams = ["conversation_id"]
+
+export type GetConversationParameters = GetConversationPathParameters
+
+export type GetConversationResponse = Conversation
+
+export const getConversation = {
+  method: "get",
+  pathParams: [...getConversationPathParams],
+  queryParams: [],
+  bodyParams: [],
+  path: (p: GetConversationPathParameters): string =>
+    `conversations/${p.conversation_id}`,
+} as const
+
 type GetContactPathParameters = {
   contact_id: string
 }
@@ -196,12 +215,6 @@ export const listMoments = {
   path: (p: ListMomentsPathParameters): string =>
     p.user_id ? `im_users/${p.user_id}/moments` : "moments",
 } as const
-
-type GetConversationPathParameters = {
-  conversation_id: string
-}
-
-const getConversationPathParams = ["conversation_id"]
 
 type ListMessagesPathParameters = Partial<GetConversationPathParameters>
 

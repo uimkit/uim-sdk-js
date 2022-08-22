@@ -45,6 +45,9 @@ import {
   ListMessagesParameters,
   ListMessagesResponse,
   listMessages,
+  GetConversationParameters,
+  GetConversationResponse,
+  getConversation,
 } from "./api-endpoints"
 import nodeFetch from "node-fetch"
 import packageInfo from "../package.json"
@@ -376,6 +379,22 @@ export default class Client {
   }
 
   public readonly conversations = {
+
+    /**
+     * Retrieve conversation
+     */
+    retrieve: (
+      args: WithAuth<GetConversationParameters>
+    ): Promise<GetConversationResponse> => {
+      return this.request<GetConversationResponse>({
+        path: getConversation.path(args),
+        method: getConversation.method,
+        query: pick(args, getConversation.queryParams),
+        body: pick(args, getConversation.bodyParams),
+        auth: args?.auth,
+      })
+    },
+
     /**
      * List conversations
      */
