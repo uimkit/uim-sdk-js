@@ -48,6 +48,8 @@ import {
   GetConversationParameters,
   GetConversationResponse,
   getConversation,
+  GetContactByUserParameters,
+  getContactByUser,
 } from "./api-endpoints"
 import nodeFetch from "node-fetch"
 import packageInfo from "../package.json"
@@ -291,6 +293,18 @@ export default class Client {
         method: getContact.method,
         query: pick(args, getContact.queryParams),
         body: pick(args, getContact.bodyParams),
+        auth: args?.auth,
+      })
+    },
+
+    retrieveByUser: (
+      args: WithAuth<GetContactByUserParameters>
+    ): Promise<GetContactResponse> => {
+      return this.request<GetContactResponse>({
+        path: getContactByUser.path(args),
+        method: getContactByUser.method,
+        query: pick(args, getContactByUser.queryParams),
+        body: pick(args, getContactByUser.bodyParams),
         auth: args?.auth,
       })
     },

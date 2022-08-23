@@ -33,8 +33,8 @@ export type CursorListQueryParameters<T> = T & {
 export const cursorListQueryParams = ["cursor", "direction", "limit"]
 
 export type CursorListExtra = {
-  hasPrevious: boolean
-  hasNext: boolean
+  has_previous: boolean
+  has_next: boolean
   start_cursor: Cursor
   end_cursor: Cursor
 }
@@ -117,7 +117,7 @@ export type Contact = Model<{
 
 export type Group = Model<{
   id: string
-  groupeid: string
+  groupid: string
   owner?: IMUser
   name?: string
   avatar?: string
