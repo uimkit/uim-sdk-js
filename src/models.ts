@@ -146,6 +146,7 @@ export enum ConversationType {
 
 export type Conversation = Model<{
   id: string
+  account_id: string
   type: ConversationType
   to: {
     id: string
