@@ -169,8 +169,16 @@ export type Message = Model<{
   message_id: string
   conversation_type: ConversationType
   seq: number
-  from: string
-  to: string
+  from: {
+    id: string
+    name?: string
+    avatar?: string
+  }
+  to: {
+    id: string
+    name?: string
+    avatar?: string
+  }
   sent_at: Date
   revoked?: boolean
   mentioned_type?: MentionedType
