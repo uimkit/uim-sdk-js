@@ -87,19 +87,21 @@ const defaultPubSubOptions: PubSubOptions = {
   uuid: "",
 }
 
+export type ClientToken = string | (() => Promise<string>)
+
 export interface RequestParameters {
   path: string
   method: Method
   query?: QueryParams
   body?: Record<string, unknown>
-  auth?: string
+  auth?: ClientToken
 }
 
 const PACKAGE_VERSION = packageInfo.version
 const PACKAGE_NAME = packageInfo.name
 
 export default class Client {
-  _auth?: string
+  _auth?: ClientToken
   _logLevel: LogLevel
   _logger: Logger
   _prefixUrl: string
@@ -113,7 +115,7 @@ export default class Client {
 
   static readonly defaultUIMVersion = "2022-02-22"
 
-  public constructor(token: string, options?: ClientOptions) {
+  public constructor(token: ClientToken, options?: ClientOptions) {
     this._auth = token
     this._logLevel = options?.logLevel ?? LogLevel.WARN
     this._logger = options?.logger ?? makeConsoleLogger(PACKAGE_NAME)
@@ -165,8 +167,9 @@ export default class Client {
       }
     }
 
+    const authHeaders = await this.authAsHeaders(auth)
     const headers: Record<string, string> = {
-      ...this.authAsHeaders(auth),
+      ...authHeaders,
       "UIM-Version": this._uimVersion,
       "user-agent": this._userAgent,
     }
@@ -502,11 +505,14 @@ export default class Client {
    * @param auth API key or access token
    * @returns headers key-value object
    */
-  private authAsHeaders(auth?: string): Record<string, string> {
+  private async authAsHeaders(auth?: ClientToken): Promise<Record<string, string>> {
     const headers: Record<string, string> = {}
     const authHeaderValue = auth ?? this._auth
-    if (authHeaderValue !== undefined) {
+    if (authHeaderValue === undefined) return headers
+    if (typeof authHeaderValue === 'string') {
       headers["authorization"] = `Bearer ${authHeaderValue}`
+    } else {
+      headers["authorization"] = `Bearer ${await authHeaderValue()}`
     }
     return headers
   }
