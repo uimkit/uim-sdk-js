@@ -98,17 +98,12 @@ export interface RequestParameters {
   auth?: ClientToken
 }
 
-export type AuthorizeCallback = (id: string) => void;
+export type AuthorizeCallback = (id: string | null) => void;
 
 interface AuthorizeResult {
   id?: string
   state?: string
   error?: string
-}
-
-export interface PopupOptions {
-  width?: number
-  height?: number
 }
 
 const PACKAGE_VERSION = packageInfo.version
@@ -153,14 +148,14 @@ export default class Client {
    * Start the procedure to authorize a new im account.
    * Must in browser environment.
    */
-  public async authorize(provider: string, cb?: AuthorizeCallback, options?: PopupOptions): Promise<string | null> {
+  public async authorize(provider: string, cb?: AuthorizeCallback): Promise<string | null> {
     const state = createRandomString(16);
     const token = this._auth ? ((typeof this._auth === 'string') ? this._auth : (await this._auth())) : "";
     const params = { provider, token, state }
     const url = `${this._prefixUrl}authorize?${createQueryParams(params)}`;
-    const win = this.popup(url, "uim-authorize-window", options?.width ?? 800, options?.height ?? 600);
+    const win = this.popup(url, "uim-authorize-window");
     if (!win) {
-      throw new Error('open authorize window erro')
+      throw new Error('open authorize window error')
     }
 
     const res = await Promise.race([
@@ -184,20 +179,20 @@ export default class Client {
 
     if (!res) {
       // 授权页窗口被用户关闭了
-      return null
+      cb && cb(null);
+      return null;
     }
 
     if (res.error) {
-      throw new Error(`authorize error: "${res.error}"`)
+      throw new Error('invalid authorize state')
     }
 
     if (res.state !== state) {
       throw new Error('invalid authorize state')
     }
 
-    const id = res.id!
-    cb && cb(id)
-    return id
+    cb && cb(res.id!)
+    return res.id!
   }
 
   private async listenToAuthorizeResult(): Promise<AuthorizeResult> {
@@ -220,24 +215,13 @@ export default class Client {
     })
   }
 
-  private popup(url: string, title: string, w: number, h: number): Window | null {
-    const dualScreenLeft = window.screenLeft !== undefined ? window.screenLeft : window.screenX;
-    const dualScreenTop = window.screenTop !== undefined ? window.screenTop : window.screenY;
-
-    const width = window.innerWidth ? window.innerWidth : document.documentElement.clientWidth ? document.documentElement.clientWidth : screen.width;
-    const height = window.innerHeight ? window.innerHeight : document.documentElement.clientHeight ? document.documentElement.clientHeight : screen.height;
-
-    const systemZoom = width / window.screen.availWidth;
-    const left = (width - w) / 2 / systemZoom + dualScreenLeft
-    const top = (height - h) / 2 / systemZoom + dualScreenTop
+  private popup(url: string, title: string): Window | null {
+    const width = Math.min(screen.width / 2, 800)
+    const height = Math.min(screen.height / 2, 600)
+    const left = (screen.width / 2) - (width / 2);
+    const top = (screen.height / 2) - (height / 2);
     return window.open(url, title,
-      `
-      scrollbars=yes,
-      width=${w / systemZoom}, 
-      height=${h / systemZoom}, 
-      top=${top}, 
-      left=${left}
-      `
+      `scrollbars=yes, width=${width}, height=${height}, top=${top}, left=${left}`
     )
   }
 
