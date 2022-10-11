@@ -22,3 +22,26 @@ export function pick<O extends unknown, K extends AllKeys<O>>(
 export function isObject(o: unknown): o is Record<PropertyKey, unknown> {
   return typeof o === "object" && o !== null
 }
+
+export function createRandomString(length: number) {
+  const charset =
+    '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'
+  const randomValues = Array.from(
+    getCrypto().getRandomValues(new Uint8Array(length))
+  )
+  return randomValues.map(v => charset[v % charset.length]).join('')
+}
+
+export function getCrypto() {
+  //ie 11.x uses msCrypto
+  return (window.crypto || (window as any).msCrypto) as Crypto
+}
+
+export function createQueryParams(params: any) {
+  return Object.keys(params)
+    .filter(k => params[k] !== null && params[k] !== undefined)
+    .map(
+      k => encodeURIComponent(k) + '=' + encodeURIComponent(params[k] as string)
+    )
+    .join('&')
+}

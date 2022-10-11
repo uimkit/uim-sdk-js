@@ -13,7 +13,7 @@ import {
   isUIMClientError,
   RequestTimeoutError,
 } from "./errors"
-import { pick } from "./helpers"
+import { createQueryParams, createRandomString, pick } from "./helpers"
 import {
   GetIMAccountParameters,
   GetIMAccountResponse,
@@ -67,6 +67,7 @@ import {
   SubscribeMessageType,
   SubscribeMessageHandler,
 } from "./pubsub-messages"
+import { IMAccount } from "./models"
 
 export interface ClientOptions {
   timeoutMs?: number
@@ -97,6 +98,20 @@ export interface RequestParameters {
   auth?: ClientToken
 }
 
+export type AuthorizeCallback = (id: string) => void;
+
+interface AuthorizeResult {
+  id?: string
+  state?: string
+  error?: string
+}
+
+export interface AuthorizeOptions {
+  popupWidth?: number
+  popupHeight?: number
+  onResult?: AuthorizeCallback
+}
+
 const PACKAGE_VERSION = packageInfo.version
 const PACKAGE_NAME = packageInfo.name
 
@@ -112,6 +127,7 @@ export default class Client {
   _agent: Agent | undefined
   _userAgent: string
   _handlers: Record<string, SubscribeMessageHandler>
+  _messageEventListener?: (msgEvent: MessageEvent) => void
 
   static readonly defaultUIMVersion = "2022-02-22"
 
@@ -130,7 +146,85 @@ export default class Client {
       options?.pubsub ??
       new PubSub(options?.pubsubOptions ?? defaultPubSubOptions)
     this._pubsub.addListener(this.onMessage.bind(this))
+    this._messageEventListener = undefined
   }
+
+
+  /**
+   * Start the procedure to authorize a new im account.
+   * Must in browser environment.
+   */
+  public async authorize(provider: string, options?: AuthorizeOptions): Promise<string | null> {
+    const state = createRandomString(16);
+    const token = this._auth ? ((typeof this._auth === 'string') ? this._auth : (await this._auth())) : "";
+    const params = { provider, token, state }
+    const url = `${this._prefixUrl}authorize?${createQueryParams(params)}`;
+    const win = window.open(
+      url,
+      'uim-authorize-window',
+      `popup,width=${options?.popupWidth ?? 600},height=${options?.popupHeight ?? 400}`
+    );
+    if (!win) {
+      throw new Error('open authorize window erro')
+    }
+
+    const res = await Promise.race([
+      // 等待授权页面返回
+      this.listenToAuthorizeResult(),
+      // 检测授权页面关闭
+      new Promise<null>(resolve => {
+        const handle = setInterval(() => {
+          if (win.closed) {
+            clearInterval(handle)
+            // 授权页 postMessage 后会关闭自己，这里延后让 message 先得到处理
+            setTimeout(() => resolve(null), 500)
+          }
+        }, 500)
+      })
+    ])
+    if (this._messageEventListener) {
+      window.removeEventListener('message', this._messageEventListener)
+    }
+    this._messageEventListener = undefined
+
+    if (!res) {
+      // 授权页窗口被用户关闭了
+      return null
+    }
+
+    if (res.error) {
+      throw new Error(`authorize error: "${res.error}"`)
+    }
+
+    if (res.state !== state) {
+      throw new Error('invalid authorize state')
+    }
+
+    const id = res.id!
+    options?.onResult && options.onResult(id)
+    return id
+  }
+
+  private async listenToAuthorizeResult(): Promise<AuthorizeResult> {
+    const { origin } = new URL(this._prefixUrl)
+    return new Promise<AuthorizeResult>((resolve) => {
+      const msgEventListener = (msgEvent: MessageEvent) => {
+        if (
+          msgEvent.origin !== origin ||
+          msgEvent.data?.type !== 'authorization_response'
+        ) {
+          return
+        }
+        window.removeEventListener('message', msgEventListener)
+        this._messageEventListener = undefined
+        return resolve(msgEvent.data)
+      }
+
+      this._messageEventListener = msgEventListener
+      window.addEventListener('message', msgEventListener)
+    })
+  }
+
 
   /**
    * Sends a request.
