@@ -216,10 +216,14 @@ export default class Client {
   }
 
   private popup(url: string, title: string): Window | null {
-    const width = Math.min(screen.width / 2, 800)
-    const height = Math.min(screen.height / 2, 600)
-    const left = (screen.width / 2) - (width / 2);
-    const top = (screen.height / 2) - (height / 2);
+    const dualScreenLeft = window.screenLeft ?? window.screenX;
+    const dualScreenTop = window.screenTop ?? window.screenY;
+    const windowWidth = window.innerWidth ?? document.documentElement.clientWidth ?? screen.width;
+    const windowHeight = window.innerHeight ?? document.documentElement.clientHeight ?? screen.height;
+    const width = Math.min(800, windowWidth / 2)
+    const height = Math.min(600, windowHeight / 2)
+    const left = (windowWidth - width) / 2 + dualScreenLeft
+    const top = (windowHeight - height) / 2 + dualScreenTop
     return window.open(url, title,
       `scrollbars=yes, width=${width}, height=${height}, top=${top}, left=${left}`
     )
