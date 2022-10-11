@@ -106,10 +106,9 @@ interface AuthorizeResult {
   error?: string
 }
 
-export interface AuthorizeOptions {
-  popupWidth?: number
-  popupHeight?: number
-  onResult?: AuthorizeCallback
+export interface PopupOptions {
+  width?: number
+  height?: number
 }
 
 const PACKAGE_VERSION = packageInfo.version
@@ -154,16 +153,12 @@ export default class Client {
    * Start the procedure to authorize a new im account.
    * Must in browser environment.
    */
-  public async authorize(provider: string, options?: AuthorizeOptions): Promise<string | null> {
+  public async authorize(provider: string, cb?: AuthorizeCallback, options?: PopupOptions): Promise<string | null> {
     const state = createRandomString(16);
     const token = this._auth ? ((typeof this._auth === 'string') ? this._auth : (await this._auth())) : "";
     const params = { provider, token, state }
     const url = `${this._prefixUrl}authorize?${createQueryParams(params)}`;
-    const win = window.open(
-      url,
-      'uim-authorize-window',
-      `popup,width=${options?.popupWidth ?? 600},height=${options?.popupHeight ?? 400}`
-    );
+    const win = this.popup(url, "uim-authorize-window", options?.width ?? 800, options?.height ?? 600);
     if (!win) {
       throw new Error('open authorize window erro')
     }
@@ -201,7 +196,7 @@ export default class Client {
     }
 
     const id = res.id!
-    options?.onResult && options.onResult(id)
+    cb && cb(id)
     return id
   }
 
@@ -225,6 +220,26 @@ export default class Client {
     })
   }
 
+  private popup(url: string, title: string, w: number, h: number): Window | null {
+    const dualScreenLeft = window.screenLeft !== undefined ? window.screenLeft : window.screenX;
+    const dualScreenTop = window.screenTop !== undefined ? window.screenTop : window.screenY;
+
+    const width = window.innerWidth ? window.innerWidth : document.documentElement.clientWidth ? document.documentElement.clientWidth : screen.width;
+    const height = window.innerHeight ? window.innerHeight : document.documentElement.clientHeight ? document.documentElement.clientHeight : screen.height;
+
+    const systemZoom = width / window.screen.availWidth;
+    const left = (width - w) / 2 / systemZoom + dualScreenLeft
+    const top = (height - h) / 2 / systemZoom + dualScreenTop
+    return window.open(url, title,
+      `
+      scrollbars=yes,
+      width=${w / systemZoom}, 
+      height=${h / systemZoom}, 
+      top=${top}, 
+      left=${left}
+      `
+    )
+  }
 
   /**
    * Sends a request.
