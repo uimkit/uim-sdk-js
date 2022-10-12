@@ -184,7 +184,7 @@ export default class Client {
     }
 
     if (res.error) {
-      throw new Error('invalid authorize state')
+      throw new Error(res.error)
     }
 
     if (res.state !== state) {
