@@ -88,14 +88,12 @@ const defaultPubSubOptions: PubSubOptions = {
   uuid: "",
 }
 
-export type ClientToken = string | (() => Promise<string>)
-
 export interface RequestParameters {
   path: string
   method: Method
   query?: QueryParams
   body?: Record<string, unknown>
-  auth?: ClientToken
+  auth?: string
 }
 
 export type AuthorizeCallback = (id: string | null) => void;
@@ -110,7 +108,7 @@ const PACKAGE_VERSION = packageInfo.version
 const PACKAGE_NAME = packageInfo.name
 
 export default class Client {
-  _auth?: ClientToken
+  _auth?: string
   _logLevel: LogLevel
   _logger: Logger
   _prefixUrl: string
@@ -125,7 +123,7 @@ export default class Client {
 
   static readonly defaultUIMVersion = "2022-02-22"
 
-  public constructor(token: ClientToken, options?: ClientOptions) {
+  public constructor(token: string, options?: ClientOptions) {
     this._auth = token
     this._logLevel = options?.logLevel ?? LogLevel.WARN
     this._logger = options?.logger ?? makeConsoleLogger(PACKAGE_NAME)
@@ -602,15 +600,11 @@ export default class Client {
    * @param auth API key or access token
    * @returns headers key-value object
    */
-  private async authAsHeaders(auth?: ClientToken): Promise<Record<string, string>> {
+  private async authAsHeaders(auth?: string): Promise<Record<string, string>> {
     const headers: Record<string, string> = {}
     const authHeaderValue = auth ?? this._auth
     if (authHeaderValue === undefined) return headers
-    if (typeof authHeaderValue === 'string') {
-      headers["authorization"] = `Bearer ${authHeaderValue}`
-    } else {
-      headers["authorization"] = `Bearer ${await authHeaderValue()}`
-    }
+    headers["authorization"] = `Bearer ${authHeaderValue}`
     return headers
   }
 
