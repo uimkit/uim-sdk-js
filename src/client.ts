@@ -148,7 +148,7 @@ export default class Client {
    */
   public async authorize(provider: string, cb?: AuthorizeCallback): Promise<string | null> {
     const state = createRandomString(16);
-    const token = this._auth ? ((typeof this._auth === 'string') ? this._auth : (await this._auth())) : "";
+    const token = this._auth ?? "";
     const params = { provider, token, state }
     const url = `${this._prefixUrl}authorize?${createQueryParams(params)}`;
     const win = this.popup(url, "uim-authorize-window");
