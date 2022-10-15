@@ -603,7 +603,7 @@ export default class Client {
   private async authAsHeaders(auth?: string): Promise<Record<string, string>> {
     const headers: Record<string, string> = {}
     const authHeaderValue = auth ?? this._auth
-    if (authHeaderValue === undefined) return headers
+    if (!authHeaderValue) return headers
     headers["authorization"] = `Bearer ${authHeaderValue}`
     return headers
   }
