@@ -10,14 +10,18 @@ export type SubscribeOptions = Omit<
   "channels" | "channelGroups"
 >
 
-export type Listener = (channel: string, message: any, extra?: any) => void
+export type Listener = (
+  channel: string,
+  message: unknown,
+  extra?: unknown
+) => void
 
 export type PubSubOptions = Webpubsub.WebpubsubConfig
 
 export interface SupportedPubSub {
   publish: (
     channel: string,
-    message: any,
+    message: unknown,
     options?: PublishOptions
   ) => Promise<void>
   subscribe: (channels: Array<string>, options?: SubscribeOptions) => void
@@ -33,7 +37,7 @@ export default class PubSub {
 
   async publish(
     channel: string,
-    message: any,
+    message: unknown,
     options?: PublishOptions
   ): Promise<void> {
     return new Promise((resolve, reject) => {

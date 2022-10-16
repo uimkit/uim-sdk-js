@@ -23,25 +23,26 @@ export function isObject(o: unknown): o is Record<PropertyKey, unknown> {
   return typeof o === "object" && o !== null
 }
 
-export function createRandomString(length: number) {
+export function createRandomString(length: number): string {
   const charset =
-    '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'
+    "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
   const randomValues = Array.from(
     getCrypto().getRandomValues(new Uint8Array(length))
   )
-  return randomValues.map(v => charset[v % charset.length]).join('')
+  return randomValues.map(v => charset[v % charset.length]).join("")
 }
 
-export function getCrypto() {
+export function getCrypto(): Crypto {
   //ie 11.x uses msCrypto
-  return (window.crypto || (window as any).msCrypto) as Crypto
+  return (window.crypto ||
+    (window as unknown as { msCrypto: Crypto }).msCrypto) as Crypto
 }
 
-export function createQueryParams(params: any) {
+export function createQueryParams(
+  params: Record<string, string | number>
+): string {
   return Object.keys(params)
     .filter(k => params[k] !== null && params[k] !== undefined)
-    .map(
-      k => encodeURIComponent(k) + '=' + encodeURIComponent(params[k] as string)
-    )
-    .join('&')
+    .map(k => encodeURIComponent(k) + "=" + encodeURIComponent(params[k]!))
+    .join("&")
 }

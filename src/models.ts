@@ -1,6 +1,6 @@
 // cspell:disable-file
 
-export type EmptyObject = Record<string, any>
+export type EmptyObject = Record<string, unknown>
 
 export type PageListQueryParameters<T> = T & {
   offset?: number
@@ -190,7 +190,7 @@ export enum MessageType {
   Text = 1,
   Image = 2,
   Voice = 3,
-  Video = 4
+  Video = 4,
 }
 
 export type MessagePayload =

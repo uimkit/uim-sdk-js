@@ -1,6 +1,6 @@
 import type { Agent } from "http"
 import { isNode } from "browser-or-node"
-import 'unfetch/polyfill'
+import "unfetch/polyfill"
 import {
   Logger,
   LogLevel,
@@ -67,7 +67,6 @@ import {
   SubscribeMessageType,
   SubscribeMessageHandler,
 } from "./pubsub-messages"
-import { IMAccount } from "./models"
 
 export interface ClientOptions {
   timeoutMs?: number
@@ -96,7 +95,7 @@ export interface RequestParameters {
   auth?: string
 }
 
-export type AuthorizeCallback = (id: string | null) => void;
+export type AuthorizeCallback = (id: string | null) => void
 
 interface AuthorizeResult {
   id?: string
@@ -130,7 +129,8 @@ export default class Client {
     this._prefixUrl = options?.baseUrl ?? "https://api.uimkit.chat/client/v1/"
     this._timeoutMs = options?.timeoutMs ?? 60_000
     this._uimVersion = options?.uimVersion ?? Client.defaultUIMVersion
-    this._fetch = options?.fetch ?? (isNode ? nodeFetch : window.fetch.bind(window))
+    this._fetch =
+      options?.fetch ?? (isNode ? nodeFetch : window.fetch.bind(window))
     this._agent = options?.agent
     this._userAgent = `uim-client/${PACKAGE_VERSION}`
     this._handlers = {}
@@ -141,19 +141,21 @@ export default class Client {
     this._messageEventListener = undefined
   }
 
-
   /**
    * Start the procedure to authorize a new im account.
    * Must in browser environment.
    */
-  public async authorize(provider: string, cb?: AuthorizeCallback): Promise<string | null> {
-    const state = createRandomString(16);
-    const token = this._auth ?? "";
+  public async authorize(
+    provider: string,
+    cb?: AuthorizeCallback
+  ): Promise<string | null> {
+    const state = createRandomString(16)
+    const token = this._auth ?? ""
     const params = { provider, token, state }
-    const url = `${this._prefixUrl}authorize?${createQueryParams(params)}`;
-    const win = this.popup(url, "uim-authorize-window");
+    const url = `${this._prefixUrl}authorize?${createQueryParams(params)}`
+    const win = this.popup(url, "uim-authorize-window")
     if (!win) {
-      throw new Error('open authorize window error')
+      throw new Error("open authorize window error")
     }
 
     const res = await Promise.race([
@@ -168,17 +170,17 @@ export default class Client {
             setTimeout(() => resolve(null), 500)
           }
         }, 500)
-      })
+      }),
     ])
     if (this._messageEventListener) {
-      window.removeEventListener('message', this._messageEventListener)
+      window.removeEventListener("message", this._messageEventListener)
     }
     this._messageEventListener = undefined
 
     if (!res) {
       // 授权页窗口被用户关闭了
-      cb && cb(null);
-      return null;
+      cb && cb(null)
+      return null
     }
 
     if (res.error) {
@@ -186,7 +188,7 @@ export default class Client {
     }
 
     if (res.state !== state) {
-      throw new Error('invalid authorize state')
+      throw new Error("invalid authorize state")
     }
 
     cb && cb(res.id!)
@@ -195,34 +197,40 @@ export default class Client {
 
   private async listenToAuthorizeResult(): Promise<AuthorizeResult> {
     const { origin } = new URL(this._prefixUrl)
-    return new Promise<AuthorizeResult>((resolve) => {
+    return new Promise<AuthorizeResult>(resolve => {
       const msgEventListener = (msgEvent: MessageEvent) => {
         if (
           msgEvent.origin !== origin ||
-          msgEvent.data?.type !== 'authorization_response'
+          msgEvent.data?.type !== "authorization_response"
         ) {
           return
         }
-        window.removeEventListener('message', msgEventListener)
+        window.removeEventListener("message", msgEventListener)
         this._messageEventListener = undefined
         return resolve(msgEvent.data)
       }
 
       this._messageEventListener = msgEventListener
-      window.addEventListener('message', msgEventListener)
+      window.addEventListener("message", msgEventListener)
     })
   }
 
   private popup(url: string, title: string): Window | null {
-    const dualScreenLeft = window.screenLeft ?? window.screenX;
-    const dualScreenTop = window.screenTop ?? window.screenY;
-    const windowWidth = window.innerWidth ?? document.documentElement.clientWidth ?? screen.width;
-    const windowHeight = window.innerHeight ?? document.documentElement.clientHeight ?? screen.height;
+    const dualScreenLeft = window.screenLeft ?? window.screenX
+    const dualScreenTop = window.screenTop ?? window.screenY
+    const windowWidth =
+      window.innerWidth ?? document.documentElement.clientWidth ?? screen.width
+    const windowHeight =
+      window.innerHeight ??
+      document.documentElement.clientHeight ??
+      screen.height
     const width = Math.min(800, windowWidth / 2)
     const height = Math.min(600, windowHeight / 2)
     const left = (windowWidth - width) / 2 + dualScreenLeft
     const top = (windowHeight - height) / 2 + dualScreenTop
-    return window.open(url, title,
+    return window.open(
+      url,
+      title,
       `scrollbars=yes, width=${width}, height=${height}, top=${top}, left=${left}`
     )
   }
@@ -320,7 +328,7 @@ export default class Client {
    * @param message
    * @param _extra
    */
-  private onMessage(_channel: string, message: any, _extra?: any) {
+  private onMessage(_channel: string, message: unknown, _extra?: unknown) {
     const subscribeMessage = message as SubscribeMessage
     const messageType = subscribeMessage.type
     const handler = this._handlers[messageType]
@@ -330,7 +338,10 @@ export default class Client {
   /**
    * Add message handlers
    */
-  public on(type: SubscribeMessageType, handler: SubscribeMessageHandler) {
+  public on(
+    type: SubscribeMessageType,
+    handler: SubscribeMessageHandler
+  ): void {
     this._handlers[type] = handler
   }
 
@@ -367,7 +378,7 @@ export default class Client {
       const resp = await this.request<ListIMAccountsResponse>({
         path: listIMAccounts.path(args),
         method: listIMAccounts.method,
-        query: pick(args, listIMAccounts.queryParams),
+        query: pick(args, listIMAccounts.queryParams) as PlainQueryParams,
         body: pick(args, listIMAccounts.bodyParams),
         auth: args?.auth,
       })
@@ -416,7 +427,7 @@ export default class Client {
       return this.request<ListContactsResponse>({
         path: listContacts.path(args),
         method: listContacts.method,
-        query: pick(args, listContacts.queryParams),
+        query: pick(args, listContacts.queryParams) as PlainQueryParams,
         body: pick(args, listContacts.bodyParams),
         auth: args?.auth,
       })
@@ -457,7 +468,7 @@ export default class Client {
       return this.request<ListGroupsResponse>({
         path: listGroups.path(args),
         method: listGroups.method,
-        query: pick(args, listGroups.queryParams),
+        query: pick(args, listGroups.queryParams) as PlainQueryParams,
         body: pick(args, listGroups.bodyParams),
         auth: args?.auth,
       })
@@ -483,7 +494,7 @@ export default class Client {
       return this.request<ListGroupMembersResponse>({
         path: listGroupMembers.path(args),
         method: listGroupMembers.method,
-        query: pick(args, listGroupMembers.queryParams),
+        query: pick(args, listGroupMembers.queryParams) as PlainQueryParams,
         body: pick(args, listGroupMembers.bodyParams),
         auth: args?.auth,
       })
@@ -491,7 +502,6 @@ export default class Client {
   }
 
   public readonly conversations = {
-
     /**
      * Retrieve conversation
      */
@@ -516,7 +526,7 @@ export default class Client {
       return this.request<ListConversationsResponse>({
         path: listConversations.path(args),
         method: listConversations.method,
-        query: pick(args, listConversations.queryParams),
+        query: pick(args, listConversations.queryParams) as PlainQueryParams,
         body: pick(args, listConversations.bodyParams),
         auth: args?.auth,
       })
@@ -551,7 +561,7 @@ export default class Client {
       return this.request<ListMessagesResponse>({
         path: listMessages.path(args),
         method: listMessages.method,
-        query: pick(args, listMessages.queryParams),
+        query: pick(args, listMessages.queryParams) as PlainQueryParams,
         body: pick(args, listMessages.bodyParams),
         auth: args?.auth,
       })
@@ -568,7 +578,7 @@ export default class Client {
       return this.request<ListMomentsResponse>({
         path: listMoments.path(args),
         method: listMoments.method,
-        query: pick(args, listMoments.queryParams),
+        query: pick(args, listMoments.queryParams) as PlainQueryParams,
         body: pick(args, listMoments.bodyParams),
         auth: args?.auth,
       })
@@ -617,6 +627,7 @@ export default class Client {
  * Type aliases to support the generic request interface.
  */
 type Method = "get" | "post" | "patch" | "delete"
-type QueryParams = Record<string, string | number> | URLSearchParams
+type PlainQueryParams = Record<string, string | number | boolean>
+type QueryParams = PlainQueryParams | URLSearchParams
 
 type WithAuth<P> = P & { auth?: string }

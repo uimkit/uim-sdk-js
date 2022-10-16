@@ -236,14 +236,14 @@ export const listMessages = {
       : "messages",
 } as const
 
-
-export type GetContactByUserParameters = GetIMAccountPathParameters & GetIMUserPathParameters
+export type GetContactByUserParameters = GetIMAccountPathParameters &
+  GetIMUserPathParameters
 
 export const getContactByUser = {
   method: "get",
   pathParams: [...getIMAccountPathParams, ...getIMUserPathParams],
   queryParams: [],
   bodyParams: [],
-  path: (p: GetIMAccountPathParameters & GetIMUserPathParameters): string => `im_accounts/${p.account_id}/contacts/user/${p.user_id}`,
-
+  path: (p: GetIMAccountPathParameters & GetIMUserPathParameters): string =>
+    `im_accounts/${p.account_id}/contacts/user/${p.user_id}`,
 } as const
