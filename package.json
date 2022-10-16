@@ -34,8 +34,7 @@
   "author": "",
   "license": "MIT",
   "files": [
-    "build/package.json",
-    "build/src/**"
+    "build/**/*"
   ],
   "dependencies": {
     "@types/node-fetch": "^2.5.10",
