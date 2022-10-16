@@ -513,7 +513,7 @@ export default class Client {
   }
 
   private channelName(id: string): string {
-    return `im-account-${id}`
+    return `uim/im-accounts/${id}`
   }
 }
 
