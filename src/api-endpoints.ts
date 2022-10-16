@@ -90,19 +90,31 @@ export type ListMessagesParameters = CursorListQueryParameters<EmptyObject> & {
 export type ListMessagesResponse = CursorListResponse<Message>
 
 export type SendPrivateMessageParameters = {
-  account_id: string
-  user_id: string
+  // 发送方，规则：{平台用户ID}@{平台}/{服务商}，例如：wxid_abc@wechat/provider
+  // 服务商参数可选，如果未提供，使用默认的服务商
+  from: string
+  // 接收方，规则：{平台用户ID}@{平台}/{服务商}，例如：wxid_abc@wechat/provider
+  // 服务商参数可选，如果未提供，使用默认的服务商
+  to: string
+  // 消息内容
   message: MessagePayload
 }
 
 export type SendPrivateMessageResponse = Message
 
 export type SendGroupMessageParameters = {
-  account_id: string
-  group_id: string
-  mentioned_type?: MentionedType
-  mentioned_user_ids?: string[]
+  // 发送方，规则：{平台用户ID}@{平台}/{服务商}，例如：wxid_abc@wechat/provider
+  // 服务商参数可选，如果未提供，使用默认的服务商
+  from: string
+  // 接收方，规则：{平台群组ID}@{平台}/{服务商}
+  // 服务商参数可选，如果未提供，使用默认的服务商
+  to: string
+  // 消息内容
   message: MessagePayload
+  // @人类型
+  mentioned_type?: MentionedType
+  // @人列表，为平台用户ID
+  mentioned_user_ids?: string[]
 }
 
 export type SendGroupMessageResponse = Message
