@@ -89,7 +89,7 @@ export type IMUser = Model<{
   identities?: Array<IMIdentity>
 }>
 
-export enum Presence {
+export enum Precense {
   Online = 1,
   Offline = 2,
   Logout = 3,
@@ -100,7 +100,7 @@ export enum Presence {
 export type IMAccount = Model<{
   id: string
   user: IMUser
-  precense: Presence
+  precense: Precense
 }>
 
 export type Contact = Model<{
