@@ -1,6 +1,5 @@
 import type { Agent } from "http"
 import { isNode } from "browser-or-node"
-import "unfetch/polyfill"
 import {
   Logger,
   LogLevel,
