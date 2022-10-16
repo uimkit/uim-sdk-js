@@ -34,7 +34,7 @@ Make a request to any UIM API endpoint.
 
 ```js
 ;(async () => {
-  const response = await client.imAccounts.list({})
+  const response = await client.listIMAccounts({})
 })()
 ```
 
@@ -44,30 +44,28 @@ Each method returns a `Promise` which resolves the response.
 console.log(response)
 ```
 
-```
-{
-  data: [
-    {
-      id: 'd40e767c-d7af-4b18-a86d-55c61f1e39a4',
-      email: 'avo@example.org',
-      name: 'Avocado Lovelace',
-      avatar: 'https://s.uimkit.chat/e6a352a8-8381-44d0-a1dc-9ed80e62b53d.jpg',
+```json
+[
+  {
+    "id": "Sax3MES_sIdvV0sQO9-co",
+    "user": {
+      "id": "douyin|8b3f7f39-d27b-4e73-8290-d2949a79bc21",
+      "connection_id": "F7-I0jScfZ0pa2_Y76Q9x",
+      "user_id": "8b3f7f39-d27b-4e73-8290-d2949a79bc21",
+      // ...
     },
-    ...
-  ],
-  extra: {
-    offset: 0,
-    limit: 20,
-    totol: 36
-  }
-}
+    "presence": 0,
+  },
+  // ...
+]
 ```
 
 Endpoint parameters are grouped into a single object. You don't need to remember which parameters go in the path, query, or body.
 
 ```js
-const response = await client.contacts.list({
+const response = await client.listContacts({
   im_account_id: "897e5a76-ae52-4b48-9fdf-e71f5945d1af",
+  limit: 50
 })
 ```
 
@@ -76,11 +74,11 @@ Send accounts' commands to UIM API
 > See the complete list of commands in the [API reference](https://docs.uimkit.chat/reference).
 
 ```js
-await client.conversations.sendMessage({
+await client.sendPrivateMessage({
   account_id: "897e5a76-ae52-4b48-9fdf-e71f5945d1af",
-  conversation_id: "897e5a76-ae52-4b48-9fdf-e71f5945d1af",
-  payload: {
-    type: 1,
+  user_id: "897e5a76-ae52-4b48-9fdf-e71f5945d1af",
+  message: {
+    type: MessageType.Text,
     body: {
       content: "hello",
     },
@@ -93,8 +91,8 @@ Handle accounts' events from UIM API.
 > See the complete list of events in the [API reference](https://docs.uimkit.chat/reference).
 
 ```js
-client.conversations.onNewMessage((evt: NewMessage) => {
-  console.log(`new message id: ${evt.payload.id}`)
+client.onNewMessageReceived((evt: MessageReceivedEvent) => {
+  console.log(`new message id: ${evt.data.id}`)
 })
 ```
 
@@ -108,8 +106,8 @@ The error contains properties from the response, and the most helpful is `code`.
 const { Client, APIErrorCode } = require("@uimkit/client")
 
 try {
-  const response = await client.contacts.list({
-    im_account_id: "897e5a76-ae52-4b48-9fdf-e71f5945d1af",
+  const response = await client.listContacts({
+    account_id: "897e5a76-ae52-4b48-9fdf-e71f5945d1af",
   })
 } catch (error) {
   if (error.code === APIErrorCode.ObjectNotFound) {
@@ -163,7 +161,7 @@ the `APIErrorCode` enum are returned from the server. Codes in the
 
 ```ts
 try {
-  const response = await client.contacts.list({
+  const response = await client.listContacts({
     /* ... */
   })
 } catch (error: unknown) {
