@@ -43,7 +43,6 @@ import {
   SendGroupMessageParameters,
 } from "./api-endpoints"
 import nodeFetch from "node-fetch"
-import packageInfo from "../package.json"
 import { SupportedFetch } from "./fetch-types"
 import { SupportedPubSub, PubSubOptions, default as PubSub } from "./pubsub"
 import {
@@ -94,36 +93,27 @@ interface AuthorizeResult {
   error?: string
 }
 
-const PACKAGE_VERSION = packageInfo.version
-const PACKAGE_NAME = packageInfo.name
-
 export default class Client {
   _auth?: string
   _logLevel: LogLevel
   _logger: Logger
   _prefixUrl: string
   _timeoutMs: number
-  _uimVersion: string
   _fetch: SupportedFetch
   _pubsub: SupportedPubSub
   _agent: Agent | undefined
-  _userAgent: string
   _handlers: Record<string, EventHandler>
   _messageEventListener?: (msgEvent: MessageEvent) => void
-
-  static readonly defaultUIMVersion = "2022-02-22"
 
   public constructor(token: string, options?: ClientOptions) {
     this._auth = token
     this._logLevel = options?.logLevel ?? LogLevel.WARN
-    this._logger = options?.logger ?? makeConsoleLogger(PACKAGE_NAME)
+    this._logger = options?.logger ?? makeConsoleLogger("uim-js")
     this._prefixUrl = options?.baseUrl ?? "https://api.uimkit.chat/client/v1/"
     this._timeoutMs = options?.timeoutMs ?? 60_000
-    this._uimVersion = options?.uimVersion ?? Client.defaultUIMVersion
     this._fetch =
       options?.fetch ?? (isNode ? nodeFetch : window.fetch.bind(window))
     this._agent = options?.agent
-    this._userAgent = `uim-client/${PACKAGE_VERSION}`
     this._handlers = {}
     this._pubsub =
       options?.pubsub ??
@@ -249,8 +239,6 @@ export default class Client {
     const authHeaders = await this.authAsHeaders(auth)
     const headers: Record<string, string> = {
       ...authHeaders,
-      "UIM-Version": this._uimVersion,
-      "user-agent": this._userAgent,
     }
 
     if (bodyAsJsonString !== undefined) {
