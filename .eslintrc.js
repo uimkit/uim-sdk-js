@@ -26,6 +26,7 @@ module.exports = {
       },
     ],
     "no-mixed-spaces-and-tabs": ["error", "smart-tabs"],
-    "@typescript-eslint/no-non-null-assertion": "off"
+    "@typescript-eslint/no-non-null-assertion": "off",
+    "@typescript-eslint/no-non-null-asserted-optional-chain": "off"
   },
 }

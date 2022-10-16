@@ -24,7 +24,6 @@ export type RetrieveIMAccountParameters = {
 
 export type RetrieveIMAccountResponse = IMAccount
 
-
 export type ListIMAccountsParameters = PageListQueryParameters<EmptyObject> & {
   subscribe?: boolean
 }
@@ -43,9 +42,10 @@ export type ListGroupsParameters = PageListQueryParameters<EmptyObject> & {
 
 export type ListGroupsResponse = PageListResponse<Group>
 
-export type ListConversationsParameters = CursorListQueryParameters<EmptyObject> & {
-  account_id: string
-}
+export type ListConversationsParameters =
+  CursorListQueryParameters<EmptyObject> & {
+    account_id: string
+  }
 
 export type ListConversationsResponse = CursorListResponse<Conversation>
 
@@ -63,15 +63,16 @@ export type RetrieveContactParameters = {
 export type RetrieveContactResponse = Contact
 
 export type RetrieveGroupParameters = {
-  account_id: string,
+  account_id: string
   group_id: string
 }
 
 export type RetrieveGroupResponse = Group
 
-export type ListGroupMembersParameters = PageListQueryParameters<EmptyObject> & {
-  group_id: string
-}
+export type ListGroupMembersParameters =
+  PageListQueryParameters<EmptyObject> & {
+    group_id: string
+  }
 
 export type ListGroupMembersResponse = PageListResponse<GroupMember>
 
@@ -89,16 +90,16 @@ export type ListMessagesParameters = CursorListQueryParameters<EmptyObject> & {
 export type ListMessagesResponse = CursorListResponse<Message>
 
 export type SendPrivateMessageParameters = {
-  account_id: string,
-  user_id: string,
+  account_id: string
+  user_id: string
   message: MessagePayload
 }
 
 export type SendPrivateMessageResponse = Message
 
 export type SendGroupMessageParameters = {
-  account_id: string,
-  group_id: string,
+  account_id: string
+  group_id: string
   mentioned_type?: MentionedType
   mentioned_user_ids?: string[]
   message: MessagePayload

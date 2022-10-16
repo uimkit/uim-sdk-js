@@ -1,6 +1,6 @@
 import type { Agent } from "http"
 import { isNode } from "browser-or-node"
-import { omit, pick } from "lodash";
+import { omit, pick } from "lodash"
 import {
   Logger,
   LogLevel,
@@ -420,7 +420,9 @@ export default class Client {
     args: WithAuth<ListMomentsParameters>
   ): Promise<ListMomentsResponse> {
     return this.request<ListMomentsResponse>({
-      path: args.user_id ? `im_accounts/${args.account_id}/contacts/${args.user_id}/moments` : `im_accounts/${args.account_id}/moments`,
+      path: args.user_id
+        ? `im_accounts/${args.account_id}/contacts/${args.user_id}/moments`
+        : `im_accounts/${args.account_id}/moments`,
       method: "get",
       query: pick(args, [...cursorListQueryParams]) as PlainQueryParams,
       auth: args.auth,
@@ -434,7 +436,7 @@ export default class Client {
       path: "send_private_message",
       method: "post",
       body: omit(args, ["auth"]),
-      auth: args.auth
+      auth: args.auth,
     })
   }
 
@@ -445,32 +447,35 @@ export default class Client {
       path: "send_group_message",
       method: "post",
       body: omit(args, ["auth"]),
-      auth: args.auth
+      auth: args.auth,
     })
   }
 
   onIMAccountStatusUpdated(handler: IMAccountStatusUpdatedHandler): void {
-    this.on(EventType.IM_ACCOUNT_STATUS_UPDATED, (handler as unknown) as EventHandler)
+    this.on(
+      EventType.IM_ACCOUNT_STATUS_UPDATED,
+      handler as unknown as EventHandler
+    )
   }
 
   onIMAccountUpdated(handler: IMAccountUpdatedHandler): void {
-    this.on(EventType.IM_ACCOUNT_UPDATED, (handler as unknown) as EventHandler)
+    this.on(EventType.IM_ACCOUNT_UPDATED, handler as unknown as EventHandler)
   }
 
   onNewConversation(handler: NewConversationHandler): void {
-    this.on(EventType.NEW_CONVERSATION, (handler as unknown) as EventHandler)
+    this.on(EventType.NEW_CONVERSATION, handler as unknown as EventHandler)
   }
 
   onConversationUpdated(handler: ConversationUpdatedHandler): void {
-    this.on(EventType.CONVERSATION_UPDATED, (handler as unknown) as EventHandler)
+    this.on(EventType.CONVERSATION_UPDATED, handler as unknown as EventHandler)
   }
 
   onMessageReceived(handler: MessageReceivedEvent): void {
-    this.on(EventType.MESSAGE_RECEIVED, (handler as unknown) as EventHandler)
+    this.on(EventType.MESSAGE_RECEIVED, handler as unknown as EventHandler)
   }
 
   onMessageUpdated(handler: MessageUpdatedHandler): void {
-    this.on(EventType.MESSAGE_UPDATED, (handler as unknown) as EventHandler)
+    this.on(EventType.MESSAGE_UPDATED, handler as unknown as EventHandler)
   }
 
   private onEvent(_channel: string, evt: unknown, _extra?: unknown) {

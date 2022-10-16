@@ -1,10 +1,6 @@
 // cspell:disable-file
 
-import {
-  Conversation,
-  IMAccount,
-  Message,
-} from "./models"
+import { Conversation, IMAccount, Message } from "./models"
 
 export enum EventType {
   // 账号状态变更
@@ -42,7 +38,9 @@ export type IMAccountStatusUpdatedEvent = {
   data: IMAccount
 }
 
-export type IMAccountStatusUpdatedHandler = (evt: IMAccountStatusUpdatedEvent) => void
+export type IMAccountStatusUpdatedHandler = (
+  evt: IMAccountStatusUpdatedEvent
+) => void
 
 export type IMAccountUpdatedEvent = {
   type: typeof EventType.IM_ACCOUNT_UPDATED
