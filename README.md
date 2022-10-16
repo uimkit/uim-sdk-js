@@ -75,8 +75,8 @@ Send accounts' commands to UIM API
 
 ```js
 await client.sendPrivateMessage({
-  account_id: "897e5a76-ae52-4b48-9fdf-e71f5945d1af",
-  user_id: "897e5a76-ae52-4b48-9fdf-e71f5945d1af",
+  account_id: "897e5a76-ae52-4b48-9fdf-e71f5945d1af@douyin",
+  user_id: "897e5a76-ae52-4b48-9fdf-e71f5945d1af@douyin",
   message: {
     type: MessageType.Text,
     body: {
