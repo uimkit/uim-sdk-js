@@ -34,7 +34,10 @@
   "author": "",
   "license": "MIT",
   "files": [
-    "build/**/*"
+    "./build/package.json",
+    "./build/src/*.d.ts",
+    "./build/src/*.d.ts.map",
+    "./build/src/*.js"
   ],
   "dependencies": {
     "@types/node-fetch": "^2.5.10",
