@@ -2,9 +2,6 @@
   "name": "@uimkit/client",
   "version": "0.0.1",
   "description": "A simple and easy client for the UIM API",
-  "engines": {
-    "node": ">=12"
-  },
   "homepage": "https://docs.uimkit.chat",
   "bugs": {
     "url": "https://github.com/uimkit/uim-sdk-js/issues"
