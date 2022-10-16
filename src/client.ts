@@ -1,5 +1,6 @@
 import type { Agent } from "http"
 import { isNode } from "browser-or-node"
+import { omit, pick } from "lodash";
 import {
   Logger,
   LogLevel,
@@ -12,60 +13,51 @@ import {
   isUIMClientError,
   RequestTimeoutError,
 } from "./errors"
-import { createQueryParams, createRandomString, pick } from "./helpers"
+import { createQueryParams, createRandomString } from "./helpers"
 import {
-  GetIMAccountParameters,
-  GetIMAccountResponse,
-  getIMAccount,
   ListIMAccountsParameters,
   ListIMAccountsResponse,
-  listIMAccounts,
   ListContactsParameters,
   ListContactsResponse,
-  listContacts,
   ListGroupsParameters,
   ListGroupsResponse,
-  listGroups,
   ListConversationsParameters,
   ListConversationsResponse,
-  listConversations,
-  GetContactParameters,
-  GetContactResponse,
-  getContact,
-  GetGroupParameters,
-  GetGroupResponse,
-  getGroup,
   ListGroupMembersParameters,
   ListGroupMembersResponse,
-  listGroupMembers,
   ListMomentsParameters,
   ListMomentsResponse,
-  listMoments,
   ListMessagesParameters,
   ListMessagesResponse,
-  listMessages,
-  GetConversationParameters,
-  GetConversationResponse,
-  getConversation,
-  GetContactByUserParameters,
-  getContactByUser,
+  RetrieveIMAccountParameters,
+  RetrieveIMAccountResponse,
+  RetrieveContactParameters,
+  RetrieveContactResponse,
+  RetrieveGroupParameters,
+  RetrieveGroupResponse,
+  RetrieveConversationParameters,
+  RetrieveConversationResponse,
+  SendPrivateMessageResponse,
+  SendGroupMessageResponse,
+  SendPrivateMessageParameters,
+  SendGroupMessageParameters,
 } from "./api-endpoints"
 import nodeFetch from "node-fetch"
 import packageInfo from "../package.json"
 import { SupportedFetch } from "./fetch-types"
 import { SupportedPubSub, PubSubOptions, default as PubSub } from "./pubsub"
 import {
-  SendConversationMessageParameters,
-  sendConversationMessage,
-  SendPrivateMessageParameters,
-  sendPrivateMessage,
-  SendGroupMessageParameters,
-  sendGroupMessage,
-  NewMessageHandler,
-  SubscribeMessage,
-  SubscribeMessageType,
-  SubscribeMessageHandler,
-} from "./pubsub-messages"
+  ConversationUpdatedHandler,
+  Event,
+  EventHandler,
+  EventType,
+  IMAccountStatusUpdatedHandler,
+  IMAccountUpdatedHandler,
+  MessageReceivedEvent,
+  MessageUpdatedHandler,
+  NewConversationHandler,
+} from "./events"
+import { cursorListQueryParams, pageListQueryParams } from "./models"
 
 export interface ClientOptions {
   timeoutMs?: number
@@ -116,7 +108,7 @@ export default class Client {
   _pubsub: SupportedPubSub
   _agent: Agent | undefined
   _userAgent: string
-  _handlers: Record<string, SubscribeMessageHandler>
+  _handlers: Record<string, EventHandler>
   _messageEventListener?: (msgEvent: MessageEvent) => void
 
   static readonly defaultUIMVersion = "2022-02-22"
@@ -136,14 +128,10 @@ export default class Client {
     this._pubsub =
       options?.pubsub ??
       new PubSub(options?.pubsubOptions ?? defaultPubSubOptions)
-    this._pubsub.addListener(this.onMessage.bind(this))
+    this._pubsub.addListener(this.onEvent.bind(this))
     this._messageEventListener = undefined
   }
 
-  /**
-   * Start the procedure to authorize a new im account.
-   * Must in browser environment.
-   */
   public async authorize(
     provider: string,
     cb?: AuthorizeCallback
@@ -234,17 +222,6 @@ export default class Client {
     )
   }
 
-  /**
-   * Sends a request.
-   *
-   * TODO using flyio instead of fetch
-   *
-   * @param path
-   * @param method
-   * @param query
-   * @param body
-   * @returns
-   */
   public async request<ResponseBody>({
     path,
     method,
@@ -320,268 +297,186 @@ export default class Client {
     }
   }
 
-  /**
-   * Handle messages from pubsub
-   *
-   * @param _channel
-   * @param message
-   * @param _extra
-   */
-  private onMessage(_channel: string, message: unknown, _extra?: unknown) {
-    const subscribeMessage = message as SubscribeMessage
-    const messageType = subscribeMessage.type
-    const handler = this._handlers[messageType]
-    handler && handler(subscribeMessage)
-  }
-
-  /**
-   * Add message handlers
-   */
-  public on(
-    type: SubscribeMessageType,
-    handler: SubscribeMessageHandler
-  ): void {
+  public on(type: EventType, handler: EventHandler): void {
     this._handlers[type] = handler
   }
 
-  /*
-   * UIM API endpoints
-   */
-
-  public readonly imAccounts = {
-    /**
-     * Retrieve im account
-     */
-    retrieve: async (
-      args: WithAuth<GetIMAccountParameters>
-    ): Promise<GetIMAccountResponse> => {
-      const resp = await this.request<GetIMAccountResponse>({
-        path: getIMAccount.path(args),
-        method: getIMAccount.method,
-        query: pick(args, getIMAccount.queryParams),
-        body: pick(args, getIMAccount.bodyParams),
-        auth: args?.auth,
-      })
-      if (args.subscribe) {
-        this._pubsub.subscribe([this.channelName(resp.id)])
-      }
-      return resp
-    },
-
-    /**
-     * List im accounts
-     */
-    list: async (
-      args: WithAuth<ListIMAccountsParameters>
-    ): Promise<ListIMAccountsResponse> => {
-      const resp = await this.request<ListIMAccountsResponse>({
-        path: listIMAccounts.path(args),
-        method: listIMAccounts.method,
-        query: pick(args, listIMAccounts.queryParams) as PlainQueryParams,
-        body: pick(args, listIMAccounts.bodyParams),
-        auth: args?.auth,
-      })
-      if (args.subscribe && resp.data.length > 0) {
-        const channels = resp.data.map(it => this.channelName(it.id))
-        this._pubsub.subscribe(channels)
-      }
-      return resp
-    },
+  public async listIMAccounts(
+    args: WithAuth<ListIMAccountsParameters>
+  ): Promise<ListIMAccountsResponse> {
+    const resp = await this.request<ListIMAccountsResponse>({
+      method: "get",
+      path: "im_accounts",
+      query: pick(args, [...pageListQueryParams]) as PlainQueryParams,
+      auth: args.auth,
+    })
+    if (args.subscribe && resp.data.length > 0) {
+      const channels = resp.data.map(it => this.channelName(it.id))
+      this._pubsub.subscribe(channels)
+    }
+    return resp
   }
 
-  public readonly contacts = {
-    /**
-     * Retrieve contact
-     */
-    retrieve: (
-      args: WithAuth<GetContactParameters>
-    ): Promise<GetContactResponse> => {
-      return this.request<GetContactResponse>({
-        path: getContact.path(args),
-        method: getContact.method,
-        query: pick(args, getContact.queryParams),
-        body: pick(args, getContact.bodyParams),
-        auth: args?.auth,
-      })
-    },
-
-    retrieveByUser: (
-      args: WithAuth<GetContactByUserParameters>
-    ): Promise<GetContactResponse> => {
-      return this.request<GetContactResponse>({
-        path: getContactByUser.path(args),
-        method: getContactByUser.method,
-        query: pick(args, getContactByUser.queryParams),
-        body: pick(args, getContactByUser.bodyParams),
-        auth: args?.auth,
-      })
-    },
-
-    /**
-     * List contacts
-     */
-    list: (
-      args: WithAuth<ListContactsParameters>
-    ): Promise<ListContactsResponse> => {
-      return this.request<ListContactsResponse>({
-        path: listContacts.path(args),
-        method: listContacts.method,
-        query: pick(args, listContacts.queryParams) as PlainQueryParams,
-        body: pick(args, listContacts.bodyParams),
-        auth: args?.auth,
-      })
-    },
-
-    /**
-     * Send message to contact
-     */
-    sendMessage: (args: SendPrivateMessageParameters): Promise<void> => {
-      const channel = this.channelName(args.account_id)
-      const message = sendPrivateMessage.toMessage(args)
-      return this._pubsub.publish(channel, message)
-    },
+  public async retrieveIMAccount(
+    args: WithAuth<RetrieveIMAccountParameters>
+  ): Promise<RetrieveIMAccountResponse> {
+    const resp = await this.request<RetrieveIMAccountResponse>({
+      path: `im_accounts/${args.account_id}`,
+      method: "get",
+      auth: args.auth,
+    })
+    if (args.subscribe) {
+      this._pubsub.subscribe([this.channelName(resp.id)])
+    }
+    return resp
   }
 
-  public readonly groups = {
-    /**
-     * Retrieve group
-     */
-    retrieve: (
-      args: WithAuth<GetGroupParameters>
-    ): Promise<GetGroupResponse> => {
-      return this.request<GetGroupResponse>({
-        path: getGroup.path(args),
-        method: getGroup.method,
-        query: pick(args, getGroup.queryParams),
-        body: pick(args, getGroup.bodyParams),
-        auth: args?.auth,
-      })
-    },
-
-    /**
-     * List groups
-     */
-    list: (
-      args: WithAuth<ListGroupsParameters>
-    ): Promise<ListGroupsResponse> => {
-      return this.request<ListGroupsResponse>({
-        path: listGroups.path(args),
-        method: listGroups.method,
-        query: pick(args, listGroups.queryParams) as PlainQueryParams,
-        body: pick(args, listGroups.bodyParams),
-        auth: args?.auth,
-      })
-    },
-
-    /**
-     * Send message to group
-     */
-    sendMessage: (args: SendGroupMessageParameters): Promise<void> => {
-      const channel = this.channelName(args.account_id)
-      const message = sendGroupMessage.toMessage(args)
-      return this._pubsub.publish(channel, message)
-    },
+  public async listContacts(
+    args: WithAuth<ListContactsParameters>
+  ): Promise<ListContactsResponse> {
+    return this.request<ListContactsResponse>({
+      path: `im_accounts/${args.account_id}/contacts`,
+      method: "get",
+      query: pick(args, [...cursorListQueryParams]) as PlainQueryParams,
+      auth: args.auth,
+    })
   }
 
-  public readonly groupMembers = {
-    /**
-     * List group's members
-     */
-    list: (
-      args: WithAuth<ListGroupMembersParameters>
-    ): Promise<ListGroupMembersResponse> => {
-      return this.request<ListGroupMembersResponse>({
-        path: listGroupMembers.path(args),
-        method: listGroupMembers.method,
-        query: pick(args, listGroupMembers.queryParams) as PlainQueryParams,
-        body: pick(args, listGroupMembers.bodyParams),
-        auth: args?.auth,
-      })
-    },
+  public async retrieveContact(
+    args: WithAuth<RetrieveContactParameters>
+  ): Promise<RetrieveContactResponse> {
+    return this.request<RetrieveContactResponse>({
+      path: `im_accounts/${args.account_id}/contacts/${args.user_id}`,
+      method: "get",
+      auth: args.auth,
+    })
   }
 
-  public readonly conversations = {
-    /**
-     * Retrieve conversation
-     */
-    retrieve: (
-      args: WithAuth<GetConversationParameters>
-    ): Promise<GetConversationResponse> => {
-      return this.request<GetConversationResponse>({
-        path: getConversation.path(args),
-        method: getConversation.method,
-        query: pick(args, getConversation.queryParams),
-        body: pick(args, getConversation.bodyParams),
-        auth: args?.auth,
-      })
-    },
-
-    /**
-     * List conversations
-     */
-    list: (
-      args: WithAuth<ListConversationsParameters>
-    ): Promise<ListConversationsResponse> => {
-      return this.request<ListConversationsResponse>({
-        path: listConversations.path(args),
-        method: listConversations.method,
-        query: pick(args, listConversations.queryParams) as PlainQueryParams,
-        body: pick(args, listConversations.bodyParams),
-        auth: args?.auth,
-      })
-    },
-
-    /**
-     * Send message to conversation
-     */
-    sendMessage: (args: SendConversationMessageParameters): Promise<void> => {
-      const channel = this.channelName(args.account_id)
-      const message = sendConversationMessage.toMessage(args)
-      return this._pubsub.publish(channel, message)
-    },
-
-    /**
-     * Listen new messages
-     *
-     * @param handler
-     */
-    onNewMessage: (handler: NewMessageHandler): void => {
-      this.on(SubscribeMessageType.NewMessage, handler)
-    },
+  public async listGroups(
+    args: WithAuth<ListGroupsParameters>
+  ): Promise<ListGroupsResponse> {
+    return this.request<ListGroupsResponse>({
+      path: `im_accounts/${args.account_id}/groups`,
+      method: "get",
+      query: pick(args, [...pageListQueryParams]) as PlainQueryParams,
+      auth: args.auth,
+    })
   }
 
-  public readonly messages = {
-    /**
-     * List conversation's message histories
-     */
-    list: (
-      args: WithAuth<ListMessagesParameters>
-    ): Promise<ListMessagesResponse> => {
-      return this.request<ListMessagesResponse>({
-        path: listMessages.path(args),
-        method: listMessages.method,
-        query: pick(args, listMessages.queryParams) as PlainQueryParams,
-        body: pick(args, listMessages.bodyParams),
-        auth: args?.auth,
-      })
-    },
+  public async retrieveGroup(
+    args: WithAuth<RetrieveGroupParameters>
+  ): Promise<RetrieveGroupResponse> {
+    return this.request<RetrieveGroupResponse>({
+      path: `im_accounts/${args.account_id}/groups/${args.group_id}`,
+      method: "get",
+      auth: args.auth,
+    })
   }
 
-  public readonly moments = {
-    /**
-     * List moments
-     */
-    list: (
-      args: WithAuth<ListMomentsParameters>
-    ): Promise<ListMomentsResponse> => {
-      return this.request<ListMomentsResponse>({
-        path: listMoments.path(args),
-        method: listMoments.method,
-        query: pick(args, listMoments.queryParams) as PlainQueryParams,
-        body: pick(args, listMoments.bodyParams),
-        auth: args?.auth,
-      })
-    },
+  public listGroupMembers(
+    args: WithAuth<ListGroupMembersParameters>
+  ): Promise<ListGroupMembersResponse> {
+    return this.request<ListGroupMembersResponse>({
+      path: `groups/${args.group_id}/members`,
+      method: "get",
+      query: pick(args, [...pageListQueryParams]) as PlainQueryParams,
+      auth: args.auth,
+    })
+  }
+
+  public listConversations(
+    args: WithAuth<ListConversationsParameters>
+  ): Promise<ListConversationsResponse> {
+    return this.request<ListConversationsResponse>({
+      path: `im_accounts/${args.account_id}/conversations`,
+      method: "get",
+      query: pick(args, [...cursorListQueryParams]) as PlainQueryParams,
+      auth: args.auth,
+    })
+  }
+
+  public retrieveConversation(
+    args: WithAuth<RetrieveConversationParameters>
+  ): Promise<RetrieveConversationResponse> {
+    return this.request<RetrieveConversationResponse>({
+      path: `conversations/${args.conversation_id}`,
+      method: "get",
+      auth: args.auth,
+    })
+  }
+
+  public listMessages(
+    args: WithAuth<ListMessagesParameters>
+  ): Promise<ListMessagesResponse> {
+    return this.request<ListMessagesResponse>({
+      path: `conversations/${args.conversation_id}/messages`,
+      method: "get",
+      query: pick(args, [...cursorListQueryParams]) as PlainQueryParams,
+      auth: args.auth,
+    })
+  }
+
+  public listMoments(
+    args: WithAuth<ListMomentsParameters>
+  ): Promise<ListMomentsResponse> {
+    return this.request<ListMomentsResponse>({
+      path: args.user_id ? `im_accounts/${args.account_id}/contacts/${args.user_id}/moments` : `im_accounts/${args.account_id}/moments`,
+      method: "get",
+      query: pick(args, [...cursorListQueryParams]) as PlainQueryParams,
+      auth: args.auth,
+    })
+  }
+
+  public sendPrivateMessage(
+    args: WithAuth<SendPrivateMessageParameters>
+  ): Promise<SendPrivateMessageResponse> {
+    return this.request<SendPrivateMessageResponse>({
+      path: "send_private_message",
+      method: "post",
+      body: omit(args, ["auth"]),
+      auth: args.auth
+    })
+  }
+
+  public sendGroupMessage(
+    args: WithAuth<SendGroupMessageParameters>
+  ): Promise<SendGroupMessageResponse> {
+    return this.request<SendGroupMessageResponse>({
+      path: "send_group_message",
+      method: "post",
+      body: omit(args, ["auth"]),
+      auth: args.auth
+    })
+  }
+
+  onIMAccountStatusUpdated(handler: IMAccountStatusUpdatedHandler): void {
+    this.on(EventType.IM_ACCOUNT_STATUS_UPDATED, (handler as unknown) as EventHandler)
+  }
+
+  onIMAccountUpdated(handler: IMAccountUpdatedHandler): void {
+    this.on(EventType.IM_ACCOUNT_UPDATED, (handler as unknown) as EventHandler)
+  }
+
+  onNewConversation(handler: NewConversationHandler): void {
+    this.on(EventType.NEW_CONVERSATION, (handler as unknown) as EventHandler)
+  }
+
+  onConversationUpdated(handler: ConversationUpdatedHandler): void {
+    this.on(EventType.CONVERSATION_UPDATED, (handler as unknown) as EventHandler)
+  }
+
+  onMessageReceived(handler: MessageReceivedEvent): void {
+    this.on(EventType.MESSAGE_RECEIVED, (handler as unknown) as EventHandler)
+  }
+
+  onMessageUpdated(handler: MessageUpdatedHandler): void {
+    this.on(EventType.MESSAGE_UPDATED, (handler as unknown) as EventHandler)
+  }
+
+  private onEvent(_channel: string, evt: unknown, _extra?: unknown) {
+    const e = evt as Event
+    const handler = this._handlers[e.type]
+    handler && handler(e)
   }
 
   /**
@@ -618,7 +513,7 @@ export default class Client {
   }
 
   private channelName(id: string): string {
-    return `account-${id}`
+    return `im-account-${id}`
   }
 }
 
