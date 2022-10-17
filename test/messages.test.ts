@@ -12,7 +12,7 @@ describe("messages", () => {
       },
     }
     await client.sendPrivateMessage({
-      from: "Sax3MES_sIdvV0sQO9-co@douyin",
+      from: "8b3f7f39-d27b-4e73-8290-d2949a79bc21@douyin",
       to: "f7942cb5-6177-4351-9eb7-5a958a10b94d@douyin",
       message: textMessage,
     })
