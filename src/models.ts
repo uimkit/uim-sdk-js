@@ -97,10 +97,48 @@ export enum Precense {
   DisabledByProvider = 5,
 }
 
+// 账号信息
 export type IMAccount = Model<{
+  // 账号唯一ID
   id: string
-  user: IMUser
+  // 服务商平台，如：douyin
+  provider: string
+  // 平台用户ID，如：抖音ID
+  user_id: string
+  // 用户自定义ID，如：抖音号
+  custom_id?: string
+  // 在线状态
   precense: Precense
+  // 用户账户
+  username?: string
+  // 名称
+  name?: string
+  // 手机号
+  mobile?: string
+  // 邮箱
+  email?: string
+  // 头像URL
+  avatar?: string
+  // 二维码URL
+  qrcode?: string
+  // 性别
+  gender?: Gender
+  // 国家
+  country?: string
+  // 省份
+  province?: string
+  // 城市
+  city?: string
+  // 区
+  district?: string
+  // 地址
+  address?: string
+  // 签名
+  signature?: string
+  // 生日
+  birthday?: Date
+  // 语言
+  language?: string
 }>
 
 export type Contact = Model<{
