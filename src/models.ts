@@ -33,8 +33,10 @@ export type CursorListQueryParameters<T> = T & {
 export const cursorListQueryParams = ["cursor", "direction", "limit"]
 
 export type CursorListExtra = {
-  cursor: Cursor
-  has_more: boolean
+  start_cursor?: Cursor
+  end_cursor?: Cursor
+  has_previous: boolean
+  has_next: boolean
   limit: number
 }
 
