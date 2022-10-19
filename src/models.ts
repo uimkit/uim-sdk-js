@@ -108,7 +108,7 @@ export type IMAccount = Model<{
   // 用户自定义ID，如：抖音号
   custom_id?: string
   // 在线状态
-  precense: Precense
+  presence: Precense
   // 用户账户
   username?: string
   // 名称
