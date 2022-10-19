@@ -142,13 +142,51 @@ export type IMAccount = Model<{
 }>
 
 export type Contact = Model<{
+  // 联系人唯一ID
   id: string
-  account_id: string
-  user: IMUser
+  // 平台用户ID，如：抖音ID
+  user_id: string
+  // 用户自定义ID，如：抖音号
+  custom_id?: string
+  // 用户账户
+  username?: string
+  // 名称
+  name?: string
+  // 手机号
+  mobile?: string
+  // 邮箱
+  email?: string
+  // 头像URL
+  avatar?: string
+  // 二维码URL
+  qrcode?: string
+  // 性别
+  gender?: Gender
+  // 国家
+  country?: string
+  // 省份
+  province?: string
+  // 城市
+  city?: string
+  // 区
+  district?: string
+  // 地址
+  address?: string
+  // 签名
+  signature?: string
+  // 生日
+  birthday?: Date
+  // 语言
+  language?: string
+  // 备注名
   alias?: string
+  // 备注
   remark?: string
+  // 标签
   tags?: Array<string>
+  // 黑名单
   blocked?: boolean
+  // 星标
   marked?: boolean
 }>
 

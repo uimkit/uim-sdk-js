@@ -41,6 +41,8 @@ import {
   SendGroupMessageResponse,
   SendPrivateMessageParameters,
   SendGroupMessageParameters,
+  CreateConversationParameters,
+  CreateConversationResponse,
 } from "./api-endpoints"
 import nodeFetch from "node-fetch"
 import { SupportedFetch } from "./fetch-types"
@@ -389,6 +391,17 @@ export default class Client {
     return this.request<RetrieveConversationResponse>({
       path: `conversations/${args.conversation_id}`,
       method: "get",
+      auth: args.auth,
+    })
+  }
+
+  public createConversation(
+    args: WithAuth<CreateConversationParameters>
+  ): Promise<CreateConversationResponse> {
+    return this.request<CreateConversationResponse>({
+      path: "conversations",
+      method: "post",
+      body: omit(args, ["auth"]),
       auth: args.auth,
     })
   }
