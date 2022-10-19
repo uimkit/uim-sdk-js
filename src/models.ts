@@ -182,17 +182,23 @@ export enum ConversationType {
 }
 
 export type Conversation = Model<{
+  // 会话ID
   id: string
-  account_id: string
+  // 会话类型
   type: ConversationType
-  to: {
-    id: string
-    name?: string
-    avatar?: string
-  }
+  // 对方ID
+  partyId: string
+  // 对方名称
+  partyName?: string
+  // 对方头像
+  partyAvatar?: string
+  // 最后消息
   lastMessage?: Message
+  // 最后消息时间
   lastMessageAt?: Date
+  // 未读数量
   unread: number
+  // 是否置顶
   pinned: boolean
 }>
 
