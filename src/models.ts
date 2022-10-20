@@ -250,25 +250,59 @@ export enum MentionedType {
 }
 
 export type Message = Model<{
+  // 消息唯一ID
   id: string
-  message_id: string
+  // 平台消息ID
+  message_id?: string
+  // 所属会话ID
+  conversation_id: string
+  // 会话类型
   conversation_type: ConversationType
+  // 消息编号，在会话内有序递增
   seq: number
+  // 消息发送方
   from: {
+    // 发送人平台用户ID
     id: string
+    // 发送人名称
     name?: string
+    // 发送人头像
     avatar?: string
   }
+  // 消息接收方
   to: {
+    // 接收方平台ID，私聊消息时为平台用户ID，群聊消息时为平台群ID
     id: string
+    // 接收方名称
     name?: string
+    // 接收方头像
     avatar?: string
   }
-  sent_at: Date
-  revoked?: boolean
+  // @类型
   mentioned_type?: MentionedType
-  mentioned_users?: Array<IMUser>
+  // @用户列表
+  mentioned_users?: Array<{
+    // 平台用户ID
+    id: string,
+    // 名称
+    name?: string
+    // 头像
+    avatar?: string
+  }>
+  // 消息内容
   payload: MessagePayload
+  // 发送时间
+  sent_at: Date
+  // 是否撤回
+  revoked?: boolean
+  // 是否发送中
+  sending?: boolean
+  // 是否发送成功
+  succeeded?: boolean
+  // 是否发送失败
+  failed?: boolean
+  // 发送消息返回时透传的自定义数据
+  state?: string
 }>
 
 export enum MessageType {

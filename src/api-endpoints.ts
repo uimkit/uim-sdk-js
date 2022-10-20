@@ -106,6 +106,8 @@ export type SendPrivateMessageParameters = {
   to: string
   // 消息内容
   message: MessagePayload
+  // 自定义数据，在返回中透传回来
+  state?: string
 }
 
 export type SendPrivateMessageResponse = Message
@@ -123,6 +125,8 @@ export type SendGroupMessageParameters = {
   mentioned_type?: MentionedType
   // @人列表，为平台用户ID
   mentioned_user_ids?: string[]
+  // 自定义数据，在返回中透传回来
+  state?: string
 }
 
 export type SendGroupMessageResponse = Message
