@@ -70,6 +70,22 @@ export type RetrieveContactParameters = {
 
 export type RetrieveContactResponse = Contact
 
+export type AddContactParameters = {
+  // 账号ID
+  account_id: string
+  // 联系人，可以为手机号、平台ID等
+  contact: string
+  // 打招呼留言
+  hello_message?: string
+}
+
+export type AddContactResponse = {
+  // 好友申请是否发送成功 
+  success: boolean
+  // 如果失败，返回失败的原因
+  reason?: string
+}
+
 export type RetrieveGroupParameters = {
   account_id: string
   group_id: string

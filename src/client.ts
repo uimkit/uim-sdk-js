@@ -43,6 +43,8 @@ import {
   SendGroupMessageParameters,
   CreateConversationParameters,
   CreateConversationResponse,
+  AddContactParameters,
+  AddContactResponse,
 } from "./api-endpoints"
 import nodeFetch from "node-fetch"
 import { SupportedFetch } from "./fetch-types"
@@ -338,6 +340,17 @@ export default class Client {
     return this.request<RetrieveContactResponse>({
       path: `im_accounts/${args.account_id}/contacts/${args.user_id}`,
       method: "get",
+      auth: args.auth,
+    })
+  }
+
+  public async addContact(
+    args: WithAuth<AddContactParameters>
+  ): Promise<AddContactResponse> {
+    return this.request<AddContactResponse>({
+      path: `im_accounts/${args.account_id}/contacts`,
+      method: "post",
+      body: omit(args, ["auth"]),
       auth: args.auth,
     })
   }
