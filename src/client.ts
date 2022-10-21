@@ -299,7 +299,7 @@ export default class Client {
     const resp = await this.request<ListIMAccountsResponse>({
       method: "get",
       path: "im_accounts",
-      query: pick(args, [...pageListQueryParams]) as PlainQueryParams,
+      query: pick(args, [...pageListQueryParams, "provider"]) as PlainQueryParams,
       auth: args.auth,
     })
     if (args.subscribe && resp.data.length > 0) {
