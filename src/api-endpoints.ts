@@ -25,6 +25,9 @@ export type RetrieveIMAccountParameters = {
 export type RetrieveIMAccountResponse = IMAccount
 
 export type ListIMAccountsParameters = PageListQueryParameters<EmptyObject> & {
+  // 查询指定服务商的账号
+  provider?: string
+  // 获得账号后是否订阅账号事件
   subscribe?: boolean
 }
 
