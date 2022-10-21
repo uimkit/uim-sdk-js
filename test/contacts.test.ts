@@ -3,11 +3,14 @@ import { createClient } from "./client"
 const client = createClient()
 // const accountId = 'rg-y6JnVJZftxhSshrChc'
 // const accountId = 'Sax3MES_sIdvV0sQO9-co' // 测试环境抖音
-const accountId = 'PDd4lp5rexe_24_uQBOE5' // 测试环境微信
+// const accountId = 'PDd4lp5rexe_24_uQBOE5' // 测试环境微信
+const accountId = 'vMoSsbqoaWsnXMPV6phem' // 正式环境微信
 
 describe("contacts", () => {
+	jest.setTimeout(30000)
+
 	it("add-contact", async () => {
-		const resp = await client.addContact({ account_id: accountId, contact: "13000000001", hello_message: "hi" })
+		const resp = await client.addContact({ account_id: accountId, contact: "18665311790", hello_message: "hi" })
 		console.log(JSON.stringify(resp, undefined, 4))
 	})
 	// it("contacts-crud", async () => {
