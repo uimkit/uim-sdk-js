@@ -350,7 +350,7 @@ export default class Client {
     return this.request<AddContactResponse>({
       path: `im_accounts/${args.account_id}/contacts`,
       method: "post",
-      body: omit(args, ["auth"]),
+      body: omit(args, ["auth", "account_id"]),
       auth: args.auth,
     })
   }
