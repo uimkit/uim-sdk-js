@@ -75,6 +75,7 @@ export type IMUser = Model<{
   custom_id?: string
   username?: string
   name?: string
+  real_name?: string
   mobile?: string
   email?: string
   avatar?: string
@@ -87,6 +88,9 @@ export type IMUser = Model<{
   address?: string
   signature?: string
   birthday?: Date
+  company?: string
+  department?: string
+  title?: string
   language?: string
   identities?: Array<IMIdentity>
 }>
@@ -115,6 +119,8 @@ export type IMAccount = Model<{
   username?: string
   // 名称
   name?: string
+  // 真实姓名
+  real_name?: string
   // 手机号
   mobile?: string
   // 邮箱
@@ -139,6 +145,12 @@ export type IMAccount = Model<{
   signature?: string
   // 生日
   birthday?: Date
+  // 公司
+  company?: string
+  // 部门
+  department?: string
+  // 头衔、职位
+  title?: string
   // 语言
   language?: string
 }>
@@ -154,6 +166,8 @@ export type Contact = Model<{
   username?: string
   // 名称
   name?: string
+  // 真实姓名
+  real_name?: string
   // 手机号
   mobile?: string
   // 邮箱
@@ -178,6 +192,12 @@ export type Contact = Model<{
   signature?: string
   // 生日
   birthday?: Date
+  // 公司
+  company?: string
+  // 部门
+  department?: string
+  // 头衔、职位
+  title?: string
   // 语言
   language?: string
   // 备注名
