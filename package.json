@@ -35,17 +35,19 @@
     "build/**/*"
   ],
   "dependencies": {
-    "@types/node-fetch": "^2.5.10",
     "browser-or-node": "^2.0.0",
     "cloudevents": "^6.0.2",
     "core-js": "^3.23.5",
     "lodash": "^4.17.21",
     "node-fetch": "^2.6.1",
+    "rfc4648": "^1.5.2",
+    "uint8arrays": "^3.1.1",
     "webpubsub-js": "^1.0.2"
   },
   "devDependencies": {
     "@types/jest": "^29.1.2",
     "@types/lodash": "^4.14.186",
+    "@types/node-fetch": "^2.6.2",
     "@typescript-eslint/eslint-plugin": "^4.22.0",
     "@typescript-eslint/parser": "^4.22.0",
     "cspell": "^5.4.1",

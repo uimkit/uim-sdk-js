@@ -15,18 +15,25 @@ export enum EventType {
 
 export type NewConversationEvent = CloudEvent<Conversation>
 export type NewConversationHandler = (
+  provider: string,
   userid: string,
   e: NewConversationEvent
 ) => void
 export type ConversationUpdatedEvent = CloudEvent<Conversation>
 export type ConversationUpdatedHandler = (
+  provider: string,
   userid: string,
   e: ConversationUpdatedEvent
 ) => void
 export type NewMessageEvent = CloudEvent<Message>
-export type NewMessageHandler = (userid: string, e: NewMessageEvent) => void
+export type NewMessageHandler = (
+  provider: string,
+  userid: string,
+  e: NewMessageEvent
+) => void
 export type MessageUpdatedEvent = CloudEvent<Message>
 export type MessageUpdatedHandler = (
+  provider: string,
   userid: string,
   e: MessageUpdatedEvent
 ) => void
@@ -37,4 +44,8 @@ export type Event =
   | NewMessageEvent
   | MessageUpdatedEvent
 
-export type EventHandler = (userid: string, e: unknown) => void
+export type EventHandler = (
+  provider: string,
+  userid: string,
+  e: unknown
+) => void

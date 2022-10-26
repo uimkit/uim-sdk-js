@@ -1,4 +1,7 @@
-import type { Agent } from "http"
+import { Agent } from "http"
+import { base64url } from "rfc4648"
+import { toString } from "uint8arrays/to-string"
+import { fromString } from "uint8arrays/from-string"
 import { isNode } from "browser-or-node"
 import { omit, pick, indexOf } from "lodash"
 import {
@@ -63,7 +66,6 @@ import {
   NewMessageHandler,
 } from "./events"
 import { cursorListQueryParams, IMAccount, pageListQueryParams } from "./models"
-import { CloudEvent } from "cloudevents"
 
 export interface ClientOptions {
   timeoutMs?: number
@@ -313,7 +315,7 @@ export default class Client {
     if (args.subscribe && resp.data.length > 0) {
       const channels = resp.data
         .map(it => this.channelName(it))
-        .filter(it => indexOf(this._channels, it) >= 0)
+        .filter(it => indexOf(this._channels, it) < 0)
       this._channels = [...channels, ...this._channels]
       this._pubsub.subscribe(this._channels)
     }
@@ -481,34 +483,36 @@ export default class Client {
   }
 
   onNewMessage(handler: NewMessageHandler): void {
-    this.on(EventType.NEW_MESSAGE, (userid, e) =>
-      handler(userid, e as NewMessageEvent)
+    this.on(EventType.NEW_MESSAGE, (provider, userid, e) =>
+      handler(provider, userid, e as NewMessageEvent)
     )
   }
 
   onMessageUpdated(handler: MessageUpdatedHandler): void {
-    this.on(EventType.MESSAGE_UPDATED, (userid, e) =>
-      handler(userid, e as MessageUpdatedEvent)
+    this.on(EventType.MESSAGE_UPDATED, (provider, userid, e) =>
+      handler(provider, userid, e as MessageUpdatedEvent)
     )
   }
 
   onNewConversation(handler: NewConversationHandler): void {
-    this.on(EventType.NEW_CONVERSATION, (userid, e) =>
-      handler(userid, e as NewConversationEvent)
+    this.on(EventType.NEW_CONVERSATION, (provider, userid, e) =>
+      handler(provider, userid, e as NewConversationEvent)
     )
   }
 
   onConversationUpdated(handler: ConversationUpdatedHandler): void {
-    this.on(EventType.CONVERSATION_UPDATED, (userid, e) =>
-      handler(userid, e as ConversationUpdatedEvent)
+    this.on(EventType.CONVERSATION_UPDATED, (provider, userid, e) =>
+      handler(provider, userid, e as ConversationUpdatedEvent)
     )
   }
 
   private onEvent(channel: string, e: unknown, _extra?: unknown) {
-    // 队列名是 uim.im_user:${userid}，提取出 userid
-    const userid = channel.substring(12)
+    // 队列名是 ${provider}|${userid}
+    channel = toString(base64url.parse(channel))
+    const [provider, ...o] = channel.split("|")
+    const userid = o.join("|")
     const handlers = this._handlers[(e as Event).type] ?? []
-    handlers.forEach(h => h(userid, e))
+    handlers.forEach(h => h(provider!, userid, e))
   }
 
   /**
@@ -545,7 +549,7 @@ export default class Client {
   }
 
   private channelName(account: IMAccount): string {
-    return `uim.im_user:${account.user_id}`
+    return base64url.stringify(fromString(`${account.provider}|${account.user_id}`))
   }
 }
 
