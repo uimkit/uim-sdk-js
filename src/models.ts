@@ -303,7 +303,7 @@ export type Message = Model<{
   // @用户列表
   mentioned_users?: Array<{
     // 平台用户ID
-    id: string,
+    id: string
     // 名称
     name?: string
     // 头像

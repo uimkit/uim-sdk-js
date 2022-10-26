@@ -1,6 +1,6 @@
 import type { Agent } from "http"
 import { isNode } from "browser-or-node"
-import { omit, pick } from "lodash"
+import { omit, pick, indexOf } from "lodash"
 import {
   Logger,
   LogLevel,
@@ -50,17 +50,20 @@ import nodeFetch from "node-fetch"
 import { SupportedFetch } from "./fetch-types"
 import { SupportedPubSub, PubSubOptions, default as PubSub } from "./pubsub"
 import {
+  ConversationUpdatedEvent,
   ConversationUpdatedHandler,
   Event,
   EventHandler,
   EventType,
-  IMAccountStatusUpdatedHandler,
-  IMAccountUpdatedHandler,
-  MessageReceivedEvent,
+  MessageUpdatedEvent,
   MessageUpdatedHandler,
+  NewConversationEvent,
   NewConversationHandler,
+  NewMessageEvent,
+  NewMessageHandler,
 } from "./events"
-import { cursorListQueryParams, pageListQueryParams } from "./models"
+import { cursorListQueryParams, IMAccount, pageListQueryParams } from "./models"
+import { CloudEvent } from "cloudevents"
 
 export interface ClientOptions {
   timeoutMs?: number
@@ -106,6 +109,7 @@ export default class Client {
   _fetch: SupportedFetch
   _pubsub: SupportedPubSub
   _agent: Agent | undefined
+  _channels: Array<string>
   _handlers: Record<string, EventHandler>
   _messageEventListener?: (msgEvent: MessageEvent) => void
 
@@ -118,6 +122,7 @@ export default class Client {
     this._fetch =
       options?.fetch ?? (isNode ? nodeFetch : window.fetch.bind(window))
     this._agent = options?.agent
+    this._channels = []
     this._handlers = {}
     this._pubsub =
       options?.pubsub ??
@@ -299,12 +304,18 @@ export default class Client {
     const resp = await this.request<ListIMAccountsResponse>({
       method: "get",
       path: "im_accounts",
-      query: pick(args, [...pageListQueryParams, "provider"]) as PlainQueryParams,
+      query: pick(args, [
+        ...pageListQueryParams,
+        "provider",
+      ]) as PlainQueryParams,
       auth: args.auth,
     })
     if (args.subscribe && resp.data.length > 0) {
-      const channels = resp.data.map(it => this.channelName(it.id))
-      this._pubsub.subscribe(channels)
+      const channels = resp.data
+        .map(it => this.channelName(it))
+        .filter(it => indexOf(this._channels, it) >= 0)
+      this._channels = [...channels, ...this._channels]
+      this._pubsub.subscribe(this._channels)
     }
     return resp
   }
@@ -318,7 +329,11 @@ export default class Client {
       auth: args.auth,
     })
     if (args.subscribe) {
-      this._pubsub.subscribe([this.channelName(resp.id)])
+      const channel = this.channelName(resp)
+      if (indexOf(this._channels, channel) < 0) {
+        this._channels = [channel, ...this._channels]
+        this._pubsub.subscribe(this._channels)
+      }
     }
     return resp
   }
@@ -465,37 +480,35 @@ export default class Client {
     })
   }
 
-  onIMAccountStatusUpdated(handler: IMAccountStatusUpdatedHandler): void {
-    this.on(
-      EventType.IM_ACCOUNT_STATUS_UPDATED,
-      handler as unknown as EventHandler
+  onNewMessage(handler: NewMessageHandler): void {
+    this.on(EventType.NEW_MESSAGE, (userid, e) =>
+      handler(userid, e as NewMessageEvent)
     )
   }
 
-  onIMAccountUpdated(handler: IMAccountUpdatedHandler): void {
-    this.on(EventType.IM_ACCOUNT_UPDATED, handler as unknown as EventHandler)
+  onMessageUpdated(handler: MessageUpdatedHandler): void {
+    this.on(EventType.MESSAGE_UPDATED, (userid, e) =>
+      handler(userid, e as MessageUpdatedEvent)
+    )
   }
 
   onNewConversation(handler: NewConversationHandler): void {
-    this.on(EventType.NEW_CONVERSATION, handler as unknown as EventHandler)
+    this.on(EventType.NEW_CONVERSATION, (userid, e) =>
+      handler(userid, e as NewConversationEvent)
+    )
   }
 
   onConversationUpdated(handler: ConversationUpdatedHandler): void {
-    this.on(EventType.CONVERSATION_UPDATED, handler as unknown as EventHandler)
+    this.on(EventType.CONVERSATION_UPDATED, (userid, e) =>
+      handler(userid, e as ConversationUpdatedEvent)
+    )
   }
 
-  onMessageReceived(handler: MessageReceivedEvent): void {
-    this.on(EventType.MESSAGE_RECEIVED, handler as unknown as EventHandler)
-  }
-
-  onMessageUpdated(handler: MessageUpdatedHandler): void {
-    this.on(EventType.MESSAGE_UPDATED, handler as unknown as EventHandler)
-  }
-
-  private onEvent(_channel: string, evt: unknown, _extra?: unknown) {
-    const e = evt as Event
-    const handler = this._handlers[e.type]
-    handler && handler(e)
+  private onEvent(channel: string, e: unknown, _extra?: unknown) {
+    // 队列名是 uim.im_user:${userid}，提取出 userid
+    const userid = channel.substring(12)
+    const handler = this._handlers[(e as Event).type]
+    handler && handler(userid, e)
   }
 
   /**
@@ -531,8 +544,8 @@ export default class Client {
     return headers
   }
 
-  private channelName(id: string): string {
-    return `uim/im-accounts/${id}`
+  private channelName(account: IMAccount): string {
+    return `uim.im_user:${account.user_id}`
   }
 }
 

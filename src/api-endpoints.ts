@@ -83,7 +83,7 @@ export type AddContactParameters = {
 }
 
 export type AddContactResponse = {
-  // 好友申请是否发送成功 
+  // 好友申请是否发送成功
   success: boolean
   // 如果失败，返回失败的原因
   reason?: string

@@ -37,6 +37,7 @@
   "dependencies": {
     "@types/node-fetch": "^2.5.10",
     "browser-or-node": "^2.0.0",
+    "cloudevents": "^6.0.2",
     "core-js": "^3.23.5",
     "lodash": "^4.17.21",
     "node-fetch": "^2.6.1",
