@@ -110,7 +110,7 @@ export default class Client {
   _pubsub: SupportedPubSub
   _agent: Agent | undefined
   _channels: Array<string>
-  _handlers: Record<string, EventHandler>
+  _handlers: Record<string, Array<EventHandler>>
   _messageEventListener?: (msgEvent: MessageEvent) => void
 
   public constructor(token: string, options?: ClientOptions) {
@@ -295,7 +295,7 @@ export default class Client {
   }
 
   public on(type: EventType, handler: EventHandler): void {
-    this._handlers[type] = handler
+    this._handlers[type] = [...(this._handlers[type] ?? []), handler]
   }
 
   public async listIMAccounts(
@@ -507,8 +507,8 @@ export default class Client {
   private onEvent(channel: string, e: unknown, _extra?: unknown) {
     // 队列名是 uim.im_user:${userid}，提取出 userid
     const userid = channel.substring(12)
-    const handler = this._handlers[(e as Event).type]
-    handler && handler(userid, e)
+    const handlers = this._handlers[(e as Event).type] ?? []
+    handlers.forEach(h => h(userid, e))
   }
 
   /**
