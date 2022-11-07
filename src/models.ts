@@ -165,6 +165,12 @@ export type IMAccount = Model<{
   title?: string
   // 语言
   language?: string
+  // 扩展信息
+  metadata?: unknown
+  // 创建时间
+  created_at?: Date
+  // 最后更新时间
+  updated_at?: Date
 }>
 
 export type Contact = Model<{
