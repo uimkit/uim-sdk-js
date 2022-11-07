@@ -549,9 +549,7 @@ export default class Client {
   }
 
   private channelName(account: IMAccount): string {
-    return base64url.stringify(
-      fromString(`${account.provider}|${account.user_id}`)
-    )
+    return account.id
   }
 }
 

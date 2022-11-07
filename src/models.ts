@@ -95,34 +95,46 @@ export type IMUser = Model<{
   identities?: Array<IMIdentity>
 }>
 
+// 账号在线状态
 export enum Precense {
+  // 初始化中
+  Initializing = 0,
+  // 在线
   Online = 1,
+  // 离线
   Offline = 2,
+  // 登出
   Logout = 3,
+  // 禁用
   Disabled = 4,
+  // 平台封号
   DisabledByProvider = 5,
 }
 
 // 账号信息
 export type IMAccount = Model<{
-  // 账号唯一ID
+  // 账号用户的ID
   id: string
-  // 服务商平台，如：douyin
-  provider: string
-  // 平台用户ID，如：抖音ID
-  user_id: string
-  // 用户自定义ID，如：抖音号
-  custom_id?: string
   // 在线状态
   presence: Precense
+  // 平台，如：douyin
+  provider: string
+  // 平台用户ID，如：抖音ID
+  open_id: string
+  // 用户自定义ID，如：抖音号
+  custom_id?: string
   // 用户账户
   username?: string
   // 名称
   name?: string
+  // 昵称
+  nickname?: string
   // 真实姓名
   real_name?: string
   // 手机号
   mobile?: string
+  // 座机电话
+  tel?: string
   // 邮箱
   email?: string
   // 头像URL
