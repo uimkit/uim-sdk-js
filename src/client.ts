@@ -429,9 +429,9 @@ export default class Client {
     args: WithAuth<CreateConversationParameters>
   ): Promise<CreateConversationResponse> {
     return this.request<CreateConversationResponse>({
-      path: "conversations",
+      path: `im_accounts/${args.account_id}/conversations/create`,
       method: "post",
-      body: omit(args, ["auth"]),
+      body: omit(args, ["auth", "account_id"]),
       auth: args.auth,
     })
   }

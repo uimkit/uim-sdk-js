@@ -3,6 +3,7 @@
 import {
   Contact,
   Conversation,
+  ConversationType,
   CursorListQueryParameters,
   CursorListResponse,
   EmptyObject,

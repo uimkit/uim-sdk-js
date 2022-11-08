@@ -265,11 +265,11 @@ export type GroupMember = Model<{
 }>
 
 export enum ConversationType {
-  Private = 1,
-  Group = 2,
-  Discussion = 3,
-  System = 4,
-  CustomerService = 5,
+  Private = "private",
+  Group = "group",
+  Discussion = "discussion",
+  System = "system",
+  CustomerService = "customer_service",
 }
 
 export type Conversation = Model<{
