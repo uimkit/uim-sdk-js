@@ -275,16 +275,20 @@ export enum ConversationType {
 export type Conversation = Model<{
   // 会话ID
   id: string
-  // 账号ID
-  account_id: string
+  // 所属账号的IM用户ID
+  account: string
+  // 平台 
+  provider: string
+  // 消息收发地址
+  channel: string
+  // 对方ID，私聊是对方IM用户ID，群聊是群组ID
+  participant: string
+  // 对方名称
+  name?: string
+  // 对方头像
+  avatar?: string
   // 会话类型
   type: ConversationType
-  // 对方ID
-  party_id: string
-  // 对方名称
-  party_name?: string
-  // 对方头像
-  party_avatar?: string
   // 最后消息
   last_message?: Message
   // 最后消息时间
@@ -293,6 +297,12 @@ export type Conversation = Model<{
   unread: number
   // 是否置顶
   pinned: boolean
+  // 扩展信息
+  metadata?: unknown
+  // 创建时间
+  created_at?: Date
+  // 最后更新时间
+  updated_at?: Date
 }>
 
 export enum MentionedType {
