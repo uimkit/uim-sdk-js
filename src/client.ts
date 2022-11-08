@@ -1,7 +1,6 @@
 import { Agent } from "http"
 import { base64url } from "rfc4648"
 import { toString } from "uint8arrays/to-string"
-import { fromString } from "uint8arrays/from-string"
 import { isNode } from "browser-or-node"
 import { omit, pick, indexOf } from "lodash"
 import {
@@ -40,14 +39,12 @@ import {
   RetrieveGroupResponse,
   RetrieveConversationParameters,
   RetrieveConversationResponse,
-  SendPrivateMessageResponse,
-  SendGroupMessageResponse,
-  SendPrivateMessageParameters,
-  SendGroupMessageParameters,
   CreateConversationParameters,
   CreateConversationResponse,
   AddContactParameters,
   AddContactResponse,
+  SendMessageParameters,
+  SendMessageResponse,
 } from "./api-endpoints"
 import nodeFetch from "node-fetch"
 import { SupportedFetch } from "./fetch-types"
@@ -460,22 +457,11 @@ export default class Client {
     })
   }
 
-  public sendPrivateMessage(
-    args: WithAuth<SendPrivateMessageParameters>
-  ): Promise<SendPrivateMessageResponse> {
-    return this.request<SendPrivateMessageResponse>({
-      path: "send_private_message",
-      method: "post",
-      body: omit(args, ["auth"]),
-      auth: args.auth,
-    })
-  }
-
-  public sendGroupMessage(
-    args: WithAuth<SendGroupMessageParameters>
-  ): Promise<SendGroupMessageResponse> {
-    return this.request<SendGroupMessageResponse>({
-      path: "send_group_message",
+  public sendMessage(
+    args: WithAuth<SendMessageParameters>
+  ): Promise<SendMessageResponse> {
+    return this.request<SendMessageResponse>({
+      path: "send_message",
       method: "post",
       body: omit(args, ["auth"]),
       auth: args.auth,

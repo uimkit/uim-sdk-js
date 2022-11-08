@@ -10,12 +10,14 @@ import {
   Group,
   GroupMember,
   IMAccount,
-  MentionedType,
+  ImageMessageBody,
   Message,
-  MessagePayload,
+  MessageType,
   Moment,
   PageListQueryParameters,
   PageListResponse,
+  VideoMessageBody,
+  VoiceMessageBody,
 } from "./models"
 
 export type RetrieveIMAccountParameters = {
@@ -117,36 +119,49 @@ export type ListMessagesParameters = CursorListQueryParameters<EmptyObject> & {
 
 export type ListMessagesResponse = CursorListResponse<Message>
 
-export type SendPrivateMessageParameters = {
-  // 发送方，规则：{平台用户ID}@{平台}/{服务商}，例如：wxid_abc@wechat/provider
-  // 服务商参数可选，如果未提供，使用默认的服务商
+// 直接发送消息给目标
+export type SendMessageDirectParameters = {
+  // 发送方，是账号的IM用户ID
   from: string
-  // 接收方，规则：{平台用户ID}@{平台}/{服务商}，例如：wxid_abc@wechat/provider
-  // 服务商参数可选，如果未提供，使用默认的服务商
+  // 接收方，私聊消息时对方的IM用户ID，群聊消息时群ID
   to: string
-  // 消息内容
-  message: MessagePayload
+  // 会话类型，用于识别接收方是私聊还是群聊
+  conversation_type: ConversationType
+  // 消息类型
+  type: MessageType
+  // 文本消息内容
+  text?: string
+  // 图片消息内容
+  image?: ImageMessageBody
+  // 语音消息内容
+  voice?: VoiceMessageBody
+  // 视频消息内容
+  video?: VideoMessageBody
   // 自定义数据，在返回中透传回来
   state?: string
 }
 
-export type SendPrivateMessageResponse = Message
-
-export type SendGroupMessageParameters = {
-  // 发送方，规则：{平台用户ID}@{平台}/{服务商}，例如：wxid_abc@wechat/provider
-  // 服务商参数可选，如果未提供，使用默认的服务商
-  from: string
-  // 接收方，规则：{平台群组ID}@{平台}/{服务商}
-  // 服务商参数可选，如果未提供，使用默认的服务商
-  to: string
-  // 消息内容
-  message: MessagePayload
-  // @人类型
-  mentioned_type?: MentionedType
-  // @人列表，为平台用户ID
-  mentioned_user_ids?: string[]
+// 发送消息到会话
+export type SendMessageToConversationParameters = {
+  // 会话ID
+  conversation_id: string
+  // 消息类型
+  type: MessageType
+  // 文本消息内容
+  text?: string
+  // 图片消息内容
+  image?: ImageMessageBody
+  // 语音消息内容
+  voice?: VoiceMessageBody
+  // 视频消息内容
+  video?: VideoMessageBody
   // 自定义数据，在返回中透传回来
   state?: string
 }
 
-export type SendGroupMessageResponse = Message
+// 发送消息，可以直接发送，也可以发送到会话
+export type SendMessageParameters =
+  | SendMessageDirectParameters
+  | SendMessageToConversationParameters
+
+export type SendMessageResponse = Message

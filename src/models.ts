@@ -313,45 +313,32 @@ export enum MentionedType {
 export type Message = Model<{
   // 消息唯一ID
   id: string
+  // 平台 
+  provider: string
   // 平台消息ID
-  message_id?: string
+  message_id: string
   // 所属会话ID
   conversation_id: string
-  // 会话类型
-  conversation_type: ConversationType
+  // 所属账号的IM用户ID
+  account: string
+  // 发消息的IM用户ID
+  user_id: string
+  // 发消息的名称
+  name?: string
+  // 发消息的头像
+  avatar?: string
+  // 消息类型 
+  type: MessageType
+  // 文本消息内容
+  text?: string
+  // 图片消息内容
+  image?: ImageMessageBody
+  // 语音消息内容
+  voice?: VoiceMessageBody
+  // 视频消息内容
+  video?: VideoMessageBody
   // 消息编号，在会话内有序递增
   seq: number
-  // 消息发送方
-  from: {
-    // 发送人平台用户ID
-    id: string
-    // 发送人名称
-    name?: string
-    // 发送人头像
-    avatar?: string
-  }
-  // 消息接收方
-  to: {
-    // 接收方平台ID，私聊消息时为平台用户ID，群聊消息时为平台群ID
-    id: string
-    // 接收方名称
-    name?: string
-    // 接收方头像
-    avatar?: string
-  }
-  // @类型
-  mentioned_type?: MentionedType
-  // @用户列表
-  mentioned_users?: Array<{
-    // 平台用户ID
-    id: string
-    // 名称
-    name?: string
-    // 头像
-    avatar?: string
-  }>
-  // 消息内容
-  payload: MessagePayload
   // 发送时间
   sent_at: Date
   // 是否撤回
@@ -362,75 +349,59 @@ export type Message = Model<{
   succeeded?: boolean
   // 是否发送失败
   failed?: boolean
+  // 扩展信息
+  metadata?: unknown
   // 发送消息返回时透传的自定义数据
   state?: string
 }>
 
 export enum MessageType {
-  Text = 1,
-  Image = 2,
-  Voice = 3,
-  Video = 4,
+  // 文本消息
+  Text = "text",
+  // 图片消息
+  Image = "image",
+  // 语音消息
+  Voice = "voice",
+  // 视频消息
+  Video = "video",
 }
 
-export type MessagePayload =
-  | TextMessagePayload
-  | ImageMessagePayload
-  | VoiceMessagePayload
-  | VideoMessagePayload
-
-export type TextMessagePayload = {
-  type: MessageType.Text
-  body: {
-    content: string
-  }
-}
-
-export type ImageMessagePayload = {
-  type: MessageType.Image
-  body: {
+export type ImageMessageBody = {
+  url: string
+  width?: number
+  height?: number
+  size?: number
+  ext?: string
+  md5?: string
+  thumb?: {
     url: string
     width?: number
     height?: number
-    size?: number
     ext?: string
-    md5?: string
-    thumb?: {
-      url: string
-      width?: number
-      height?: number
-      ext?: string
-    }
   }
 }
 
-export type VoiceMessagePayload = {
-  type: MessageType.Voice
-  body: {
-    url: string
-    duration?: number
-    size?: number
-    ext?: string
-    md5?: string
-  }
+export type VoiceMessageBody = {
+  url: string
+  duration?: number
+  size?: number
+  ext?: string
+  md5?: string
 }
 
-export type VideoMessagePayload = {
-  type: MessageType.Video
-  body: {
+export type VideoMessageBody = {
+  url: string
+  duration?: number
+  width?: number
+  height?: number
+  size?: number
+  ext?: string
+  md5?: string
+  thumb?: {
     url: string
-    duration?: number
     width?: number
     height?: number
-    size?: number
     ext?: string
-    md5?: string
-    thumb?: {
-      url: string
-      width?: number
-      height?: number
-      ext?: string
-    }
   }
 }
 
