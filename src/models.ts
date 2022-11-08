@@ -173,21 +173,28 @@ export type IMAccount = Model<{
   updated_at?: Date
 }>
 
+// 好友信息
 export type Contact = Model<{
-  // 联系人唯一ID
+  // 好友用户的ID
   id: string
+  // 平台，如：douyin
+  provider: string
   // 平台用户ID，如：抖音ID
-  user_id: string
+  open_id: string
   // 用户自定义ID，如：抖音号
   custom_id?: string
   // 用户账户
   username?: string
   // 名称
   name?: string
+  // 昵称
+  nickname?: string
   // 真实姓名
   real_name?: string
   // 手机号
   mobile?: string
+  // 座机电话
+  tel?: string
   // 邮箱
   email?: string
   // 头像URL
@@ -228,6 +235,12 @@ export type Contact = Model<{
   blocked?: boolean
   // 星标
   marked?: boolean
+  // 扩展信息
+  metadata?: unknown
+  // 创建时间
+  created_at?: Date
+  // 最后更新时间
+  updated_at?: Date
 }>
 
 export type Group = Model<{
