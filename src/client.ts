@@ -365,7 +365,7 @@ export default class Client {
     args: WithAuth<AddContactParameters>
   ): Promise<AddContactResponse> {
     return this.request<AddContactResponse>({
-      path: `im_accounts/${args.account_id}/contacts`,
+      path: `im_accounts/${args.account_id}/contacts/add`,
       method: "post",
       body: omit(args, ["auth", "account_id"]),
       auth: args.auth,
