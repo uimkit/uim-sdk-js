@@ -366,6 +366,12 @@ export enum MessageType {
   Video = "video",
 }
 
+export type MessageBody =
+  | string
+  | ImageMessageBody
+  | VoiceMessageBody
+  | VideoMessageBody
+
 export type ImageMessageBody = {
   url: string
   width?: number
