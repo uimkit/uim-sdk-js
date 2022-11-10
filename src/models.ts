@@ -177,6 +177,8 @@ export type IMAccount = Model<{
 export type Contact = Model<{
   // 好友用户的ID
   id: string
+  // 归属账号的用户ID
+  account: string
   // 平台，如：douyin
   provider: string
   // 平台用户ID，如：抖音ID
