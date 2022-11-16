@@ -469,36 +469,34 @@ export default class Client {
   }
 
   onNewMessage(handler: NewMessageHandler): void {
-    this.on(EventType.NEW_MESSAGE, (provider, userid, e) =>
-      handler(provider, userid, e as NewMessageEvent)
+    this.on(EventType.NEW_MESSAGE, (accountId, e) =>
+      handler(accountId, e as NewMessageEvent)
     )
   }
 
   onMessageUpdated(handler: MessageUpdatedHandler): void {
-    this.on(EventType.MESSAGE_UPDATED, (provider, userid, e) =>
-      handler(provider, userid, e as MessageUpdatedEvent)
+    this.on(EventType.MESSAGE_UPDATED, (accountId, e) =>
+      handler(accountId, e as MessageUpdatedEvent)
     )
   }
 
   onNewConversation(handler: NewConversationHandler): void {
-    this.on(EventType.NEW_CONVERSATION, (provider, userid, e) =>
-      handler(provider, userid, e as NewConversationEvent)
+    this.on(EventType.NEW_CONVERSATION, (accountId, e) =>
+      handler(accountId, e as NewConversationEvent)
     )
   }
 
   onConversationUpdated(handler: ConversationUpdatedHandler): void {
-    this.on(EventType.CONVERSATION_UPDATED, (provider, userid, e) =>
-      handler(provider, userid, e as ConversationUpdatedEvent)
+    this.on(EventType.CONVERSATION_UPDATED, (accountId, e) =>
+      handler(accountId, e as ConversationUpdatedEvent)
     )
   }
 
   private onEvent(channel: string, e: unknown, _extra?: unknown) {
-    // 队列名是 ${provider}|${userid}
-    channel = toString(base64url.parse(channel))
-    const [provider, ...o] = channel.split("|")
-    const userid = o.join("|")
+    // 队列名就是账号ID
+    const accountId = channel
     const handlers = this._handlers[(e as Event).type] ?? []
-    handlers.forEach(h => h(provider!, userid, e))
+    handlers.forEach(h => h(accountId, e))
   }
 
   /**
