@@ -50,8 +50,8 @@ export type WithMetadata<T> = T & {
 }
 
 export type WithTimestamps<T> = T & {
-  created_at: Date
-  updated_at?: Date
+  created_at: number
+  updated_at?: number
 }
 
 export type Model<T> = WithTimestamps<WithMetadata<T>>
@@ -87,7 +87,7 @@ export type IMUser = Model<{
   district?: string
   address?: string
   signature?: string
-  birthday?: Date
+  birthday?: number
   company?: string
   department?: string
   title?: string
@@ -156,7 +156,7 @@ export type IMAccount = Model<{
   // 签名
   signature?: string
   // 生日
-  birthday?: Date
+  birthday?: number
   // 公司
   company?: string
   // 部门
@@ -168,9 +168,9 @@ export type IMAccount = Model<{
   // 扩展信息
   metadata?: unknown
   // 创建时间
-  created_at?: Date
+  created_at?: number
   // 最后更新时间
-  updated_at?: Date
+  updated_at?: number
 }>
 
 // 好友信息
@@ -218,7 +218,7 @@ export type Contact = Model<{
   // 签名
   signature?: string
   // 生日
-  birthday?: Date
+  birthday?: number
   // 公司
   company?: string
   // 部门
@@ -240,9 +240,9 @@ export type Contact = Model<{
   // 扩展信息
   metadata?: unknown
   // 创建时间
-  created_at?: Date
+  created_at?: number
   // 最后更新时间
-  updated_at?: Date
+  updated_at?: number
 }>
 
 export type Group = Model<{
@@ -294,9 +294,9 @@ export type Conversation = Model<{
   // 最后消息
   last_message?: Message
   // 最后消息时间
-  last_message_at?: Date
+  last_message_at?: number
   // 最后活跃时间
-  active_at?: Date
+  active_at?: number
   // 未读数量
   unread: number
   // 是否置顶
@@ -304,9 +304,9 @@ export type Conversation = Model<{
   // 扩展信息
   metadata?: unknown
   // 创建时间
-  created_at?: Date
+  created_at?: number
   // 最后更新时间
-  updated_at?: Date
+  updated_at?: number
 }>
 
 export enum MentionedType {
@@ -344,7 +344,7 @@ export type Message = Model<{
   // 消息编号，在会话内有序递增
   seq: number
   // 发送时间
-  sent_at: Date
+  sent_at: number
   // 是否撤回
   revoked?: boolean
   // 是否发送中
@@ -419,7 +419,7 @@ export type Moment = Model<{
   id: string
   moment_id: string
   user: IMUser
-  published_at: Date
+  published_at: number
   is_private?: boolean
   tags?: Array<string>
   location?: {
