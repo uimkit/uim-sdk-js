@@ -295,6 +295,8 @@ export type Conversation = Model<{
   last_message?: Message
   // 最后消息时间
   last_message_at?: Date
+  // 最后活跃时间
+  active_at?: Date
   // 未读数量
   unread: number
   // 是否置顶
