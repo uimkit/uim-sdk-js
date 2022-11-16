@@ -45,6 +45,8 @@ import {
   AddContactResponse,
   SendMessageParameters,
   SendMessageResponse,
+  SetConversationReadAllParameters,
+  SetConversationReadAllResponse,
 } from "./api-endpoints"
 import nodeFetch from "node-fetch"
 import { SupportedFetch } from "./fetch-types"
@@ -430,6 +432,17 @@ export default class Client {
       method: "post",
       body: omit(args, ["auth", "account_id"]),
       auth: args.auth,
+    })
+  }
+
+  public setConversationReadAll(
+    args: WithAuth<SetConversationReadAllParameters>
+  ): Promise<SetConversationReadAllResponse> {
+    return this.request<SetConversationReadAllResponse>({
+      path: `conversations/${args.conversation_id}/read_all`,
+      method: "post",
+      body: {},
+      auth: args.auth
     })
   }
 

@@ -69,6 +69,12 @@ export type CreateConversationParameters = {
 
 export type CreateConversationResponse = Conversation
 
+export type SetConversationReadAllParameters = {
+  conversation_id: string
+}
+
+export type SetConversationReadAllResponse = Conversation
+
 export type RetrieveContactParameters = {
   account_id: string
   user_id: string
