@@ -39,14 +39,16 @@ import {
   RetrieveGroupResponse,
   RetrieveConversationParameters,
   RetrieveConversationResponse,
-  CreateConversationParameters,
-  CreateConversationResponse,
+  RetrieveContactConversationParameters,
+  RetrieveContactConversationResponse,
   AddContactParameters,
   AddContactResponse,
   SendMessageParameters,
   SendMessageResponse,
-  SetConversationReadAllParameters,
-  SetConversationReadAllResponse,
+  ResetConversationUnreadParameters,
+  ResetConversationUnreadResponse,
+  RetrieveGroupConversationParameters,
+  RetrieveGroupConversationResponse,
 } from "./api-endpoints"
 import nodeFetch from "node-fetch"
 import { SupportedFetch } from "./fetch-types"
@@ -424,22 +426,33 @@ export default class Client {
     })
   }
 
-  public createConversation(
-    args: WithAuth<CreateConversationParameters>
-  ): Promise<CreateConversationResponse> {
-    return this.request<CreateConversationResponse>({
-      path: `im_accounts/${args.account_id}/conversations/create`,
-      method: "post",
-      body: omit(args, ["auth", "account_id"]),
+  public retrieveContactConversation(
+    args: WithAuth<RetrieveContactConversationParameters>
+  ): Promise<RetrieveContactConversationResponse> {
+    return this.request<RetrieveContactConversationResponse>({
+      path: `im_accounts/${args.account_id}/conversations/fetch`,
+      method: "get",
+      query: pick(args, ["user_id"]) as PlainQueryParams,
       auth: args.auth,
     })
   }
 
-  public setConversationReadAll(
-    args: WithAuth<SetConversationReadAllParameters>
-  ): Promise<SetConversationReadAllResponse> {
-    return this.request<SetConversationReadAllResponse>({
-      path: `conversations/${args.conversation_id}/read_all`,
+  public retrieveGroupConversation(
+    args: WithAuth<RetrieveGroupConversationParameters>
+  ): Promise<RetrieveGroupConversationResponse> {
+    return this.request<RetrieveGroupConversationResponse>({
+      path: `im_accounts/${args.account_id}/conversations/fetch`,
+      method: "get",
+      query: pick(args, ["group_id"]) as PlainQueryParams,
+      auth: args.auth,
+    })
+  }
+
+  public resetConversationUnread(
+    args: WithAuth<ResetConversationUnreadParameters>
+  ): Promise<ResetConversationUnreadResponse> {
+    return this.request<ResetConversationUnreadResponse>({
+      path: `conversations/${args.conversation_id}/reset_unread`,
       method: "post",
       body: {},
       auth: args.auth

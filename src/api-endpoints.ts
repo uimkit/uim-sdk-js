@@ -61,19 +61,25 @@ export type RetrieveConversationParameters = {
 
 export type RetrieveConversationResponse = Conversation
 
-export type CreateConversationParameters = {
+export type RetrieveContactConversationParameters = {
   account_id: string
-  user_id?: string
-  group_id?: string
+  user_id: string
 }
 
-export type CreateConversationResponse = Conversation
+export type RetrieveContactConversationResponse = Conversation
 
-export type SetConversationReadAllParameters = {
+export type RetrieveGroupConversationParameters = {
+  account_id: string
+  group_id: string
+}
+
+export type RetrieveGroupConversationResponse = Conversation
+
+export type ResetConversationUnreadParameters = {
   conversation_id: string
 }
 
-export type SetConversationReadAllResponse = Conversation
+export type ResetConversationUnreadResponse = Conversation
 
 export type RetrieveContactParameters = {
   account_id: string
