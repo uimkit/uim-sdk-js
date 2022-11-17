@@ -353,6 +353,8 @@ export type Message = Model<{
   succeeded?: boolean
   // 是否发送失败
   failed?: boolean
+  // 发送失败原因
+  failed_reason?: string
   // 扩展信息
   metadata?: unknown
   // 发送消息返回时透传的自定义数据
