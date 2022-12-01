@@ -1,7 +1,7 @@
 import { Agent } from "http"
 import { v4 as uuidv4 } from "uuid";
 import { isNode } from "browser-or-node"
-import { omit, pick, indexOf, head } from "lodash"
+import { omit, pick, indexOf } from "lodash"
 import {
   Logger,
   LogLevel,
@@ -53,17 +53,12 @@ import nodeFetch from "node-fetch"
 import { SupportedFetch } from "./fetch-types"
 import { SupportedPubSub, PubSubOptions, default as PubSub } from "./pubsub"
 import {
-  ConversationUpdatedEvent,
-  ConversationUpdatedHandler,
+  ConversationEvent,
+  ConversationHandler,
   Event,
   EventHandler,
   EventType,
-  MessageUpdatedEvent,
-  MessageUpdatedHandler,
-  NewConversationEvent,
-  NewConversationHandler,
-  NewMessageEvent,
-  NewMessageHandler,
+  MessageHandler,
 } from "./events"
 import { cursorListQueryParams, IMAccount, pageListQueryParams } from "./models"
 
@@ -495,27 +490,15 @@ export default class Client {
     })
   }
 
-  onNewMessage(handler: NewMessageHandler): void {
-    this.on(EventType.NEW_MESSAGE, (accountId, e) =>
-      handler(accountId, e as NewMessageEvent)
+  onMessage(handler: MessageHandler): void {
+    this.on(EventType.MESSAGE, (accountId, e) =>
+      handler(accountId, e as MessageEvent)
     )
   }
 
-  onMessageUpdated(handler: MessageUpdatedHandler): void {
-    this.on(EventType.MESSAGE_UPDATED, (accountId, e) =>
-      handler(accountId, e as MessageUpdatedEvent)
-    )
-  }
-
-  onNewConversation(handler: NewConversationHandler): void {
-    this.on(EventType.NEW_CONVERSATION, (accountId, e) =>
-      handler(accountId, e as NewConversationEvent)
-    )
-  }
-
-  onConversationUpdated(handler: ConversationUpdatedHandler): void {
-    this.on(EventType.CONVERSATION_UPDATED, (accountId, e) =>
-      handler(accountId, e as ConversationUpdatedEvent)
+  onConversation(handler: ConversationHandler): void {
+    this.on(EventType.CONVERSATION, (accountId, e) =>
+      handler(accountId, e as ConversationEvent)
     )
   }
 

@@ -56,6 +56,15 @@ export type WithTimestamps<T> = T & {
 
 export type Model<T> = WithTimestamps<WithMetadata<T>>
 
+export interface ClientEvent<T> {
+  // 与事件关联的请求ID
+  request_id?: string
+  // 事件类型
+  type: string
+  // 事件数据
+  data: T
+}
+
 export enum Gender {
   Unknown = 0,
   Male = 1,
@@ -357,8 +366,6 @@ export type Message = Model<{
   failed_reason?: string
   // 扩展信息
   metadata?: unknown
-  // 发送消息返回时透传的自定义数据
-  state?: string
 }>
 
 export enum MessageType {

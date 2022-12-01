@@ -1,47 +1,28 @@
 // cspell:disable-file
-import { CloudEvent } from "cloudevents"
-import { Conversation, Message } from "./models"
+import { ClientEvent, Conversation, Message } from "./models"
 
 export enum EventType {
-  // 会话信息
-  NEW_CONVERSATION = "uim.conversation:new",
-  // 会话更新
-  CONVERSATION_UPDATED = "uim.conversation:updated",
-  // 新消息
-  NEW_MESSAGE = "uim.message:new",
-  // 消息更新
-  MESSAGE_UPDATED = "uim.message:updated",
+  // 推送会话
+  CONVERSATION = "uim.conversation",
+  // 推送消息
+  MESSAGE = "uim.message",
 }
 
-export type NewConversationEvent = CloudEvent<Conversation>
-export type NewConversationHandler = (
+export type ConversationEvent = ClientEvent<Conversation>
+export type ConversationHandler = (
   accountId: string,
-  e: NewConversationEvent
+  e: ConversationEvent
 ) => void
 
-export type ConversationUpdatedEvent = CloudEvent<Conversation>
-export type ConversationUpdatedHandler = (
+export type MessageEvent = ClientEvent<Message>
+export type MessageHandler = (
   accountId: string,
-  e: ConversationUpdatedEvent
-) => void
-
-export type NewMessageEvent = CloudEvent<Message>
-export type NewMessageHandler = (
-  accountId: string,
-  e: NewMessageEvent
-) => void
-
-export type MessageUpdatedEvent = CloudEvent<Message>
-export type MessageUpdatedHandler = (
-  accountId: string,
-  e: MessageUpdatedEvent
+  e: MessageEvent
 ) => void
 
 export type Event =
-  | NewConversationEvent
-  | ConversationUpdatedEvent
-  | NewMessageEvent
-  | MessageUpdatedEvent
+  | ConversationEvent
+  | MessageEvent
 
 export type EventHandler = (
   accountId: string,

@@ -149,8 +149,6 @@ export type SendMessageDirectParameters = {
   voice?: VoiceMessageBody
   // 视频消息内容
   video?: VideoMessageBody
-  // 自定义数据，在返回中透传回来
-  state?: string
 }
 
 // 发送消息到会话
@@ -167,8 +165,6 @@ export type SendMessageToConversationParameters = {
   voice?: VoiceMessageBody
   // 视频消息内容
   video?: VideoMessageBody
-  // 自定义数据，在返回中透传回来
-  state?: string
 }
 
 // 发送消息，可以直接发送，也可以发送到会话
