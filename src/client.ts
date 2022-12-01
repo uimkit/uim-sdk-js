@@ -1,8 +1,7 @@
 import { Agent } from "http"
-import { base64url } from "rfc4648"
-import { toString } from "uint8arrays/to-string"
+import { v4 as uuidv4 } from "uuid";
 import { isNode } from "browser-or-node"
-import { omit, pick, indexOf } from "lodash"
+import { omit, pick, indexOf, head } from "lodash"
 import {
   Logger,
   LogLevel,
@@ -252,6 +251,8 @@ export default class Client {
     const headers: Record<string, string> = {
       ...authHeaders,
     }
+
+    headers['UIM-Request-ID'] = uuidv4()
 
     if (bodyAsJsonString !== undefined) {
       headers["content-type"] = "application/json"
