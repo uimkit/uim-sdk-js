@@ -173,3 +173,10 @@ export type SendMessageParameters =
   | SendMessageToConversationParameters
 
 export type SendMessageResponse = Message
+
+export type ResendMessageParameters = {
+  // 重发的消息id
+  id: string
+}
+
+export type ResendMessageResponse = Message

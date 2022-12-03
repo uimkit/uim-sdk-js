@@ -48,6 +48,8 @@ import {
   ResetConversationUnreadResponse,
   RetrieveGroupConversationParameters,
   RetrieveGroupConversationResponse,
+  ResendMessageParameters,
+  ResendMessageResponse,
 } from "./api-endpoints"
 import nodeFetch from "node-fetch"
 import { SupportedFetch } from "./fetch-types"
@@ -500,6 +502,17 @@ export default class Client {
       body: omit(args, ["auth"]),
       auth: args.auth,
       requestId
+    })
+  }
+
+  public resendMessage(
+    args: WithAuth<ResendMessageParameters>
+  ): Promise<ResendMessageResponse> {
+    return this.request<SendMessageResponse>({
+      path: "resend_message",
+      method: "post",
+      body: omit(args, ["auth"]),
+      auth: args.auth,
     })
   }
 
