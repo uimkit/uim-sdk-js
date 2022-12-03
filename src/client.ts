@@ -87,6 +87,7 @@ export interface RequestParameters {
   query?: QueryParams
   body?: Record<string, unknown>
   auth?: string
+  requestId?: string
 }
 
 export type AuthorizeCallback = (id: string | null) => void
@@ -108,6 +109,9 @@ export default class Client {
   _agent: Agent | undefined
   _channels: Array<string>
   _handlers: Record<string, Array<EventHandler>>
+  _callbacks: Record<string, Record<string, EventHandler>>
+  _callbackExpiries: Record<string, number>
+  _callbackExpiryTimer: unknown
   _messageEventListener?: (msgEvent: MessageEvent) => void
 
   public constructor(token: string, options?: ClientOptions) {
@@ -121,6 +125,9 @@ export default class Client {
     this._agent = options?.agent
     this._channels = []
     this._handlers = {}
+    this._callbacks = {}
+    this._callbackExpiries = {}
+    this._callbackExpiryTimer = setInterval(this.clearExpiredCallbacks.bind(this), 10000)
     this._pubsub =
       options?.pubsub ??
       new PubSub(options?.pubsubOptions ?? defaultPubSubOptions)
@@ -224,6 +231,7 @@ export default class Client {
     query,
     body,
     auth,
+    requestId
   }: RequestParameters): Promise<ResponseBody> {
     this.log(LogLevel.INFO, "request start", { method, path })
 
@@ -247,7 +255,7 @@ export default class Client {
       ...authHeaders,
     }
 
-    headers['UIM-Request-ID'] = uuidv4()
+    headers['UIM-Request-ID'] = requestId ?? uuidv4()
 
     if (bodyAsJsonString !== undefined) {
       headers["content-type"] = "application/json"
@@ -291,10 +299,6 @@ export default class Client {
 
       throw error
     }
-  }
-
-  public on(type: EventType, handler: EventHandler): void {
-    this._handlers[type] = [...(this._handlers[type] ?? []), handler]
   }
 
   public async listIMAccounts(
@@ -480,13 +484,22 @@ export default class Client {
   }
 
   public sendMessage(
-    args: WithAuth<SendMessageParameters>
+    args: WithAuth<SendMessageParameters>,
+    handler?: MessageHandler
   ): Promise<SendMessageResponse> {
+    const requestId = uuidv4()
+    if (handler) {
+      this.onCallback(
+        requestId, EventType.MESSAGE,
+        (accountId, e) => handler(accountId, e as MessageEvent)
+      )
+    }
     return this.request<SendMessageResponse>({
       path: "send_message",
       method: "post",
       body: omit(args, ["auth"]),
       auth: args.auth,
+      requestId
     })
   }
 
@@ -502,10 +515,44 @@ export default class Client {
     )
   }
 
+  public on(type: EventType, handler: EventHandler): void {
+    this._handlers[type] = [...(this._handlers[type] ?? []), handler]
+  }
+
+  private clearExpiredCallbacks() {
+    const now = new Date().getTime()
+    Object.keys(this._callbackExpiries).forEach(requestId => {
+      const expiry = this._callbackExpiries[requestId]!
+      if (expiry <= now) {
+        delete this._callbackExpiries[requestId]
+        delete this._callbacks[requestId]
+      }
+    })
+  }
+
+  private onCallback(requestId: string, type: string, handler: EventHandler) {
+    const callbacks = this._callbacks[requestId] ?? {}
+    callbacks[type] = handler
+    this._callbacks[requestId] = callbacks
+    this._callbackExpiries[requestId] = new Date().getTime() + 30000
+  }
+
   private onEvent(channel: string, e: unknown, _extra?: unknown) {
     // 队列名就是账号ID
     const accountId = channel
-    const handlers = this._handlers[(e as Event).type] ?? []
+    const evt = e as Event
+    if (evt.request_id) {
+      // 如果是回调，就先按照回调处理
+      const requestId = evt.request_id!
+      const callbacks = this._callbacks[requestId] ?? {}
+      const handler = callbacks[evt.type]
+      if (handler) {
+        handler(accountId, e)
+        return
+      }
+    }
+    // 不是回调，作为事件处理
+    const handlers = this._handlers[evt.type] ?? []
     handlers.forEach(h => h(accountId, e))
   }
 
