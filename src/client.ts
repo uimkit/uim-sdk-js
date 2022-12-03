@@ -78,6 +78,7 @@ export interface ClientOptions {
   agent?: Agent
   /** Options for pubsub */
   pubsubOptions?: PubSubOptions
+  errorHandler?: (e: unknown) => void
 }
 
 const defaultPubSubOptions: PubSubOptions = {
@@ -117,6 +118,7 @@ export default class Client {
   _callbackExpiries: Record<string, number>
   _callbackExpiryTimer: unknown
   _messageEventListener?: (msgEvent: MessageEvent) => void
+  _errorHandler?: (e: unknown) => void
 
   public constructor(token: string, options?: ClientOptions) {
     this._auth = token
@@ -137,6 +139,7 @@ export default class Client {
       new PubSub(options?.pubsubOptions ?? defaultPubSubOptions)
     this._pubsub.addListener(this.onEvent.bind(this))
     this._messageEventListener = undefined
+    this._errorHandler = options?.errorHandler
   }
 
   public async authorize(
@@ -288,6 +291,10 @@ export default class Client {
         return {} as ResponseBody
       }
     } catch (error: unknown) {
+      if (this._errorHandler) {
+        this._errorHandler(error)
+      }
+
       if (!isUIMClientError(error)) {
         throw error
       }
