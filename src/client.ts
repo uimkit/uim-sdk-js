@@ -50,6 +50,8 @@ import {
   RetrieveGroupConversationResponse,
   ResendMessageParameters,
   ResendMessageResponse,
+  DeleteMessageParameters,
+  DeleteMessageResponse,
 } from "./api-endpoints"
 import nodeFetch from "node-fetch"
 import { SupportedFetch } from "./fetch-types"
@@ -278,9 +280,13 @@ export default class Client {
         throw buildRequestError(response, responseText)
       }
 
-      const responseJson: ResponseBody = JSON.parse(responseText)
-      this.log(LogLevel.INFO, `request success`, { method, path })
-      return responseJson
+      if (responseText !== "") {
+        const responseJson: ResponseBody = JSON.parse(responseText)
+        this.log(LogLevel.INFO, `request success`, { method, path })
+        return responseJson
+      } else {
+        return {} as ResponseBody
+      }
     } catch (error: unknown) {
       if (!isUIMClientError(error)) {
         throw error
@@ -512,6 +518,16 @@ export default class Client {
       path: "resend_message",
       method: "post",
       body: omit(args, ["auth"]),
+      auth: args.auth,
+    })
+  }
+
+  public deleteMessage(
+    args: WithAuth<DeleteMessageParameters>
+  ): Promise<DeleteMessageResponse> {
+    return this.request<DeleteMessageResponse>({
+      path: `messages/${args.message_id}`,
+      method: "delete",
       auth: args.auth,
     })
   }

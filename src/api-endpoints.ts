@@ -176,7 +176,13 @@ export type SendMessageResponse = Message
 
 export type ResendMessageParameters = {
   // 重发的消息id
-  id: string
+  message_id: string
+}
+export type ResendMessageResponse = Message
+
+export type DeleteMessageParameters = {
+  // 消息id
+  message_id: string
 }
 
-export type ResendMessageResponse = Message
+export type DeleteMessageResponse = {}
