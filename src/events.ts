@@ -2,10 +2,14 @@
 import { ClientEvent, Conversation, Message } from "./models"
 
 export enum EventType {
-  // 推送会话
-  CONVERSATION = "uim.conversation",
-  // 推送消息
-  MESSAGE = "uim.message",
+  // 新会话
+  NEW_CONVERSATION = "uim.conversation:new",
+  // 会话更新
+  CONVERSAtiON_UPDATED = "uim.conversation:update",
+  // 新消息 
+  NEW_MESSAGE = "uim.message:new",
+  // 消息更新
+  MESSAGE_UPDATED = "uim.message:update"
 }
 
 export type ConversationEvent = ClientEvent<Conversation>

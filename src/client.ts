@@ -504,8 +504,8 @@ export default class Client {
   ): Promise<SendMessageResponse> {
     const requestId = uuidv4()
     if (handler) {
-      this.onCallback(
-        requestId, EventType.MESSAGE,
+      this.registerCallback(
+        requestId, EventType.MESSAGE_UPDATED,
         (accountId, e) => handler(accountId, e as MessageEvent)
       )
     }
@@ -539,34 +539,43 @@ export default class Client {
     })
   }
 
-  onMessage(handler: MessageHandler): void {
-    this.on(EventType.MESSAGE, (accountId, e) =>
+  onNewMessage(handler: MessageHandler): () => void {
+    return this.on(EventType.NEW_MESSAGE, (accountId, e) =>
       handler(accountId, e as MessageEvent)
     )
   }
 
-  onConversation(handler: ConversationHandler): void {
-    this.on(EventType.CONVERSATION, (accountId, e) =>
+  onMessageUpdated(handler: MessageHandler): () => void {
+    return this.on(EventType.MESSAGE_UPDATED, (accountId, e) =>
+      handler(accountId, e as MessageEvent)
+    )
+  }
+
+  onNewConversation(handler: ConversationHandler): () => void {
+    return this.on(EventType.NEW_CONVERSATION, (accountId, e) =>
       handler(accountId, e as ConversationEvent)
     )
   }
 
-  public on(type: EventType, handler: EventHandler): void {
+  onConversationUpdated(handler: ConversationHandler): () => void {
+    return this.on(EventType.CONVERSAtiON_UPDATED, (accountId, e) =>
+      handler(accountId, e as ConversationEvent)
+    )
+  }
+
+  public on(type: EventType, handler: EventHandler): () => void {
     this._handlers[type] = [...(this._handlers[type] ?? []), handler]
-  }
-
-  private clearExpiredCallbacks() {
-    const now = new Date().getTime()
-    Object.keys(this._callbackExpiries).forEach(requestId => {
-      const expiry = this._callbackExpiries[requestId]!
-      if (expiry <= now) {
-        delete this._callbackExpiries[requestId]
-        delete this._callbacks[requestId]
+    return () => {
+      const handlers = this._handlers[type] ?? []
+      const idx = handlers.findIndex(it => it === handler)
+      if (idx >= 0) {
+        handlers.splice(idx, 1)
       }
-    })
+      this._handlers[type] = [...handlers]
+    }
   }
 
-  private onCallback(requestId: string, type: string, handler: EventHandler) {
+  private registerCallback(requestId: string, type: string, handler: EventHandler) {
     const callbacks = this._callbacks[requestId] ?? {}
     callbacks[type] = handler
     this._callbacks[requestId] = callbacks
@@ -578,18 +587,35 @@ export default class Client {
     const accountId = channel
     const evt = e as Event
     if (evt.request_id) {
-      // 如果是回调，就先按照回调处理
-      const requestId = evt.request_id!
-      const callbacks = this._callbacks[requestId] ?? {}
-      const handler = callbacks[evt.type]
-      if (handler) {
-        handler(accountId, e)
+      if (this.invokeCallback(accountId, evt)) {
         return
       }
     }
     // 不是回调，作为事件处理
     const handlers = this._handlers[evt.type] ?? []
     handlers.forEach(h => h(accountId, e))
+  }
+
+  private invokeCallback(accountId: string, e: Event): boolean {
+    const requestId = e.request_id!
+    const callbacks = this._callbacks[requestId] ?? {}
+    const handler = callbacks[e.type]
+    if (handler) {
+      handler(accountId, e)
+      return true
+    }
+    return false
+  }
+
+  private clearExpiredCallbacks() {
+    const now = new Date().getTime()
+    Object.keys(this._callbackExpiries).forEach(requestId => {
+      const expiry = this._callbackExpiries[requestId]!
+      if (expiry <= now) {
+        delete this._callbackExpiries[requestId]
+        delete this._callbacks[requestId]
+      }
+    })
   }
 
   /**
