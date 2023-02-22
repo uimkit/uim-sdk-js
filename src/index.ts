@@ -2,6 +2,9 @@ import { Client } from "./client"
 
 export default Client
 
+export * from './api-endpoints'
+export * from './events'
+export * from './models'
 export { LogLevel, Logger } from "./logging"
 export {
   // Error codes
