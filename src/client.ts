@@ -1,6 +1,6 @@
-import { Agent } from "http"
 import { v4 as uuidv4 } from "uuid";
 import { isNode } from "browser-or-node"
+import jwtdecode from "jwt-decode";
 import { omit, pick, indexOf } from "lodash"
 import {
   Logger,
@@ -70,20 +70,12 @@ export interface ClientOptions {
   timeoutMs?: number
   baseUrl?: string
   logLevel?: LogLevel
-  logger?: Logger
   uimVersion?: string
-  fetch?: SupportedFetch
-  pubsub?: SupportedPubSub
-  /** Silently ignored in the browser */
-  agent?: Agent
   /** Options for pubsub */
-  pubsubOptions?: PubSubOptions
+  subscribeKey?: string,
+  publishKey?: string,
+  secretKey?: string,
   errorHandler?: (e: unknown) => void
-}
-
-const defaultPubSubOptions: PubSubOptions = {
-  subscribeKey: "",
-  uuid: "",
 }
 
 export interface RequestParameters {
@@ -111,7 +103,6 @@ export class Client {
   _timeoutMs: number
   _fetch: SupportedFetch
   _pubsub: SupportedPubSub
-  _agent: Agent | undefined
   _channels: Array<string>
   _handlers: Record<string, Array<EventHandler>>
   _callbacks: Record<string, Record<string, EventHandler>>
@@ -123,23 +114,26 @@ export class Client {
   public constructor(token: string, options?: ClientOptions) {
     this._auth = token
     this._logLevel = options?.logLevel ?? LogLevel.WARN
-    this._logger = options?.logger ?? makeConsoleLogger("uim-js")
+    this._logger = makeConsoleLogger("uim-js")
     this._prefixUrl = options?.baseUrl ?? "https://api.uimkit.chat/client/v1/"
     this._timeoutMs = options?.timeoutMs ?? 60_000
-    this._fetch =
-      options?.fetch ?? (isNode ? nodeFetch : window.fetch.bind(window))
-    this._agent = options?.agent
+    this._fetch = isNode ? nodeFetch : window.fetch.bind(window)
     this._channels = []
     this._handlers = {}
     this._callbacks = {}
     this._callbackExpiries = {}
     this._callbackExpiryTimer = setInterval(this.clearExpiredCallbacks.bind(this), 10000)
-    this._pubsub =
-      options?.pubsub ??
-      new PubSub(options?.pubsubOptions ?? defaultPubSubOptions)
-    this._pubsub.addListener(this.onEvent.bind(this))
     this._messageEventListener = undefined
     this._errorHandler = options?.errorHandler
+    const jwt = jwtdecode(token)
+    const pubsubOptions: PubSubOptions = {
+      uuid: (jwt as any).sub,
+      subscribeKey: options?.subscribeKey ?? "",
+      publishKey: options?.publishKey,
+      secretKey: options?.secretKey
+    }
+    this._pubsub = new PubSub(pubsubOptions)
+    this._pubsub.addListener(this.onEvent.bind(this))
   }
 
   public async authorize(
@@ -273,7 +267,6 @@ export class Client {
           method,
           headers,
           body: bodyAsJsonString,
-          agent: this._agent,
         }),
         this._timeoutMs
       )
