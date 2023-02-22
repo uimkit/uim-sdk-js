@@ -185,4 +185,4 @@ export type DeleteMessageParameters = {
   message_id: string
 }
 
-export type DeleteMessageResponse = {}
+export type DeleteMessageResponse = any
