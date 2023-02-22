@@ -1,6 +1,7 @@
-import { Client } from "./client"
+import { Client } from './client'
 
 export default Client
+export { ClientOptions } from './client'
 
 export * from './api-endpoints'
 export * from './events'
