@@ -1,7 +1,7 @@
-import { Client } from "./client"
+import { UIMClient } from "./client"
 
-export default Client
-export { ClientOptions } from "./client"
+export default UIMClient
+export { UIMClientOptions } from "./client"
 
 export * from "./api-endpoints"
 export * from "./events"

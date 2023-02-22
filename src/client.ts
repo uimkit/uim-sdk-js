@@ -66,7 +66,7 @@ import {
 } from "./events"
 import { cursorListQueryParams, IMAccount, pageListQueryParams } from "./models"
 
-export interface ClientOptions {
+export interface UIMClientOptions {
   timeoutMs?: number
   baseUrl?: string
   logLevel?: LogLevel
@@ -95,7 +95,7 @@ interface AuthorizeResult {
   error?: string
 }
 
-export class Client {
+export class UIMClient {
   _auth?: string
   _logLevel: LogLevel
   _logger: Logger
@@ -111,7 +111,7 @@ export class Client {
   _messageEventListener?: (msgEvent: MessageEvent) => void
   _errorHandler?: (e: unknown) => void
 
-  public constructor(token: string, options?: ClientOptions) {
+  public constructor(token: string, options?: UIMClientOptions) {
     this._auth = token
     this._logLevel = options?.logLevel ?? LogLevel.WARN
     this._logger = makeConsoleLogger("uim-js")
