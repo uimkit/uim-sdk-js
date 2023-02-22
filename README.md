@@ -22,7 +22,7 @@ npm install @uimkit/uim-js
 Import and initialize a client using an **integration token** or an OAuth **access token**.
 
 ```js
-const { Client } = require("@uimkit/uim-js")
+const Client = require("@uimkit/uim-js")
 
 // Initializing a client
 const client = new Client(process.env.ACCESS_TOKEN, {})
