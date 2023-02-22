@@ -1,4 +1,7 @@
-export { default as Client } from "./client"
+import { Client } from "./client"
+
+export default Client
+
 export { LogLevel, Logger } from "./logging"
 export {
   // Error codes

@@ -103,7 +103,7 @@ interface AuthorizeResult {
   error?: string
 }
 
-export default class Client {
+export class Client {
   _auth?: string
   _logLevel: LogLevel
   _logger: Logger
