@@ -1,6 +1,6 @@
 import { v4 as uuidv4 } from "uuid"
 import { isNode } from "browser-or-node"
-import jwtdecode from "jwt-decode"
+import jwtdecode, { JwtPayload } from "jwt-decode"
 import { omit, pick, indexOf } from "lodash"
 import {
   Logger,
@@ -128,9 +128,9 @@ export class Client {
     )
     this._messageEventListener = undefined
     this._errorHandler = options?.errorHandler
-    const jwt = jwtdecode(token)
+    const jwt = jwtdecode<JwtPayload>(token)
     const pubsubOptions: PubSubOptions = {
-      uuid: (jwt as any).sub,
+      uuid: jwt.sub ?? "",
       subscribeKey: options?.subscribeKey ?? "",
       publishKey: options?.publishKey,
       secretKey: options?.secretKey,
