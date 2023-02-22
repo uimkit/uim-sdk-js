@@ -6,10 +6,10 @@ export enum EventType {
   NEW_CONVERSATION = "uim.conversation:new",
   // 会话更新
   CONVERSAtiON_UPDATED = "uim.conversation:update",
-  // 新消息 
+  // 新消息
   NEW_MESSAGE = "uim.message:new",
   // 消息更新
-  MESSAGE_UPDATED = "uim.message:update"
+  MESSAGE_UPDATED = "uim.message:update",
 }
 
 export type ConversationEvent = ClientEvent<Conversation>
@@ -19,16 +19,8 @@ export type ConversationHandler = (
 ) => void
 
 export type MessageEvent = ClientEvent<Message>
-export type MessageHandler = (
-  accountId: string,
-  e: MessageEvent
-) => void
+export type MessageHandler = (accountId: string, e: MessageEvent) => void
 
-export type Event =
-  | ConversationEvent
-  | MessageEvent
+export type Event = ConversationEvent | MessageEvent
 
-export type EventHandler = (
-  accountId: string,
-  e: unknown
-) => void
+export type EventHandler = (accountId: string, e: unknown) => void

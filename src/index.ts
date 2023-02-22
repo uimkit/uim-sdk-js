@@ -1,11 +1,11 @@
-import { Client } from './client'
+import { Client } from "./client"
 
 export default Client
-export { ClientOptions } from './client'
+export { ClientOptions } from "./client"
 
-export * from './api-endpoints'
-export * from './events'
-export * from './models'
+export * from "./api-endpoints"
+export * from "./events"
+export * from "./models"
 export { LogLevel, Logger } from "./logging"
 export {
   // Error codes

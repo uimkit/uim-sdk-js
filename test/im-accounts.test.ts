@@ -4,7 +4,7 @@ const client = createClient()
 
 describe("im-accounts", () => {
   it("im-accounts-crud", async () => {
-    const listResp = await client.listIMAccounts({provider: 'douyin'})
+    const listResp = await client.listIMAccounts({ provider: "douyin" })
     // expect(listResp.data.length).toBeGreaterThan(0)
     // expect(listResp.extra.total).toBeGreaterThan(0)
     console.log(JSON.stringify(listResp, undefined, 4))

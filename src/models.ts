@@ -288,7 +288,7 @@ export type Conversation = Model<{
   id: string
   // 所属账号的IM用户ID
   account: string
-  // 平台 
+  // 平台
   provider: string
   // 消息收发地址
   channel: string
@@ -326,7 +326,7 @@ export enum MentionedType {
 export type Message = Model<{
   // 消息唯一ID
   id: string
-  // 平台 
+  // 平台
   provider: string
   // 平台消息ID
   message_id: string
@@ -340,7 +340,7 @@ export type Message = Model<{
   name?: string
   // 发消息的头像
   avatar?: string
-  // 消息类型 
+  // 消息类型
   type: MessageType
   // 文本消息内容
   text?: string

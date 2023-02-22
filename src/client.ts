@@ -1,6 +1,6 @@
-import { v4 as uuidv4 } from "uuid";
+import { v4 as uuidv4 } from "uuid"
 import { isNode } from "browser-or-node"
-import jwtdecode from "jwt-decode";
+import jwtdecode from "jwt-decode"
 import { omit, pick, indexOf } from "lodash"
 import {
   Logger,
@@ -72,9 +72,9 @@ export interface ClientOptions {
   logLevel?: LogLevel
   uimVersion?: string
   /** Options for pubsub */
-  subscribeKey?: string,
-  publishKey?: string,
-  secretKey?: string,
+  subscribeKey?: string
+  publishKey?: string
+  secretKey?: string
   errorHandler?: (e: unknown) => void
 }
 
@@ -122,7 +122,10 @@ export class Client {
     this._handlers = {}
     this._callbacks = {}
     this._callbackExpiries = {}
-    this._callbackExpiryTimer = setInterval(this.clearExpiredCallbacks.bind(this), 10000)
+    this._callbackExpiryTimer = setInterval(
+      this.clearExpiredCallbacks.bind(this),
+      10000
+    )
     this._messageEventListener = undefined
     this._errorHandler = options?.errorHandler
     const jwt = jwtdecode(token)
@@ -130,7 +133,7 @@ export class Client {
       uuid: (jwt as any).sub,
       subscribeKey: options?.subscribeKey ?? "",
       publishKey: options?.publishKey,
-      secretKey: options?.secretKey
+      secretKey: options?.secretKey,
     }
     this._pubsub = new PubSub(pubsubOptions)
     this._pubsub.addListener(this.onEvent.bind(this))
@@ -232,7 +235,7 @@ export class Client {
     query,
     body,
     auth,
-    requestId
+    requestId,
   }: RequestParameters): Promise<ResponseBody> {
     this.log(LogLevel.INFO, "request start", { method, path })
 
@@ -256,7 +259,7 @@ export class Client {
       ...authHeaders,
     }
 
-    headers['UIM-Request-ID'] = requestId ?? uuidv4()
+    headers["UIM-Request-ID"] = requestId ?? uuidv4()
 
     if (bodyAsJsonString !== undefined) {
       headers["content-type"] = "application/json"
@@ -463,7 +466,7 @@ export class Client {
       path: `conversations/${args.conversation_id}/reset_unread`,
       method: "post",
       body: {},
-      auth: args.auth
+      auth: args.auth,
     })
   }
 
@@ -498,7 +501,8 @@ export class Client {
     const requestId = uuidv4()
     if (handler) {
       this.registerCallback(
-        requestId, EventType.MESSAGE_UPDATED,
+        requestId,
+        EventType.MESSAGE_UPDATED,
         (accountId, e) => handler(accountId, e as MessageEvent)
       )
     }
@@ -507,7 +511,7 @@ export class Client {
       method: "post",
       body: omit(args, ["auth"]),
       auth: args.auth,
-      requestId
+      requestId,
     })
   }
 
@@ -568,7 +572,11 @@ export class Client {
     }
   }
 
-  private registerCallback(requestId: string, type: string, handler: EventHandler) {
+  private registerCallback(
+    requestId: string,
+    type: string,
+    handler: EventHandler
+  ) {
     const callbacks = this._callbacks[requestId] ?? {}
     callbacks[type] = handler
     this._callbacks[requestId] = callbacks
