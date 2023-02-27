@@ -64,7 +64,7 @@ import {
   EventType,
   MessageHandler,
 } from "./events"
-import { cursorListQueryParams, IMAccount, pageListQueryParams } from "./models"
+import { cursorListQueryParams, Account, pageListQueryParams } from "./models"
 
 export interface UIMClientOptions {
   timeoutMs?: number
@@ -652,7 +652,7 @@ export class UIMClient {
     return headers
   }
 
-  private channelName(account: IMAccount): string {
+  private channelName(account: Account): string {
     return account.id
   }
 }

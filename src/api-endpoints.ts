@@ -9,7 +9,7 @@ import {
   EmptyObject,
   Group,
   GroupMember,
-  IMAccount,
+  Account,
   ImageMessageBody,
   Message,
   MessageType,
@@ -25,7 +25,7 @@ export type RetrieveIMAccountParameters = {
   subscribe?: boolean
 }
 
-export type RetrieveIMAccountResponse = IMAccount
+export type RetrieveIMAccountResponse = Account
 
 export type ListIMAccountsParameters = PageListQueryParameters<EmptyObject> & {
   // 查询指定服务商的账号
@@ -34,7 +34,7 @@ export type ListIMAccountsParameters = PageListQueryParameters<EmptyObject> & {
   subscribe?: boolean
 }
 
-export type ListIMAccountsResponse = PageListResponse<IMAccount>
+export type ListIMAccountsResponse = PageListResponse<Account>
 
 export type ListContactsParameters = CursorListQueryParameters<EmptyObject> & {
   account_id: string
