@@ -550,36 +550,36 @@ export class UIMClient {
     from: string,
     to: string,
     conversation_type: ConversationType,
-    payload: string
+    text: string
   ): SendMessageDirectParameters {
-    return { from, to, conversation_type, payload, type: MessageType.Text }
+    return { from, to, conversation_type, text, type: MessageType.Text }
   }
 
   public createImageMessage(
     from: string,
     to: string,
     conversation_type: ConversationType,
-    payload: ImageMessagePayload
+    image: ImageMessagePayload
   ): SendMessageDirectParameters {
-    return { from, to, conversation_type, payload, type: MessageType.Image }
+    return { from, to, conversation_type, image, type: MessageType.Image }
   }
 
   public createAudioMessage(
     from: string,
     to: string,
     conversation_type: ConversationType,
-    payload: AudioMessagePayload
+    audio: AudioMessagePayload
   ): SendMessageDirectParameters {
-    return { from, to, conversation_type, payload, type: MessageType.Audio }
+    return { from, to, conversation_type, audio, type: MessageType.Audio }
   }
 
   public createVieoMessage(
     from: string,
     to: string,
     conversation_type: ConversationType,
-    payload: VideoMessagePayload
+    video: VideoMessagePayload
   ): SendMessageDirectParameters {
-    return { from, to, conversation_type, payload, type: MessageType.Video }
+    return { from, to, conversation_type, video, type: MessageType.Video }
   }
 
   onNewMessage(handler: MessageHandler): () => void {

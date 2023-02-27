@@ -15,7 +15,9 @@ import {
   Moment,
   PageListQueryParameters,
   PageListResponse,
-  MessagePayload,
+  ImageMessagePayload,
+  AudioMessagePayload,
+  VideoMessagePayload,
 } from "./models"
 
 export type RetrieveIMAccountParameters = {
@@ -139,8 +141,14 @@ export type SendMessageDirectParameters = {
   conversation_type: ConversationType
   // 消息类型
   type: MessageType
-  // 消息内容
-  payload: MessagePayload
+  // 文本消息内容
+  text?: string
+  // 图片消息内容
+  image?: ImageMessagePayload
+  // 音频消息内容
+  audio?: AudioMessagePayload
+  // 视频消息内容
+  video?: VideoMessagePayload
 }
 
 // 发送消息到会话
@@ -149,8 +157,14 @@ export type SendMessageToConversationParameters = {
   conversation_id: string
   // 消息类型
   type: MessageType
-  // 消息内容
-  payload: MessagePayload
+  // 文本消息内容
+  text?: string
+  // 图片消息内容
+  image?: ImageMessagePayload
+  // 音频消息内容
+  audio?: AudioMessagePayload
+  // 视频消息内容
+  video?: VideoMessagePayload
 }
 
 // 发送消息，可以直接发送，也可以发送到会话

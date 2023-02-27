@@ -361,8 +361,10 @@ export interface Message {
   avatar?: string
   // 消息类型
   type: MessageType
-  // 消息内容
-  payload: MessagePayload
+  // 文本消息内容
+  text?: string
+  // 图片消息内容
+  image?: ImageMessagePayload
   // 语音消息内容
   audio?: AudioMessagePayload
   // 视频消息内容
@@ -382,13 +384,6 @@ export interface Message {
   // 扩展信息
   metadata?: Record<string, unknown>
 }
-
-// 消息内容
-export type MessagePayload =
-  | string
-  | ImageMessagePayload
-  | AudioMessagePayload
-  | VideoMessagePayload
 
 // 图片消息内容
 export interface ImageMessagePayload {
