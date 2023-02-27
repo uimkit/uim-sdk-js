@@ -608,11 +608,11 @@ export interface VideoMomentContent {
 export interface Comment {
   // 评论ID
   id: string
-  // 评论用户ID
+  // 发表评论用户ID
   user_id: string
-  // 评论用户名称
+  // 发表评论用户名称
   name?: string
-  // 评论用户头像
+  // 发表评论用户头像
   avatar?: string
   // 评论文案
   text?: string
