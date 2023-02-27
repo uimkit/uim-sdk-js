@@ -10,14 +10,12 @@ import {
   Group,
   GroupMember,
   Account,
-  ImageMessageBody,
   Message,
   MessageType,
   Moment,
   PageListQueryParameters,
   PageListResponse,
-  VideoMessageBody,
-  VoiceMessageBody,
+  MessagePayload,
 } from "./models"
 
 export type RetrieveIMAccountParameters = {
@@ -141,14 +139,8 @@ export type SendMessageDirectParameters = {
   conversation_type: ConversationType
   // 消息类型
   type: MessageType
-  // 文本消息内容
-  text?: string
-  // 图片消息内容
-  image?: ImageMessageBody
-  // 语音消息内容
-  voice?: VoiceMessageBody
-  // 视频消息内容
-  video?: VideoMessageBody
+  // 消息内容
+  payload: MessagePayload
 }
 
 // 发送消息到会话
@@ -157,14 +149,8 @@ export type SendMessageToConversationParameters = {
   conversation_id: string
   // 消息类型
   type: MessageType
-  // 文本消息内容
-  text?: string
-  // 图片消息内容
-  image?: ImageMessageBody
-  // 语音消息内容
-  voice?: VoiceMessageBody
-  // 视频消息内容
-  video?: VideoMessageBody
+  // 消息内容
+  payload: MessagePayload
 }
 
 // 发送消息，可以直接发送，也可以发送到会话

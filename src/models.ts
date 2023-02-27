@@ -35,15 +35,14 @@ export interface CursorList<T> {
   data: Array<T>
 }
 
-
 // 性别
 export enum Gender {
   // 未设置
-  Unknown = 'unknown',
+  Unknown = "unknown",
   // 男
-  Male = 'male',
+  Male = "male",
   // 女
-  Female = 'female',
+  Female = "female",
 }
 
 // 用户资料
@@ -101,13 +100,13 @@ export interface UserProfile {
 // 在线状态
 export enum Precense {
   // 在线
-  Active = 'active',
+  Active = "active",
   // 掉线
-  Disconnected = 'disconnected',
+  Disconnected = "disconnected",
   // 停用
-  Disabled = 'disabled',
+  Disabled = "disabled",
   // 封号
-  Banned = 'banned'
+  Banned = "banned",
 }
 
 // 账号
@@ -315,7 +314,7 @@ export enum MessageType {
   // 音乐消息
   Music = "music",
   // 笔记消息
-  Note = "note"
+  Note = "note",
 }
 
 // 消息发送状态
@@ -327,7 +326,7 @@ export enum MessageStatus {
   // 发送成功
   Succeeded = "succeeded",
   // 发送失败
-  Failed = "failed"
+  Failed = "failed",
 }
 
 // 消息发送方向
@@ -335,7 +334,7 @@ export enum MessageFlow {
   // 接收消息
   In = "in",
   // 发出消息
-  Out = "out"
+  Out = "out",
 }
 
 // 消息
@@ -387,7 +386,7 @@ export interface Message {
 // 消息内容
 export type MessagePayload =
   | string
-  | ImageMessageBody
+  | ImageMessagePayload
   | AudioMessagePayload
   | VideoMessagePayload
 
@@ -481,12 +480,12 @@ export interface Group {
 
 // 群成员角色
 export enum GroupMemberRole {
-  // 普通成员 
+  // 普通成员
   Member = "member",
   // 管理员
   Admin = "admin",
   // 群主
-  Owner = "owner"
+  Owner = "owner",
 }
 
 // 群成员
@@ -507,7 +506,7 @@ export interface GroupMember {
   avatar?: string
   // 性别
   gender?: Gender
-  // 群昵称
+  // 群内昵称
   alias?: string
   // 入群时间
   joined_at?: Date
@@ -525,7 +524,7 @@ export enum MomentType {
   // 图片动态
   Image = "image",
   // 视频动态
-  Video = "video"
+  Video = "video",
 }
 
 // 用户动态
@@ -562,9 +561,7 @@ export interface Moment {
   metadata?: Record<string, unknown>
 }
 
-export type MomentContent =
-  | Array<ImageMomentContent>
-  | VideoMomentContent
+export type MomentContent = Array<ImageMomentContent> | VideoMomentContent
 
 // 图片动态内容
 export interface ImageMomentContent {
@@ -670,7 +667,6 @@ export type CursorListResponse<T> = {
   data: Array<T>
 }
 
-
 export interface ClientEvent<T> {
   // 与事件关联的请求ID
   request_id?: string
@@ -678,45 +674,6 @@ export interface ClientEvent<T> {
   type: string
   // 事件数据
   data: T
-}
-
-export type ImageMessageBody = {
-  url: string
-  width?: number
-  height?: number
-  size?: number
-  ext?: string
-  md5?: string
-  thumb?: {
-    url: string
-    width?: number
-    height?: number
-    ext?: string
-  }
-}
-
-export type VoiceMessageBody = {
-  url: string
-  duration?: number
-  size?: number
-  ext?: string
-  md5?: string
-}
-
-export type VideoMessageBody = {
-  url: string
-  duration?: number
-  width?: number
-  height?: number
-  size?: number
-  ext?: string
-  md5?: string
-  thumb?: {
-    url: string
-    width?: number
-    height?: number
-    ext?: string
-  }
 }
 
 // 翻页查询结果信息

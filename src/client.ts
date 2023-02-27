@@ -52,6 +52,7 @@ import {
   ResendMessageResponse,
   DeleteMessageParameters,
   DeleteMessageResponse,
+  SendMessageDirectParameters,
 } from "./api-endpoints"
 import nodeFetch from "node-fetch"
 import { SupportedFetch } from "./fetch-types"
@@ -64,7 +65,16 @@ import {
   EventType,
   MessageHandler,
 } from "./events"
-import { cursorListQueryParams, Account, pageListQueryParams } from "./models"
+import {
+  cursorListQueryParams,
+  Account,
+  pageListQueryParams,
+  ConversationType,
+  MessageType,
+  ImageMessagePayload,
+  AudioMessagePayload,
+  VideoMessagePayload,
+} from "./models"
 
 export interface UIMClientOptions {
   timeoutMs?: number
@@ -534,6 +544,42 @@ export class UIMClient {
       method: "delete",
       auth: args.auth,
     })
+  }
+
+  public createTextMessage(
+    from: string,
+    to: string,
+    conversation_type: ConversationType,
+    payload: string
+  ): SendMessageDirectParameters {
+    return { from, to, conversation_type, payload, type: MessageType.Text }
+  }
+
+  public createImageMessage(
+    from: string,
+    to: string,
+    conversation_type: ConversationType,
+    payload: ImageMessagePayload
+  ): SendMessageDirectParameters {
+    return { from, to, conversation_type, payload, type: MessageType.Image }
+  }
+
+  public createAudioMessage(
+    from: string,
+    to: string,
+    conversation_type: ConversationType,
+    payload: AudioMessagePayload
+  ): SendMessageDirectParameters {
+    return { from, to, conversation_type, payload, type: MessageType.Audio }
+  }
+
+  public createVieoMessage(
+    from: string,
+    to: string,
+    conversation_type: ConversationType,
+    payload: VideoMessagePayload
+  ): SendMessageDirectParameters {
+    return { from, to, conversation_type, payload, type: MessageType.Video }
   }
 
   onNewMessage(handler: MessageHandler): () => void {
