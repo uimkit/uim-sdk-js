@@ -25,6 +25,7 @@ export interface SupportedPubSub {
     options?: PublishOptions
   ) => Promise<void>
   subscribe: (channels: Array<string>, options?: SubscribeOptions) => void
+  unsubscribe: (channels: Array<string>) => void
   addListener: (listener: Listener) => void
 }
 
@@ -57,6 +58,10 @@ export default class PubSub {
 
   subscribe(channels: Array<string>, options?: SubscribeOptions): void {
     this._client.subscribe({ channels, ...(options ?? {}) })
+  }
+
+  unsubscribe(channels: Array<string>): void {
+    this._client.unsubscribe({ channels })
   }
 
   addListener(listener: Listener): void {

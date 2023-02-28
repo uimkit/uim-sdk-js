@@ -14,6 +14,12 @@ export interface PageList<T> {
   data: Array<T>
 }
 
+// 翻页查询请求
+export type PageListParameters<T> = T & {
+  offset?: number
+  limit?: number
+}
+
 // 游标
 export type Cursor = string | number
 
@@ -349,6 +355,8 @@ export interface Message {
   message_id: string
   // 所属会话ID
   conversation_id: string
+  // 所属会话类型
+  conversation_type: ConversationType
   // 发送人ID
   from: string
   // 接收人ID/接受群组ID
@@ -636,8 +644,6 @@ export type PageListQueryParameters<T> = T & {
   offset?: number
   limit?: number
 }
-
-export const pageListQueryParams = ["offset", "limit"]
 
 export type CursorDirection = "after" | "before"
 

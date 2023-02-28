@@ -14,10 +14,10 @@ import {
   isUIMClientError,
   RequestTimeoutError,
 } from "./errors"
-import { createQueryParams, createRandomString } from "./helpers"
+import { createQueryParams, createRandomString, popup } from "./helpers"
 import {
-  ListIMAccountsParameters,
-  ListIMAccountsResponse,
+  ListAccountsParameters,
+  ListAccountsResponse,
   ListContactsParameters,
   ListContactsResponse,
   ListGroupsParameters,
@@ -30,8 +30,6 @@ import {
   ListMomentsResponse,
   ListMessagesParameters,
   ListMessagesResponse,
-  RetrieveIMAccountParameters,
-  RetrieveIMAccountResponse,
   RetrieveContactParameters,
   RetrieveContactResponse,
   RetrieveGroupParameters,
@@ -68,7 +66,6 @@ import {
 import {
   cursorListQueryParams,
   Account,
-  pageListQueryParams,
   ConversationType,
   MessageType,
   ImageMessagePayload,
@@ -76,6 +73,9 @@ import {
   VideoMessagePayload,
 } from "./models"
 
+/**
+ * UIMClient 构造选项
+ */
 export interface UIMClientOptions {
   timeoutMs?: number
   baseUrl?: string
@@ -88,20 +88,15 @@ export interface UIMClientOptions {
   errorHandler?: (e: unknown) => void
 }
 
-export interface RequestParameters {
-  path: string
-  method: Method
-  query?: QueryParams
-  body?: Record<string, unknown>
-  auth?: string
-  requestId?: string
-}
-
-export type AuthorizeCallback = (id: string | null) => void
-
+/**
+ * 账号授权结果
+ */
 interface AuthorizeResult {
+  // 账号ID
   id?: string
+  // 回传的自定义参数
   state?: string
+  // 错误信息
   error?: string
 }
 
@@ -149,15 +144,22 @@ export class UIMClient {
     this._pubsub.addListener(this.onEvent.bind(this))
   }
 
+  /**
+   * 开始授权账号流程
+   *
+   * @param provider
+   * @param cb
+   * @returns
+   */
   public async authorize(
     provider: string,
-    cb?: AuthorizeCallback
-  ): Promise<string | null> {
+    cb?: (id?: string) => void
+  ): Promise<string | undefined> {
     const state = createRandomString(16)
     const token = this._auth ?? ""
     const params = { provider, token, state }
     const url = `${this._prefixUrl}authorize?${createQueryParams(params)}`
-    const win = this.popup(url, "uim-authorize-window")
+    const win = popup(url, "uim-authorize-window")
     if (!win) {
       throw new Error("open authorize window error")
     }
@@ -183,8 +185,8 @@ export class UIMClient {
 
     if (!res) {
       // 授权页窗口被用户关闭了
-      cb && cb(null)
-      return null
+      cb && cb()
+      return
     }
 
     if (res.error) {
@@ -199,6 +201,11 @@ export class UIMClient {
     return res.id!
   }
 
+  /**
+   * 监听账号授权结果
+   *
+   * @returns
+   */
   private async listenToAuthorizeResult(): Promise<AuthorizeResult> {
     const { origin } = new URL(this._prefixUrl)
     return new Promise<AuthorizeResult>(resolve => {
@@ -219,34 +226,14 @@ export class UIMClient {
     })
   }
 
-  private popup(url: string, title: string): Window | null {
-    const dualScreenLeft = window.screenLeft ?? window.screenX
-    const dualScreenTop = window.screenTop ?? window.screenY
-    const windowWidth =
-      window.innerWidth ?? document.documentElement.clientWidth ?? screen.width
-    const windowHeight =
-      window.innerHeight ??
-      document.documentElement.clientHeight ??
-      screen.height
-    const width = Math.min(800, windowWidth / 2)
-    const height = Math.min(600, windowHeight / 2)
-    const left = (windowWidth - width) / 2 + dualScreenLeft
-    const top = (windowHeight - height) / 2 + dualScreenTop
-    return window.open(
-      url,
-      title,
-      `scrollbars=yes, width=${width}, height=${height}, top=${top}, left=${left}`
-    )
-  }
-
-  public async request<ResponseBody>({
-    path,
-    method,
-    query,
-    body,
-    auth,
-    requestId,
-  }: RequestParameters): Promise<ResponseBody> {
+  /**
+   * 发起HTTP请求调用
+   *
+   * @param parameters
+   * @returns
+   */
+  private async request<T>(parameters: RequestParameters): Promise<T> {
+    const { path, method, query, body, auth, requestId } = parameters
     this.log(LogLevel.INFO, "request start", { method, path })
 
     // If the body is empty, don't send the body in the HTTP request
@@ -265,15 +252,12 @@ export class UIMClient {
     }
 
     const authHeaders = await this.authAsHeaders(auth)
-    const headers: Record<string, string> = {
-      ...authHeaders,
-    }
-
+    const headers: Record<string, string> = { ...authHeaders }
     headers["UIM-Request-ID"] = requestId ?? uuidv4()
-
     if (bodyAsJsonString !== undefined) {
       headers["content-type"] = "application/json"
     }
+
     try {
       const response = await RequestTimeoutError.rejectAfterTimeout(
         this._fetch(url.toString(), {
@@ -290,11 +274,11 @@ export class UIMClient {
       }
 
       if (responseText !== "") {
-        const responseJson: ResponseBody = JSON.parse(responseText)
+        const responseJson: T = JSON.parse(responseText)
         this.log(LogLevel.INFO, `request success`, { method, path })
         return responseJson
       } else {
-        return {} as ResponseBody
+        return {} as T
       }
     } catch (error: unknown) {
       if (this._errorHandler) {
@@ -322,21 +306,24 @@ export class UIMClient {
     }
   }
 
-  public async listIMAccounts(
-    args: WithAuth<ListIMAccountsParameters>
-  ): Promise<ListIMAccountsResponse> {
-    const resp = await this.request<ListIMAccountsResponse>({
+  /**
+   * 查询账号列表
+   *
+   * @param args
+   * @returns
+   */
+  public async listAccounts(
+    args: ListAccountsParameters
+  ): Promise<ListAccountsResponse> {
+    const resp = await this.request<ListAccountsResponse>({
       method: "get",
       path: "im_accounts",
-      query: pick(args, [
-        ...pageListQueryParams,
-        "provider",
-      ]) as PlainQueryParams,
-      auth: args.auth,
+      query: pick(args, ["offset", "limit", "provider"]) as PlainQueryParams,
     })
     if (args.subscribe && resp.data.length > 0) {
+      // 只需要订阅之前没有订阅过的
       const channels = resp.data
-        .map(it => this.channelName(it))
+        .map(it => it.id)
         .filter(it => indexOf(this._channels, it) < 0)
       this._channels = [...channels, ...this._channels]
       this._pubsub.subscribe(this._channels)
@@ -344,155 +331,160 @@ export class UIMClient {
     return resp
   }
 
-  public async retrieveIMAccount(
-    args: WithAuth<RetrieveIMAccountParameters>
-  ): Promise<RetrieveIMAccountResponse> {
-    const resp = await this.request<RetrieveIMAccountResponse>({
-      path: `im_accounts/${args.account_id}`,
+  /**
+   * 获取账号详情
+   * 
+   * @param {string} id 账号ID 
+   * @param {boolean} subscribe 是否订阅账号的事件
+   * @returns 
+   */
+  public async getAccount(id: string, subscribe?: boolean): Promise<Account> {
+    const account = await this.request<Account>({
+      path: `im_accounts/${id}`,
       method: "get",
-      auth: args.auth,
     })
-    if (args.subscribe) {
-      const channel = this.channelName(resp)
-      if (indexOf(this._channels, channel) < 0) {
-        this._channels = [channel, ...this._channels]
+    if (subscribe) {
+      // 注意不需要重复订阅
+      if (indexOf(this._channels, account.id) < 0) {
+        this._channels = [account.id, ...this._channels]
         this._pubsub.subscribe(this._channels)
       }
     }
-    return resp
+    return account
+  }
+
+  /**
+   * 账号退出登录
+   * 
+   * @param {string} id 账号ID 
+   */
+  public async logout(id: string) {
+    await this.request({ path: `im_accounts/${id}/logout`, method: "post" })
+    // 取消订阅账号
+    if (indexOf(this._channels, id) >= 0) {
+      this._pubsub.unsubscribe([id])
+    }
   }
 
   public async listContacts(
-    args: WithAuth<ListContactsParameters>
+    args: ListContactsParameters
   ): Promise<ListContactsResponse> {
     return this.request<ListContactsResponse>({
       path: `im_accounts/${args.account_id}/contacts`,
       method: "get",
       query: pick(args, [...cursorListQueryParams]) as PlainQueryParams,
-      auth: args.auth,
     })
   }
 
   public async retrieveContact(
-    args: WithAuth<RetrieveContactParameters>
+    args: RetrieveContactParameters
   ): Promise<RetrieveContactResponse> {
     return this.request<RetrieveContactResponse>({
       path: `im_accounts/${args.account_id}/contacts/${args.user_id}`,
       method: "get",
-      auth: args.auth,
     })
   }
 
   public async addContact(
-    args: WithAuth<AddContactParameters>
+    args: AddContactParameters
   ): Promise<AddContactResponse> {
     return this.request<AddContactResponse>({
       path: `im_accounts/${args.account_id}/contacts/add`,
       method: "post",
       body: omit(args, ["auth", "account_id"]),
-      auth: args.auth,
     })
   }
 
   public async listGroups(
-    args: WithAuth<ListGroupsParameters>
+    args: ListGroupsParameters
   ): Promise<ListGroupsResponse> {
     return this.request<ListGroupsResponse>({
       path: `im_accounts/${args.account_id}/groups`,
       method: "get",
-      query: pick(args, [...pageListQueryParams]) as PlainQueryParams,
-      auth: args.auth,
+      query: pick(args, ["offset", "limit"]) as PlainQueryParams,
     })
   }
 
   public async retrieveGroup(
-    args: WithAuth<RetrieveGroupParameters>
+    args: RetrieveGroupParameters
   ): Promise<RetrieveGroupResponse> {
     return this.request<RetrieveGroupResponse>({
       path: `im_accounts/${args.account_id}/groups/${args.group_id}`,
       method: "get",
-      auth: args.auth,
     })
   }
 
   public listGroupMembers(
-    args: WithAuth<ListGroupMembersParameters>
+    args: ListGroupMembersParameters
   ): Promise<ListGroupMembersResponse> {
     return this.request<ListGroupMembersResponse>({
       path: `groups/${args.group_id}/members`,
       method: "get",
-      query: pick(args, [...pageListQueryParams]) as PlainQueryParams,
-      auth: args.auth,
+      query: pick(args, ["offset", "limit"]) as PlainQueryParams,
     })
   }
 
   public listConversations(
-    args: WithAuth<ListConversationsParameters>
+    args: ListConversationsParameters
   ): Promise<ListConversationsResponse> {
     return this.request<ListConversationsResponse>({
       path: `im_accounts/${args.account_id}/conversations`,
       method: "get",
       query: pick(args, [...cursorListQueryParams]) as PlainQueryParams,
-      auth: args.auth,
     })
   }
 
   public retrieveConversation(
-    args: WithAuth<RetrieveConversationParameters>
+    args: RetrieveConversationParameters
   ): Promise<RetrieveConversationResponse> {
     return this.request<RetrieveConversationResponse>({
       path: `conversations/${args.conversation_id}`,
       method: "get",
-      auth: args.auth,
     })
   }
 
   public retrieveContactConversation(
-    args: WithAuth<RetrieveContactConversationParameters>
+    args: RetrieveContactConversationParameters
   ): Promise<RetrieveContactConversationResponse> {
     return this.request<RetrieveContactConversationResponse>({
       path: `im_accounts/${args.account_id}/conversations/fetch`,
       method: "get",
       query: pick(args, ["user_id"]) as PlainQueryParams,
-      auth: args.auth,
     })
   }
 
   public retrieveGroupConversation(
-    args: WithAuth<RetrieveGroupConversationParameters>
+    args: RetrieveGroupConversationParameters
   ): Promise<RetrieveGroupConversationResponse> {
     return this.request<RetrieveGroupConversationResponse>({
       path: `im_accounts/${args.account_id}/conversations/fetch`,
       method: "get",
       query: pick(args, ["group_id"]) as PlainQueryParams,
-      auth: args.auth,
     })
   }
 
   public resetConversationUnread(
-    args: WithAuth<ResetConversationUnreadParameters>
+    args: ResetConversationUnreadParameters
   ): Promise<ResetConversationUnreadResponse> {
     return this.request<ResetConversationUnreadResponse>({
       path: `conversations/${args.conversation_id}/reset_unread`,
       method: "post",
       body: {},
-      auth: args.auth,
     })
   }
 
   public listMessages(
-    args: WithAuth<ListMessagesParameters>
+    args: ListMessagesParameters
   ): Promise<ListMessagesResponse> {
     return this.request<ListMessagesResponse>({
       path: `conversations/${args.conversation_id}/messages`,
       method: "get",
       query: pick(args, [...cursorListQueryParams]) as PlainQueryParams,
-      auth: args.auth,
     })
   }
 
   public listMoments(
-    args: WithAuth<ListMomentsParameters>
+    args: ListMomentsParameters
   ): Promise<ListMomentsResponse> {
     return this.request<ListMomentsResponse>({
       path: args.user_id
@@ -500,12 +492,11 @@ export class UIMClient {
         : `im_accounts/${args.account_id}/moments`,
       method: "get",
       query: pick(args, [...cursorListQueryParams]) as PlainQueryParams,
-      auth: args.auth,
     })
   }
 
   public sendMessage(
-    args: WithAuth<SendMessageParameters>,
+    args: SendMessageParameters,
     handler?: MessageHandler
   ): Promise<SendMessageResponse> {
     const requestId = uuidv4()
@@ -520,29 +511,26 @@ export class UIMClient {
       path: "send_message",
       method: "post",
       body: omit(args, ["auth"]),
-      auth: args.auth,
       requestId,
     })
   }
 
   public resendMessage(
-    args: WithAuth<ResendMessageParameters>
+    args: ResendMessageParameters
   ): Promise<ResendMessageResponse> {
     return this.request<SendMessageResponse>({
       path: "resend_message",
       method: "post",
       body: omit(args, ["auth"]),
-      auth: args.auth,
     })
   }
 
   public deleteMessage(
-    args: WithAuth<DeleteMessageParameters>
+    args: DeleteMessageParameters
   ): Promise<DeleteMessageResponse> {
     return this.request<DeleteMessageResponse>({
       path: `messages/${args.message_id}`,
       method: "delete",
-      auth: args.auth,
     })
   }
 
@@ -697,17 +685,22 @@ export class UIMClient {
     headers["authorization"] = `Bearer ${authHeaderValue}`
     return headers
   }
-
-  private channelName(account: Account): string {
-    return account.id
-  }
 }
 
 /*
  * Type aliases to support the generic request interface.
  */
 type Method = "get" | "post" | "patch" | "delete"
+
 type PlainQueryParams = Record<string, string | number | boolean>
+
 type QueryParams = PlainQueryParams | URLSearchParams
 
-type WithAuth<P> = P & { auth?: string }
+interface RequestParameters {
+  path: string
+  method: Method
+  query?: QueryParams
+  body?: Record<string, unknown>
+  auth?: string
+  requestId?: string
+}

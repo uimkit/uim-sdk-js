@@ -18,23 +18,20 @@ import {
   ImageMessagePayload,
   AudioMessagePayload,
   VideoMessagePayload,
+  PageListParameters,
+  PageList,
 } from "./models"
 
-export type RetrieveIMAccountParameters = {
-  account_id: string
-  subscribe?: boolean
-}
-
-export type RetrieveIMAccountResponse = Account
-
-export type ListIMAccountsParameters = PageListQueryParameters<EmptyObject> & {
+// 查询账号列表请求
+export type ListAccountsParameters = PageListParameters<{
   // 查询指定服务商的账号
   provider?: string
   // 获得账号后是否订阅账号事件
   subscribe?: boolean
-}
+}>
 
-export type ListIMAccountsResponse = PageListResponse<Account>
+// 查询账号列表结果
+export type ListAccountsResponse = PageList<Account>
 
 export type ListContactsParameters = CursorListQueryParameters<EmptyObject> & {
   account_id: string

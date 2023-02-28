@@ -46,3 +46,28 @@ export function createQueryParams(
     .map(k => encodeURIComponent(k) + "=" + encodeURIComponent(params[k]!))
     .join("&")
 }
+
+/**
+ * 弹出子窗口
+ *
+ * @param url
+ * @param title
+ * @returns
+ */
+export function popup(url: string, title: string): Window | null {
+  const dualScreenLeft = window.screenLeft ?? window.screenX
+  const dualScreenTop = window.screenTop ?? window.screenY
+  const windowWidth =
+    window.innerWidth ?? document.documentElement.clientWidth ?? screen.width
+  const windowHeight =
+    window.innerHeight ?? document.documentElement.clientHeight ?? screen.height
+  const width = Math.min(800, windowWidth / 2)
+  const height = Math.min(600, windowHeight / 2)
+  const left = (windowWidth - width) / 2 + dualScreenLeft
+  const top = (windowHeight - height) / 2 + dualScreenTop
+  return window.open(
+    url,
+    title,
+    `scrollbars=yes, width=${width}, height=${height}, top=${top}, left=${left}`
+  )
+}
