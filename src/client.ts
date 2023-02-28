@@ -957,7 +957,7 @@ export class UIMClient {
   }
 
   onConversationUpdated(handler: ConversationHandler): () => void {
-    return this.on(EventType.CONVERSAtiON_UPDATED, (accountId, e) =>
+    return this.on(EventType.CONVERSATION_UPDATED, (accountId, e) =>
       handler(accountId, e as ConversationEvent)
     )
   }
