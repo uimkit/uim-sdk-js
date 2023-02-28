@@ -43,7 +43,6 @@
     "node-fetch": "^2.6.1",
     "rfc4648": "^1.5.2",
     "uint8arrays": "^3.1.1",
-    "uuid": "^9.0.0",
     "webpubsub-js": "^1.0.2"
   },
   "devDependencies": {

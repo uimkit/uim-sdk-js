@@ -16,12 +16,27 @@ export interface PageList<T> {
 
 // 翻页查询请求
 export type PageListParameters<T> = T & {
+  // 查询起始位置
   offset?: number
+  // 查询数量
   limit?: number
 }
 
 // 游标
 export type Cursor = string | number
+
+// 游标方向
+export type CursorDirection = "after" | "before"
+
+// 游标查询请求
+export type CursorListParameters<T> = T & {
+  // 游标
+  cursor?: Cursor
+  // 查询方向
+  direction?: CursorDirection
+  // 查询数量
+  limit?: number
+}
 
 // 游标查询结果
 export interface CursorList<T> {
@@ -638,36 +653,6 @@ export interface Like {
 
 // TODO deprecated
 
-export type EmptyObject = Record<string, unknown>
-
-export type PageListQueryParameters<T> = T & {
-  offset?: number
-  limit?: number
-}
-
-export type CursorDirection = "after" | "before"
-
-export type CursorListQueryParameters<T> = T & {
-  cursor?: Cursor
-  direction?: CursorDirection
-  limit?: number
-}
-
-export const cursorListQueryParams = ["cursor", "direction", "limit"]
-
-export type CursorListExtra = {
-  start_cursor?: Cursor
-  end_cursor?: Cursor
-  has_previous: boolean
-  has_next: boolean
-  limit: number
-}
-
-export type CursorListResponse<T> = {
-  extra: CursorListExtra
-  data: Array<T>
-}
-
 export interface ClientEvent<T> {
   // 与事件关联的请求ID
   request_id?: string
@@ -675,20 +660,4 @@ export interface ClientEvent<T> {
   type: string
   // 事件数据
   data: T
-}
-
-// 翻页查询结果信息
-export type PageListExtra = {
-  // 查询起始位置
-  offset: number
-  // 查询数量
-  limit: number
-  // 总数量
-  total: number
-}
-
-// 翻页查询结果
-export type PageListResponse<T> = {
-  extra: PageListExtra
-  data: Array<T>
 }

@@ -1,25 +1,17 @@
 // cspell:disable-file
 
 import {
+  PageListParameters,
+  PageList,
+  CursorListParameters,
+  CursorList,
   Contact,
   Conversation,
-  ConversationType,
-  CursorListQueryParameters,
-  CursorListResponse,
-  EmptyObject,
   Group,
   GroupMember,
   Account,
   Message,
-  MessageType,
   Moment,
-  PageListQueryParameters,
-  PageListResponse,
-  ImageMessagePayload,
-  AudioMessagePayload,
-  VideoMessagePayload,
-  PageListParameters,
-  PageList,
 } from "./models"
 
 // 查询账号列表请求
@@ -33,58 +25,33 @@ export type ListAccountsParameters = PageListParameters<{
 // 查询账号列表结果
 export type ListAccountsResponse = PageList<Account>
 
-export type ListContactsParameters = CursorListQueryParameters<EmptyObject> & {
+// 查询好友列表请求
+export type ListContactsParameters = CursorListParameters<{
+  // 查询指定账号的好友列表
   account_id: string
-}
+}>
 
-export type ListContactsResponse = CursorListResponse<Contact>
+// 查询好友列表结果
+export type ListContactsResponse = CursorList<Contact>
 
-export type ListGroupsParameters = PageListQueryParameters<EmptyObject> & {
+// 查询群组列表
+export type ListGroupsParameters = PageListParameters<{
+  // 查询指定账号的群组列表
   account_id: string
-}
+}>
 
-export type ListGroupsResponse = PageListResponse<Group>
+// 查询群组列表结果
+export type ListGroupsResponse = PageList<Group>
 
-export type ListConversationsParameters =
-  CursorListQueryParameters<EmptyObject> & {
-    account_id: string
-  }
-
-export type ListConversationsResponse = CursorListResponse<Conversation>
-
-export type RetrieveConversationParameters = {
-  conversation_id: string
-}
-
-export type RetrieveConversationResponse = Conversation
-
-export type RetrieveContactConversationParameters = {
+// 查询会话列表请求
+export type ListConversationsParameters = CursorListParameters<{
   account_id: string
-  user_id: string
-}
+}>
 
-export type RetrieveContactConversationResponse = Conversation
+// 查询会话列表结果
+export type ListConversationsResponse = CursorList<Conversation>
 
-export type RetrieveGroupConversationParameters = {
-  account_id: string
-  group_id: string
-}
-
-export type RetrieveGroupConversationResponse = Conversation
-
-export type ResetConversationUnreadParameters = {
-  conversation_id: string
-}
-
-export type ResetConversationUnreadResponse = Conversation
-
-export type RetrieveContactParameters = {
-  account_id: string
-  user_id: string
-}
-
-export type RetrieveContactResponse = Contact
-
+// 添加好友请求
 export type AddContactParameters = {
   // 账号ID
   account_id: string
@@ -94,6 +61,7 @@ export type AddContactParameters = {
   hello_message?: string
 }
 
+// 添加好友结果
 export type AddContactResponse = {
   // 好友申请是否发送成功
   success: boolean
@@ -101,85 +69,55 @@ export type AddContactResponse = {
   reason?: string
 }
 
-export type RetrieveGroupParameters = {
-  account_id: string
+// 查询群成员列表请求
+export type ListGroupMembersParameters = PageListParameters<{
   group_id: string
-}
+}>
 
-export type RetrieveGroupResponse = Group
+// 查询群成员列表结果
+export type ListGroupMembersResponse = PageList<GroupMember>
 
-export type ListGroupMembersParameters =
-  PageListQueryParameters<EmptyObject> & {
-    group_id: string
-  }
-
-export type ListGroupMembersResponse = PageListResponse<GroupMember>
-
-export type ListMomentsParameters = CursorListQueryParameters<EmptyObject> & {
-  account_id: string
-  user_id?: string
-}
-
-export type ListMomentsResponse = CursorListResponse<Moment>
-
-export type ListMessagesParameters = CursorListQueryParameters<EmptyObject> & {
+// 查询消息列表请求
+export type ListMessagesParameters = CursorListParameters<{
   conversation_id: string
-}
+}>
 
-export type ListMessagesResponse = CursorListResponse<Message>
+// 查询消息列表结果
+export type ListMessagesResponse = CursorList<Message>
+
+// 查询账号的动态列表请求
+export type ListAccountMomentsParameters = CursorListParameters<{
+  account_id: string
+}>
+
+// 查询好友的动态列表请求
+export type ListContactMomentsParameters = CursorListParameters<{
+  contact_id: string
+}>
+
+// 查询动态列表结果
+export type ListMomentsResponse = CursorList<Moment>
 
 // 直接发送消息给目标
-export type SendMessageDirectParameters = {
-  // 发送方，是账号的IM用户ID
-  from: string
-  // 接收方，私聊消息时对方的IM用户ID，群聊消息时群ID
-  to: string
-  // 会话类型，用于识别接收方是私聊还是群聊
-  conversation_type: ConversationType
-  // 消息类型
-  type: MessageType
-  // 文本消息内容
-  text?: string
-  // 图片消息内容
-  image?: ImageMessagePayload
-  // 音频消息内容
-  audio?: AudioMessagePayload
-  // 视频消息内容
-  video?: VideoMessagePayload
-}
+export type SendMessageDirectParameters = Pick<
+  Message,
+  | "from"
+  | "to"
+  | "conversation_type"
+  | "type"
+  | "text"
+  | "image"
+  | "audio"
+  | "video"
+>
 
 // 发送消息到会话
-export type SendMessageToConversationParameters = {
-  // 会话ID
-  conversation_id: string
-  // 消息类型
-  type: MessageType
-  // 文本消息内容
-  text?: string
-  // 图片消息内容
-  image?: ImageMessagePayload
-  // 音频消息内容
-  audio?: AudioMessagePayload
-  // 视频消息内容
-  video?: VideoMessagePayload
-}
+export type SendMessageToConversationParameters = Pick<
+  Message,
+  "conversation_id" | "type" | "text" | "image" | "audio" | "video"
+>
 
 // 发送消息，可以直接发送，也可以发送到会话
 export type SendMessageParameters =
   | SendMessageDirectParameters
   | SendMessageToConversationParameters
-
-export type SendMessageResponse = Message
-
-export type ResendMessageParameters = {
-  // 重发的消息id
-  message_id: string
-}
-export type ResendMessageResponse = Message
-
-export type DeleteMessageParameters = {
-  // 消息id
-  message_id: string
-}
-
-export type DeleteMessageResponse = any

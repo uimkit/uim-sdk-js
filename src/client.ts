@@ -1,4 +1,3 @@
-import { v4 as uuidv4 } from "uuid"
 import { isNode } from "browser-or-node"
 import jwtdecode, { JwtPayload } from "jwt-decode"
 import { omit, pick, indexOf } from "lodash"
@@ -26,31 +25,15 @@ import {
   ListConversationsResponse,
   ListGroupMembersParameters,
   ListGroupMembersResponse,
-  ListMomentsParameters,
   ListMomentsResponse,
   ListMessagesParameters,
   ListMessagesResponse,
-  RetrieveContactParameters,
-  RetrieveContactResponse,
-  RetrieveGroupParameters,
-  RetrieveGroupResponse,
-  RetrieveConversationParameters,
-  RetrieveConversationResponse,
-  RetrieveContactConversationParameters,
-  RetrieveContactConversationResponse,
   AddContactParameters,
   AddContactResponse,
   SendMessageParameters,
-  SendMessageResponse,
-  ResetConversationUnreadParameters,
-  ResetConversationUnreadResponse,
-  RetrieveGroupConversationParameters,
-  RetrieveGroupConversationResponse,
-  ResendMessageParameters,
-  ResendMessageResponse,
-  DeleteMessageParameters,
-  DeleteMessageResponse,
   SendMessageDirectParameters,
+  ListAccountMomentsParameters,
+  ListContactMomentsParameters,
 } from "./api-endpoints"
 import nodeFetch from "node-fetch"
 import { SupportedFetch } from "./fetch-types"
@@ -64,13 +47,17 @@ import {
   MessageHandler,
 } from "./events"
 import {
-  cursorListQueryParams,
   Account,
   ConversationType,
   MessageType,
   ImageMessagePayload,
   AudioMessagePayload,
   VideoMessagePayload,
+  Contact,
+  Group,
+  GroupMember,
+  Conversation,
+  Message,
 } from "./models"
 
 /**
@@ -110,9 +97,6 @@ export class UIMClient {
   _pubsub: SupportedPubSub
   _channels: Array<string>
   _handlers: Record<string, Array<EventHandler>>
-  _callbacks: Record<string, Record<string, EventHandler>>
-  _callbackExpiries: Record<string, number>
-  _callbackExpiryTimer: unknown
   _messageEventListener?: (msgEvent: MessageEvent) => void
   _errorHandler?: (e: unknown) => void
 
@@ -125,12 +109,6 @@ export class UIMClient {
     this._fetch = isNode ? nodeFetch : window.fetch.bind(window)
     this._channels = []
     this._handlers = {}
-    this._callbacks = {}
-    this._callbackExpiries = {}
-    this._callbackExpiryTimer = setInterval(
-      this.clearExpiredCallbacks.bind(this),
-      10000
-    )
     this._messageEventListener = undefined
     this._errorHandler = options?.errorHandler
     const jwt = jwtdecode<JwtPayload>(token)
@@ -233,7 +211,7 @@ export class UIMClient {
    * @returns
    */
   private async request<T>(parameters: RequestParameters): Promise<T> {
-    const { path, method, query, body, auth, requestId } = parameters
+    const { path, method, query, body, auth } = parameters
     this.log(LogLevel.INFO, "request start", { method, path })
 
     // If the body is empty, don't send the body in the HTTP request
@@ -253,7 +231,6 @@ export class UIMClient {
 
     const authHeaders = await this.authAsHeaders(auth)
     const headers: Record<string, string> = { ...authHeaders }
-    headers["UIM-Request-ID"] = requestId ?? uuidv4()
     if (bodyAsJsonString !== undefined) {
       headers["content-type"] = "application/json"
     }
@@ -333,10 +310,10 @@ export class UIMClient {
 
   /**
    * 获取账号详情
-   * 
-   * @param {string} id 账号ID 
+   *
+   * @param {string} id 账号ID
    * @param {boolean} subscribe 是否订阅账号的事件
-   * @returns 
+   * @returns
    */
   public async getAccount(id: string, subscribe?: boolean): Promise<Account> {
     const account = await this.request<Account>({
@@ -355,8 +332,8 @@ export class UIMClient {
 
   /**
    * 账号退出登录
-   * 
-   * @param {string} id 账号ID 
+   *
+   * @param {string} id 账号ID
    */
   public async logout(id: string) {
     await this.request({ path: `im_accounts/${id}/logout`, method: "post" })
@@ -366,170 +343,351 @@ export class UIMClient {
     }
   }
 
+  /**
+   * 查询好友列表
+   *
+   * @param parameters
+   * @returns
+   */
   public async listContacts(
-    args: ListContactsParameters
+    parameters: ListContactsParameters
   ): Promise<ListContactsResponse> {
     return this.request<ListContactsResponse>({
-      path: `im_accounts/${args.account_id}/contacts`,
+      path: `im_accounts/${parameters.account_id}/contacts`,
       method: "get",
-      query: pick(args, [...cursorListQueryParams]) as PlainQueryParams,
+      query: pick(parameters, [
+        "cursor",
+        "direction",
+        "limit",
+      ]) as PlainQueryParams,
     })
   }
 
-  public async retrieveContact(
-    args: RetrieveContactParameters
-  ): Promise<RetrieveContactResponse> {
-    return this.request<RetrieveContactResponse>({
-      path: `im_accounts/${args.account_id}/contacts/${args.user_id}`,
+  /**
+   * 获取好友详情
+   *
+   * @param {string} id 好友id
+   * @returns
+   */
+  public async getContact(id: string): Promise<Contact> {
+    return this.request<Contact>({
+      path: `contacts/${id}`,
       method: "get",
     })
   }
 
+  /**
+   * 删除好友
+   *
+   * @param id
+   */
+  public async deleteContact(id: string) {
+    await this.request({ path: `contacts/${id}`, method: "delete" })
+  }
+
+  /**
+   * 添加好友
+   *
+   * @param parameters
+   * @returns
+   */
   public async addContact(
-    args: AddContactParameters
+    parameters: AddContactParameters
   ): Promise<AddContactResponse> {
     return this.request<AddContactResponse>({
-      path: `im_accounts/${args.account_id}/contacts/add`,
+      path: `im_accounts/${parameters.account_id}/contacts/add`,
       method: "post",
-      body: omit(args, ["auth", "account_id"]),
+      body: omit(parameters, ["auth", "account_id"]),
     })
   }
 
+  public async acceptContact() {
+    // TODO
+  }
+
+  /**
+   * 查询群组列表
+   *
+   * @param parameters
+   * @returns
+   */
   public async listGroups(
-    args: ListGroupsParameters
+    parameters: ListGroupsParameters
   ): Promise<ListGroupsResponse> {
     return this.request<ListGroupsResponse>({
-      path: `im_accounts/${args.account_id}/groups`,
+      path: `im_accounts/${parameters.account_id}/groups`,
       method: "get",
-      query: pick(args, ["offset", "limit"]) as PlainQueryParams,
+      query: pick(parameters, ["offset", "limit"]) as PlainQueryParams,
     })
   }
 
-  public async retrieveGroup(
-    args: RetrieveGroupParameters
-  ): Promise<RetrieveGroupResponse> {
-    return this.request<RetrieveGroupResponse>({
-      path: `im_accounts/${args.account_id}/groups/${args.group_id}`,
+  /**
+   * 获取群组详情
+   *
+   * @param id
+   * @returns
+   */
+  public async getGroup(id: string): Promise<Group> {
+    return this.request<Group>({
+      path: `groups/${id}`,
       method: "get",
     })
   }
 
+  public async createGroup() {
+    //TODO
+  }
+
+  public async quitGroup() {
+    //TODO
+  }
+
+  public async dismissGroup() {
+    //TODO
+  }
+
+  public async transferGroup() {
+    // TODO
+  }
+
+  /**
+   * 查询群成员列表
+   *
+   * @param parameters
+   * @returns
+   */
   public listGroupMembers(
-    args: ListGroupMembersParameters
+    parameters: ListGroupMembersParameters
   ): Promise<ListGroupMembersResponse> {
     return this.request<ListGroupMembersResponse>({
-      path: `groups/${args.group_id}/members`,
+      path: `groups/${parameters.group_id}/members`,
       method: "get",
-      query: pick(args, ["offset", "limit"]) as PlainQueryParams,
+      query: pick(parameters, ["offset", "limit"]) as PlainQueryParams,
     })
   }
 
+  /**
+   * 获取群成员详情
+   *
+   * @param id
+   * @returns
+   */
+  public getGroupMember(id: string): Promise<GroupMember> {
+    return this.request<GroupMember>({
+      path: `group_members/${id}`,
+      method: "get",
+    })
+  }
+
+  public async inviteGroupMember() {
+    // TODO
+  }
+
+  public async acceptGroupMember() {
+    // TODO
+  }
+
+  public async kickGroupMember() {
+    // TODO
+  }
+
+  public async appointGroupMemberRole() {
+    // TODO
+  }
+
+  /**
+   * 查询会话列表
+   *
+   * @param parameters
+   * @returns
+   */
   public listConversations(
-    args: ListConversationsParameters
+    parameters: ListConversationsParameters
   ): Promise<ListConversationsResponse> {
     return this.request<ListConversationsResponse>({
-      path: `im_accounts/${args.account_id}/conversations`,
+      path: `im_accounts/${parameters.account_id}/conversations`,
       method: "get",
-      query: pick(args, [...cursorListQueryParams]) as PlainQueryParams,
+      query: pick(parameters, [
+        "cursor",
+        "direction",
+        "limit",
+      ]) as PlainQueryParams,
     })
   }
 
-  public retrieveConversation(
-    args: RetrieveConversationParameters
-  ): Promise<RetrieveConversationResponse> {
-    return this.request<RetrieveConversationResponse>({
-      path: `conversations/${args.conversation_id}`,
+  /**
+   * 获取会话详情
+   *
+   * @param id
+   * @returns
+   */
+  public getConversation(id: string): Promise<Conversation> {
+    return this.request<Conversation>({
+      path: `conversations/${id}`,
       method: "get",
     })
   }
 
-  public retrieveContactConversation(
-    args: RetrieveContactConversationParameters
-  ): Promise<RetrieveContactConversationResponse> {
-    return this.request<RetrieveContactConversationResponse>({
-      path: `im_accounts/${args.account_id}/conversations/fetch`,
+  /**
+   * 获取和好友的会话详情
+   *
+   * @param account_id
+   * @param contact_id
+   * @returns
+   */
+  public getConversationWithContact(
+    account_id: string,
+    contact_id: string
+  ): Promise<Conversation> {
+    return this.request<Conversation>({
+      path: `im_accounts/${account_id}/contacts/${contact_id}/conversation`,
       method: "get",
-      query: pick(args, ["user_id"]) as PlainQueryParams,
     })
   }
 
-  public retrieveGroupConversation(
-    args: RetrieveGroupConversationParameters
-  ): Promise<RetrieveGroupConversationResponse> {
-    return this.request<RetrieveGroupConversationResponse>({
-      path: `im_accounts/${args.account_id}/conversations/fetch`,
+  /**
+   * 获取和群组的会话详情
+   *
+   * @param account_id
+   * @param group_id
+   * @returns
+   */
+  public getConversationWithGroup(
+    account_id: string,
+    group_id: string
+  ): Promise<Conversation> {
+    return this.request<Conversation>({
+      path: `im_accounts/${account_id}/groups/${group_id}/conversation`,
       method: "get",
-      query: pick(args, ["group_id"]) as PlainQueryParams,
     })
   }
 
-  public resetConversationUnread(
-    args: ResetConversationUnreadParameters
-  ): Promise<ResetConversationUnreadResponse> {
-    return this.request<ResetConversationUnreadResponse>({
-      path: `conversations/${args.conversation_id}/reset_unread`,
+  /**
+   * 设置会话所有消息已读
+   *
+   * @param id
+   * @returns
+   */
+  public setConversationRead(id: string): Promise<Conversation> {
+    return this.request<Conversation>({
+      path: `conversations/${id}/read`,
       method: "post",
       body: {},
     })
   }
 
+  /**
+   * 删除会话
+   *
+   * @param id
+   */
+  public async deleteConversation(id: string) {
+    await this.request({
+      path: `conversations/${id}`,
+      method: "delete",
+    })
+  }
+
+  /**
+   * 查询会话的消息列表
+   *
+   * @param args
+   * @returns
+   */
   public listMessages(
-    args: ListMessagesParameters
+    parameters: ListMessagesParameters
   ): Promise<ListMessagesResponse> {
     return this.request<ListMessagesResponse>({
-      path: `conversations/${args.conversation_id}/messages`,
+      path: `conversations/${parameters.conversation_id}/messages`,
       method: "get",
-      query: pick(args, [...cursorListQueryParams]) as PlainQueryParams,
+      query: pick(parameters, [
+        "cursor",
+        "direction",
+        "limit",
+      ]) as PlainQueryParams,
     })
   }
 
-  public listMoments(
-    args: ListMomentsParameters
+  /**
+   * 查询账号的动态列表
+   *
+   * @param parameters
+   * @returns
+   */
+  public listAccountMoments(
+    parameters: ListAccountMomentsParameters
   ): Promise<ListMomentsResponse> {
     return this.request<ListMomentsResponse>({
-      path: args.user_id
-        ? `im_accounts/${args.account_id}/contacts/${args.user_id}/moments`
-        : `im_accounts/${args.account_id}/moments`,
+      path: `im_accounts/${parameters.account_id}/moments`,
       method: "get",
-      query: pick(args, [...cursorListQueryParams]) as PlainQueryParams,
+      query: pick(parameters, [
+        "cursor",
+        "direction",
+        "limit",
+      ]) as PlainQueryParams,
     })
   }
 
-  public sendMessage(
-    args: SendMessageParameters,
-    handler?: MessageHandler
-  ): Promise<SendMessageResponse> {
-    const requestId = uuidv4()
-    if (handler) {
-      this.registerCallback(
-        requestId,
-        EventType.MESSAGE_UPDATED,
-        (accountId, e) => handler(accountId, e as MessageEvent)
-      )
-    }
-    return this.request<SendMessageResponse>({
+  /**
+   * 查询好友的动态列表
+   *
+   * @param parameters
+   * @returns
+   */
+  public listContactMoments(
+    parameters: ListContactMomentsParameters
+  ): Promise<ListMomentsResponse> {
+    return this.request<ListMomentsResponse>({
+      path: `contacts/${parameters.contact_id}/moments`,
+      method: "get",
+      query: pick(parameters, [
+        "cursor",
+        "direction",
+        "limit",
+      ]) as PlainQueryParams,
+    })
+  }
+
+  public listMomentComments() {
+    // TODO
+  }
+
+  /**
+   * 发送消息
+   *
+   * @param parameters
+   * @returns
+   */
+  public sendMessage(parameters: SendMessageParameters): Promise<Message> {
+    return this.request<Message>({
       path: "send_message",
       method: "post",
-      body: omit(args, ["auth"]),
-      requestId,
+      body: parameters,
     })
   }
 
-  public resendMessage(
-    args: ResendMessageParameters
-  ): Promise<ResendMessageResponse> {
-    return this.request<SendMessageResponse>({
+  /**
+   * 重发消息
+   *
+   * @param message_id
+   * @returns
+   */
+  public resendMessage(message_id: string): Promise<Message> {
+    return this.request<Message>({
       path: "resend_message",
       method: "post",
-      body: omit(args, ["auth"]),
+      body: { message_id },
     })
   }
 
-  public deleteMessage(
-    args: DeleteMessageParameters
-  ): Promise<DeleteMessageResponse> {
-    return this.request<DeleteMessageResponse>({
-      path: `messages/${args.message_id}`,
+  /**
+   * 删除消息
+   *
+   * @param id
+   */
+  public async deleteMessage(id: string) {
+    await this.request({
+      path: `messages/${id}`,
       method: "delete",
     })
   }
@@ -606,51 +764,12 @@ export class UIMClient {
     }
   }
 
-  private registerCallback(
-    requestId: string,
-    type: string,
-    handler: EventHandler
-  ) {
-    const callbacks = this._callbacks[requestId] ?? {}
-    callbacks[type] = handler
-    this._callbacks[requestId] = callbacks
-    this._callbackExpiries[requestId] = new Date().getTime() + 30000
-  }
-
   private onEvent(channel: string, e: unknown, _extra?: unknown) {
     // 队列名就是账号ID
     const accountId = channel
     const evt = e as Event
-    if (evt.request_id) {
-      if (this.invokeCallback(accountId, evt)) {
-        return
-      }
-    }
-    // 不是回调，作为事件处理
     const handlers = this._handlers[evt.type] ?? []
     handlers.forEach(h => h(accountId, e))
-  }
-
-  private invokeCallback(accountId: string, e: Event): boolean {
-    const requestId = e.request_id!
-    const callbacks = this._callbacks[requestId] ?? {}
-    const handler = callbacks[e.type]
-    if (handler) {
-      handler(accountId, e)
-      return true
-    }
-    return false
-  }
-
-  private clearExpiredCallbacks() {
-    const now = new Date().getTime()
-    Object.keys(this._callbackExpiries).forEach(requestId => {
-      const expiry = this._callbackExpiries[requestId]!
-      if (expiry <= now) {
-        delete this._callbackExpiries[requestId]
-        delete this._callbacks[requestId]
-      }
-    })
   }
 
   /**
@@ -702,5 +821,4 @@ interface RequestParameters {
   query?: QueryParams
   body?: Record<string, unknown>
   auth?: string
-  requestId?: string
 }
