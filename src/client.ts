@@ -49,7 +49,7 @@ import {
   SendTextMessageParameters,
   SendImageMessageParameters,
   SendAudioMessageParameters,
-  SendVideoMessageParameters
+  SendVideoMessageParameters,
 } from "./api-endpoints"
 import nodeFetch from "node-fetch"
 import { SupportedFetch } from "./fetch-types"

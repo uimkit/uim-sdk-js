@@ -13,6 +13,10 @@ describe("messages", () => {
     })
     client.createTextMessage({ conversation_id: "", text: "" })
 
-    client.createImageMessage({ conversation_type: ConversationType.Private, from: "", to: "" })
+    client.createImageMessage({
+      conversation_type: ConversationType.Private,
+      from: "",
+      to: "",
+    })
   })
 })
