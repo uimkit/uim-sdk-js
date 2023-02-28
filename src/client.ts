@@ -33,6 +33,15 @@ import {
   SendMessageParameters,
   ListAccountMomentsParameters,
   ListContactMomentsParameters,
+  CreateGroupParameters,
+  TransferGroupParameters,
+  ListFriendApplicationsParameters,
+  ListFriendApplicationsResponse,
+  InviteGroupMembersParameters,
+  InviteGroupMembersResponse,
+  SetGroupMemberRoleParameters,
+  ListGroupApplicationsParameters,
+  ListGruopApplicationsResponse,
 } from "./api-endpoints"
 import nodeFetch from "node-fetch"
 import { SupportedFetch } from "./fetch-types"
@@ -289,14 +298,18 @@ export class UIMClient {
    * @returns
    */
   public async listAccounts(
-    args: ListAccountsParameters
+    parameters: ListAccountsParameters
   ): Promise<ListAccountsResponse> {
     const resp = await this.request<ListAccountsResponse>({
       method: "get",
       path: "im_accounts",
-      query: pick(args, ["offset", "limit", "provider"]) as PlainQueryParams,
+      query: pick(parameters, [
+        "offset",
+        "limit",
+        "provider",
+      ]) as PlainQueryParams,
     })
-    if (args.subscribe && resp.data.length > 0) {
+    if (parameters.subscribe && resp.data.length > 0) {
       // 只需要订阅之前没有订阅过的
       const channels = resp.data
         .map(it => it.id)
@@ -348,7 +361,7 @@ export class UIMClient {
    * @param parameters
    * @returns
    */
-  public async listContacts(
+  public listContacts(
     parameters: ListContactsParameters
   ): Promise<ListContactsResponse> {
     return this.request<ListContactsResponse>({
@@ -368,7 +381,7 @@ export class UIMClient {
    * @param {string} id 好友id
    * @returns
    */
-  public async getContact(id: string): Promise<Contact> {
+  public getContact(id: string): Promise<Contact> {
     return this.request<Contact>({
       path: `contacts/${id}`,
       method: "get",
@@ -385,23 +398,65 @@ export class UIMClient {
   }
 
   /**
+   * 星标好友
+   *
+   * @param id
+   */
+  public async markContact(id: string) {
+    await this.request({ path: `contacts/${id}/mark`, method: "post" })
+  }
+
+  /**
+   * 取消星标好友
+   *
+   * @param id
+   */
+  public async unmarkContact(id: string) {
+    await this.request({ path: `contacts/${id}/unmark`, method: "post" })
+  }
+
+  /**
    * 添加好友
    *
    * @param parameters
-   * @returns
+   * @returns 返回好友申请发送结果，成功仅代表好友申请发送成功
    */
-  public async addContact(
+  public addContact(
     parameters: AddContactParameters
   ): Promise<AddContactResponse> {
     return this.request<AddContactResponse>({
       path: `im_accounts/${parameters.account_id}/contacts/add`,
       method: "post",
-      body: omit(parameters, ["auth", "account_id"]),
+      body: omit(parameters, ["account_id"]),
     })
   }
 
-  public async acceptContact() {
-    // TODO
+  /**
+   * 查询账号的好友请求列表
+   *
+   * @param parameters
+   * @returns
+   */
+  public listFriendApplications(
+    parameters: ListFriendApplicationsParameters
+  ): Promise<ListFriendApplicationsResponse> {
+    return this.request<ListFriendApplicationsResponse>({
+      path: `im_accounts/${parameters.account_id}/friend_applications`,
+      method: "get",
+      query: pick(parameters, ["offset", "limit"]) as PlainQueryParams,
+    })
+  }
+
+  /**
+   * 通过好友申请
+   *
+   * @param {string} application_id 好友申请ID
+   */
+  public async acceptFriendApplication(application_id: string) {
+    await this.request({
+      path: `friend_applications/${application_id}/accept`,
+      method: "post",
+    })
   }
 
   /**
@@ -410,7 +465,7 @@ export class UIMClient {
    * @param parameters
    * @returns
    */
-  public async listGroups(
+  public listGroups(
     parameters: ListGroupsParameters
   ): Promise<ListGroupsResponse> {
     return this.request<ListGroupsResponse>({
@@ -426,27 +481,93 @@ export class UIMClient {
    * @param id
    * @returns
    */
-  public async getGroup(id: string): Promise<Group> {
+  public getGroup(id: string): Promise<Group> {
     return this.request<Group>({
       path: `groups/${id}`,
       method: "get",
     })
   }
 
-  public async createGroup() {
-    //TODO
+  /**
+   * 创建群组
+   *
+   * @param parameters
+   */
+  public createGroup(parameters: CreateGroupParameters): Promise<Group> {
+    return this.request<Group>({
+      path: `im_accounts/${parameters.account_id}/groups`,
+      method: "post",
+      body: omit(parameters, ["account_id"]),
+    })
   }
 
-  public async quitGroup() {
-    //TODO
+  /**
+   * TODO 申请加入群组
+   */
+
+  /**
+   * 退出群组
+   *
+   * @param account_id
+   * @param group_id
+   */
+  public async quitGroup(account_id: string, group_id: string) {
+    await this.request({
+      path: `im_accounts/${account_id}/groups/${group_id}/quit`,
+      method: "post",
+    })
   }
 
-  public async dismissGroup() {
-    //TODO
+  /**
+   * 解散群组
+   *
+   * @param group_id
+   * @returns
+   */
+  public async dismissGroup(group_id: string) {
+    await this.request({
+      path: `groups/${group_id}/dismiss`,
+      method: "post",
+    })
   }
 
-  public async transferGroup() {
-    // TODO
+  /**
+   * 转让群组
+   *
+   * @param parameters
+   */
+  public async transferGroup(parameters: TransferGroupParameters) {
+    await this.request({
+      path: `groups/${parameters.group_id}/transfer`,
+      method: "post",
+      body: omit(parameters, ["group_id"]),
+    })
+  }
+
+  /**
+   * 收藏标记群组
+   *
+   * @param account_id
+   * @param group_id
+   */
+  public async markGroup(account_id: string, group_id: string) {
+    await this.request({
+      path: `im_accounts/${account_id}/groups/${group_id}/mark`,
+      method: "post",
+    })
+  }
+
+  /**
+   * 取消收藏标记群组
+   *
+   * @param account_id
+   * @param group_id
+   */
+  public async unmarkGroup(account_id: string, group_id: string) {
+    await this.request({
+      path: `im_accounts/${account_id}/groups/${group_id}/unmark`,
+      method: "post",
+    })
   }
 
   /**
@@ -468,30 +589,93 @@ export class UIMClient {
   /**
    * 获取群成员详情
    *
-   * @param id
+   * @param member_id
    * @returns
    */
-  public getGroupMember(id: string): Promise<GroupMember> {
+  public getGroupMember(member_id: string): Promise<GroupMember> {
     return this.request<GroupMember>({
-      path: `group_members/${id}`,
+      path: `group_members/${member_id}`,
       method: "get",
     })
   }
 
-  public async inviteGroupMember() {
-    // TODO
+  /**
+   * 邀请好友加入群组
+   *
+   * @param parameters
+   */
+  public inviteGroupMembers(
+    parameters: InviteGroupMembersParameters
+  ): Promise<InviteGroupMembersResponse> {
+    return this.request<InviteGroupMembersResponse>({
+      path: `im_accounts/${parameters.account_id}/groups/${parameters.group_id}/invite`,
+      method: "post",
+      body: omit(parameters, ["account_id", "group_id"]),
+    })
   }
 
-  public async acceptGroupMember() {
-    // TODO
+  /**
+   * 从群组踢出成员
+   *
+   * @param account_id
+   * @param group_id
+   * @param member_id
+   */
+  public async kickGroupMember(
+    account_id: string,
+    group_id: string,
+    member_id: string
+  ) {
+    await this.request<InviteGroupMembersResponse>({
+      path: `im_accounts/${account_id}/groups/${group_id}/members/${member_id}/kick`,
+      method: "post",
+    })
   }
 
-  public async kickGroupMember() {
-    // TODO
+  /**
+   * 设置群成员角色
+   *
+   * @param parameters
+   */
+  public async setGroupMemberRole(parameters: SetGroupMemberRoleParameters) {
+    await this.request({
+      path: `im_accounts/${parameters.account_id}/groups/${parameters.group_id}/members/${parameters.member_id}/set_role`,
+      method: "post",
+      body: pick(parameters, ["role"]),
+    })
   }
 
-  public async appointGroupMemberRole() {
-    // TODO
+  /**
+   * 查询入群申请列表
+   *
+   * @param parameters
+   * @returns
+   */
+  public listGroupApplications(
+    parameters: ListGroupApplicationsParameters
+  ): Promise<ListGruopApplicationsResponse> {
+    return this.request<ListGruopApplicationsResponse>({
+      path: `groups/${parameters.group_id}/group_applications`,
+      method: "get",
+      query: pick(parameters, ["offset", "limit"]) as PlainQueryParams,
+    })
+  }
+
+  /**
+   * 通过入群申请
+   *
+   * @param account_id
+   * @param application_id
+   */
+  public async acceptGroupApplication(
+    account_id: string,
+    application_id: string
+  ) {
+    await this.request({
+      path: `group_applications/${application_id}/accept`,
+      method: "post",
+      body: { account_id },
+    })
   }
 
   /**
@@ -647,10 +831,6 @@ export class UIMClient {
     })
   }
 
-  public listMomentComments() {
-    // TODO
-  }
-
   /**
    * 发送消息
    *
@@ -765,10 +945,10 @@ export class UIMClient {
 
   /**
    * 监听账号事件
-   * 
-   * @param account_id 
-   * @param e 
-   * @param _extra 
+   *
+   * @param account_id
+   * @param e
+   * @param _extra
    */
   private onEvent(account_id: string, e: unknown, _extra?: unknown) {
     const evt = e as Event

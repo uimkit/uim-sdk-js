@@ -260,6 +260,62 @@ export interface Contact {
   metadata?: Record<string, unknown>
 }
 
+// 好友申请状态
+export enum FriendApplicationStatus {
+  // 待处理
+  Unhandled = "unhandled",
+  // 已通过
+  Accepted = "accepted",
+  // 已拒绝
+  Rejected = "rejected",
+  // 已过期
+  Expired = "expired",
+}
+
+// 好友申请
+export interface FriendApplication {
+  // 申请ID
+  id: string
+  // 归属账号ID
+  account: string
+  // 平台，如：douyin
+  provider: string
+  // 平台用户ID，如：抖音ID
+  open_id: string
+  // 用户自定义ID，如：抖音号
+  custom_id?: string
+  // 昵称
+  nickname?: string
+  // 真实姓名
+  real_name?: string
+  // 头像URL
+  avatar?: string
+  // 性别
+  gender?: Gender
+  // 国家
+  country?: string
+  // 省份
+  province?: string
+  // 城市
+  city?: string
+  // 区
+  district?: string
+  // 签名
+  signature?: string
+  // 公司
+  company?: string
+  // 部门
+  department?: string
+  // 头衔、职位
+  title?: string
+  // 申请留言
+  hello_message?: string
+  // 申请来源
+  source?: string
+  // 状态
+  status: FriendApplicationStatus
+}
+
 // 会话类型
 export enum ConversationType {
   // 私聊
@@ -534,6 +590,53 @@ export interface GroupMember {
   updated_at?: Date
   // 扩展信息
   metadata?: Record<string, unknown>
+}
+
+// 入群申请状态
+export type GroupApplicationStatus = FriendApplicationStatus
+
+// 入群申请
+export interface GroupApplication {
+  // 申请ID
+  id: string
+  // 群组ID
+  group_id: string
+  // 平台，如：douyin
+  provider: string
+  // 平台用户ID，如：抖音ID
+  open_id: string
+  // 用户自定义ID，如：抖音号
+  custom_id?: string
+  // 昵称
+  nickname?: string
+  // 真实姓名
+  real_name?: string
+  // 头像URL
+  avatar?: string
+  // 性别
+  gender?: Gender
+  // 国家
+  country?: string
+  // 省份
+  province?: string
+  // 城市
+  city?: string
+  // 区
+  district?: string
+  // 签名
+  signature?: string
+  // 公司
+  company?: string
+  // 部门
+  department?: string
+  // 头衔、职位
+  title?: string
+  // 申请留言
+  hello_message?: string
+  // 申请来源
+  source?: string
+  // 状态
+  status: GroupApplicationStatus
 }
 
 export enum MomentType {
