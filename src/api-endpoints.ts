@@ -205,14 +205,17 @@ export type SendTextMessageParameters = SendMessageTargetParameters & {
   type: MessageType
   text: string
 }
+// 发送图片消息
 export type SendImageMessageParameters = SendMessageTargetParameters & {
   type: MessageType
   image: ImageMessagePayload
 }
+// 发送音频消息
 export type SendAudioMessageParameters = SendMessageTargetParameters & {
   type: MessageType
   audio: AudioMessagePayload
 }
+// 发送视频消息
 export type SendVideoMessageParameters = SendMessageTargetParameters & {
   type: MessageType
   video: VideoMessagePayload
