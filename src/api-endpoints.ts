@@ -15,6 +15,10 @@ import {
   FriendApplication,
   GroupMemberRole,
   GroupApplication,
+  ImageMessagePayload,
+  AudioMessagePayload,
+  VideoMessagePayload,
+  MessageType,
 } from "./models"
 
 // 查询账号列表请求
@@ -189,26 +193,54 @@ export type ListContactMomentsParameters = CursorListParameters<{
 // 查询动态列表结果
 export type ListMomentsResponse = CursorList<Moment>
 
-// 直接发送消息给目标
-export type SendMessageDirectParameters = Pick<
-  Message,
-  | "from"
-  | "to"
-  | "conversation_type"
-  | "type"
-  | "text"
-  | "image"
-  | "audio"
-  | "video"
->
+// 消息发送目标
+type SendMessageTargetParameters =
+  // 直接发送给对方
+  | Pick<Message, "from" | "to" | "conversation_type">
+  // 发送到会话
+  | Pick<Message, "conversation_id">
 
-// 发送消息到会话
-export type SendMessageToConversationParameters = Pick<
-  Message,
-  "conversation_id" | "type" | "text" | "image" | "audio" | "video"
->
+// 发送文本消息
+export type SendTextMessageParameters = SendMessageTargetParameters & {
+  type: MessageType
+  text: string
+}
+export type SendImageMessageParameters = SendMessageTargetParameters & {
+  type: MessageType
+  image: ImageMessagePayload
+}
+export type SendAudioMessageParameters = SendMessageTargetParameters & {
+  type: MessageType
+  audio: AudioMessagePayload
+}
+export type SendVideoMessageParameters = SendMessageTargetParameters & {
+  type: MessageType
+  video: VideoMessagePayload
+}
 
-// 发送消息，可以直接发送，也可以发送到会话
+// 创建文本消息
+export type CreateTextMessageParameters = SendMessageTargetParameters & {
+  text: string
+}
+// 创建图片消息
+export type CreateImageMessageParameters = SendMessageTargetParameters & {
+  image?: ImageMessagePayload
+  file?: HTMLInputElement | File
+}
+// 创建音频消息
+export type CreateAudioMessageParameters = SendMessageTargetParameters & {
+  audio?: AudioMessagePayload
+  file?: HTMLInputElement | File
+}
+// 创建视频消息
+export type CreateVideoMessageParameters = SendMessageTargetParameters & {
+  video: VideoMessagePayload
+  file?: HTMLInputElement | File
+}
+
+// 发送消息请求
 export type SendMessageParameters =
-  | SendMessageDirectParameters
-  | SendMessageToConversationParameters
+  | SendTextMessageParameters
+  | SendImageMessageParameters
+  | SendAudioMessageParameters
+  | SendVideoMessageParameters

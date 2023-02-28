@@ -42,6 +42,14 @@ import {
   SetGroupMemberRoleParameters,
   ListGroupApplicationsParameters,
   ListGruopApplicationsResponse,
+  CreateTextMessageParameters,
+  CreateImageMessageParameters,
+  CreateAudioMessageParameters,
+  CreateVideoMessageParameters,
+  SendTextMessageParameters,
+  SendImageMessageParameters,
+  SendAudioMessageParameters,
+  SendVideoMessageParameters
 } from "./api-endpoints"
 import nodeFetch from "node-fetch"
 import { SupportedFetch } from "./fetch-types"
@@ -871,40 +879,63 @@ export class UIMClient {
     })
   }
 
+  /**
+   * 创建文本消息
+   *
+   * @param parameters
+   * @returns
+   */
   public createTextMessage(
-    from: string,
-    to: string,
-    conversation_type: ConversationType,
-    text: string
-  ): SendMessageParameters {
-    return { from, to, conversation_type, text, type: MessageType.Text }
+    parameters: CreateTextMessageParameters
+  ): SendTextMessageParameters {
+    return { type: MessageType.Text, ...parameters }
   }
 
+  /**
+   * 创建图片消息
+   *
+   * @param parameters
+   * @returns
+   */
   public createImageMessage(
-    from: string,
-    to: string,
-    conversation_type: ConversationType,
-    image: ImageMessagePayload
-  ): SendMessageParameters {
-    return { from, to, conversation_type, image, type: MessageType.Image }
+    parameters: CreateImageMessageParameters
+  ): SendImageMessageParameters {
+    const { image, file, ...others } = parameters
+    if (image) {
+      return { type: MessageType.Image, image, ...others }
+    }
+    throw new Error("not implemented")
   }
 
+  /**
+   * 创建音频消息
+   *
+   * @param parameters
+   * @returns
+   */
   public createAudioMessage(
-    from: string,
-    to: string,
-    conversation_type: ConversationType,
-    audio: AudioMessagePayload
-  ): SendMessageParameters {
-    return { from, to, conversation_type, audio, type: MessageType.Audio }
+    parameters: CreateAudioMessageParameters
+  ): SendAudioMessageParameters {
+    const { audio, file, ...others } = parameters
+    if (audio) {
+      return { type: MessageType.Audio, audio, ...others }
+    }
+    throw new Error("not implemented")
   }
 
+  /**
+   * 创建视频消息
+   * @param parameters
+   * @returns
+   */
   public createVieoMessage(
-    from: string,
-    to: string,
-    conversation_type: ConversationType,
-    video: VideoMessagePayload
-  ): SendMessageParameters {
-    return { from, to, conversation_type, video, type: MessageType.Video }
+    parameters: CreateVideoMessageParameters
+  ): SendVideoMessageParameters {
+    const { video, file, ...others } = parameters
+    if (video) {
+      return { type: MessageType.Video, video, ...others }
+    }
+    throw new Error("not implemented")
   }
 
   onNewMessage(handler: MessageHandler): () => void {
