@@ -31,7 +31,6 @@ import {
   AddContactParameters,
   AddContactResponse,
   SendMessageParameters,
-  SendMessageDirectParameters,
   ListAccountMomentsParameters,
   ListContactMomentsParameters,
 } from "./api-endpoints"
@@ -697,7 +696,7 @@ export class UIMClient {
     to: string,
     conversation_type: ConversationType,
     text: string
-  ): SendMessageDirectParameters {
+  ): SendMessageParameters {
     return { from, to, conversation_type, text, type: MessageType.Text }
   }
 
@@ -706,7 +705,7 @@ export class UIMClient {
     to: string,
     conversation_type: ConversationType,
     image: ImageMessagePayload
-  ): SendMessageDirectParameters {
+  ): SendMessageParameters {
     return { from, to, conversation_type, image, type: MessageType.Image }
   }
 
@@ -715,7 +714,7 @@ export class UIMClient {
     to: string,
     conversation_type: ConversationType,
     audio: AudioMessagePayload
-  ): SendMessageDirectParameters {
+  ): SendMessageParameters {
     return { from, to, conversation_type, audio, type: MessageType.Audio }
   }
 
@@ -724,7 +723,7 @@ export class UIMClient {
     to: string,
     conversation_type: ConversationType,
     video: VideoMessagePayload
-  ): SendMessageDirectParameters {
+  ): SendMessageParameters {
     return { from, to, conversation_type, video, type: MessageType.Video }
   }
 
@@ -764,12 +763,17 @@ export class UIMClient {
     }
   }
 
-  private onEvent(channel: string, e: unknown, _extra?: unknown) {
-    // 队列名就是账号ID
-    const accountId = channel
+  /**
+   * 监听账号事件
+   * 
+   * @param account_id 
+   * @param e 
+   * @param _extra 
+   */
+  private onEvent(account_id: string, e: unknown, _extra?: unknown) {
     const evt = e as Event
     const handlers = this._handlers[evt.type] ?? []
-    handlers.forEach(h => h(accountId, e))
+    handlers.forEach(h => h(account_id, e))
   }
 
   /**
