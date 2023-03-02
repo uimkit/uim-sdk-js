@@ -16,6 +16,7 @@
     "uim-api",
     "rest"
   ],
+  "source": "src/index.ts",
   "main": "./build",
   "types": "./build/index.d.ts",
   "scripts": {
@@ -44,10 +45,13 @@
     "node-fetch": "^2.6.1",
     "rfc4648": "^1.5.2",
     "tim-js-sdk": "^2.26.2",
+    "tim-profanity-filter-plugin": "^0.9.0",
+    "tim-upload-plugin": "^1.1.0",
     "uint8arrays": "^3.1.1",
     "webpubsub-js": "^1.0.2"
   },
   "devDependencies": {
+    "@types/invariant": "^2.2.35",
     "@types/jest": "^29.1.2",
     "@types/lodash": "^4.14.186",
     "@types/node-fetch": "^2.6.2",
