@@ -15,10 +15,7 @@ import {
   FriendApplication,
   GroupMemberRole,
   GroupApplication,
-  ImageMessagePayload,
-  AudioMessagePayload,
-  VideoMessagePayload,
-  MessageType,
+  Comment,
 } from "./models"
 
 // 查询账号列表请求
@@ -192,6 +189,26 @@ export type ListContactMomentsParameters = CursorListParameters<{
 
 // 查询动态列表结果
 export type ListMomentsResponse = CursorList<Moment>
+
+// 查询动态的评论列表
+export type ListMomentCommentsParameters = CursorListParameters<{
+  moment_id: string
+}>
+
+// 查询评论列表结果
+export type ListCommentsResponse = CursorList<Comment>
+
+// 对动态发表评论 
+export type CommentOnMomentParameters = {
+  // 发表评论的账号ID
+  account_id: string
+  // 动态ID
+  moment_id: string
+  // 回复的评论ID
+  reply_to?: string
+  // 评论内容
+  text: string
+}
 
 // 发送消息请求
 export type SendMessageParameters = Partial<Message> & {

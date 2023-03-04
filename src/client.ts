@@ -45,6 +45,9 @@ import {
   CreateMessageParameters,
   PublishMomentParameters,
   CreateMomentParameters,
+  ListMomentCommentsParameters,
+  ListCommentsResponse,
+  CommentOnMomentParameters,
 } from "./api-endpoints"
 import nodeFetch from "node-fetch"
 import { SupportedFetch } from "./fetch-types"
@@ -74,6 +77,7 @@ import {
   MomentType,
   ImageMomentContent,
   VideoMomentContent,
+  Comment,
 } from "./models"
 import { Plugin, PluginType, UIMUploadPlugin, UploadOptions, UploadPlugin } from "./plugins"
 import invariant from "invariant"
@@ -863,6 +867,38 @@ export class UIMClient {
         "direction",
         "limit",
       ]) as PlainQueryParams,
+    })
+  }
+
+  /**
+   * 查询动态的评论列表
+   * 
+   * @param parameters 
+   * @returns 
+   */
+  public listMomentComments(parameters: ListMomentCommentsParameters): Promise<ListCommentsResponse> {
+    return this.request<ListCommentsResponse>({
+      path: `moments/${parameters.moment_id}/comments`,
+      method: "get",
+      query: pick(parameters, [
+        "cursor",
+        "direction",
+        "limit",
+      ]) as PlainQueryParams,
+    })
+  }
+
+  /**
+   * 对动态发表评论
+   * 
+   * @param parameters 
+   * @returns 
+   */
+  public commentOnMoment(parameters: CommentOnMomentParameters): Promise<Comment> {
+    return this.request<Comment>({
+      path: `moments/${parameters.moment_id}/comments`,
+      method: "post",
+      body: omit(parameters, ['moment_id']),
     })
   }
 
