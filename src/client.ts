@@ -79,7 +79,13 @@ import {
   VideoMomentContent,
   Comment,
 } from "./models"
-import { Plugin, PluginType, UIMUploadPlugin, UploadOptions, UploadPlugin } from "./plugins"
+import {
+  Plugin,
+  PluginType,
+  UIMUploadPlugin,
+  UploadOptions,
+  UploadPlugin,
+} from "./plugins"
 import invariant from "invariant"
 
 /**
@@ -145,7 +151,7 @@ export class UIMClient {
     this._pubsub.addListener(this.onEvent.bind(this))
     // 默认的插件
     this._plugins = {
-      upload: new UIMUploadPlugin(jwt.sub ?? "", token, this._prefixUrl)
+      upload: new UIMUploadPlugin(jwt.sub ?? "", token, this._prefixUrl),
     }
   }
 
@@ -312,9 +318,9 @@ export class UIMClient {
 
   /**
    * 注册插件
-   * 
-   * @param type 
-   * @param plugin 
+   *
+   * @param type
+   * @param plugin
    */
   public registerPlugin(type: PluginType, plugin: Plugin) {
     this._plugins[type] = plugin
@@ -322,9 +328,9 @@ export class UIMClient {
 
   /**
    * 获取插件
-   * 
-   * @param type 
-   * @returns 
+   *
+   * @param type
+   * @returns
    */
   private getPlugin(type: PluginType): Plugin | undefined {
     return this._plugins[type]
@@ -872,11 +878,13 @@ export class UIMClient {
 
   /**
    * 查询动态的评论列表
-   * 
-   * @param parameters 
-   * @returns 
+   *
+   * @param parameters
+   * @returns
    */
-  public listMomentComments(parameters: ListMomentCommentsParameters): Promise<ListCommentsResponse> {
+  public listMomentComments(
+    parameters: ListMomentCommentsParameters
+  ): Promise<ListCommentsResponse> {
     return this.request<ListCommentsResponse>({
       path: `moments/${parameters.moment_id}/comments`,
       method: "get",
@@ -890,15 +898,17 @@ export class UIMClient {
 
   /**
    * 对动态发表评论
-   * 
-   * @param parameters 
-   * @returns 
+   *
+   * @param parameters
+   * @returns
    */
-  public commentOnMoment(parameters: CommentOnMomentParameters): Promise<Comment> {
+  public commentOnMoment(
+    parameters: CommentOnMomentParameters
+  ): Promise<Comment> {
     return this.request<Comment>({
       path: `moments/${parameters.moment_id}/comments`,
       method: "post",
-      body: omit(parameters, ['moment_id']),
+      body: omit(parameters, ["moment_id"]),
     })
   }
 
@@ -908,7 +918,9 @@ export class UIMClient {
    * @param parameters
    * @returns
    */
-  public async sendMessage(parameters: SendMessageParameters): Promise<Message> {
+  public async sendMessage(
+    parameters: SendMessageParameters
+  ): Promise<Message> {
     // 先上传文件
     if (parameters.file) {
       const plugin = this.getPlugin("upload")
@@ -916,7 +928,7 @@ export class UIMClient {
 
       const options: UploadOptions = {
         onProgress: parameters.upload_progress,
-        message: parameters as Message
+        message: parameters as Message,
       }
       const payload = await plugin.upload(parameters.file, options)
 
@@ -939,7 +951,7 @@ export class UIMClient {
     return this.request<Message>({
       path: "send_message",
       method: "post",
-      body: omit(parameters, ['file', 'upload_progress']),
+      body: omit(parameters, ["file", "upload_progress"]),
     })
   }
 
@@ -959,23 +971,29 @@ export class UIMClient {
 
   /**
    * 发布动态
-   * 
-   * @param parameters 
+   *
+   * @param parameters
    * @returns
    */
-  public async publishMoment(parameters: PublishMomentParameters): Promise<Moment> {
+  public async publishMoment(
+    parameters: PublishMomentParameters
+  ): Promise<Moment> {
     // 先上传文件
     if (parameters.files && parameters.files.length > 0) {
       const plugin = this.getPlugin("upload")
       invariant(plugin, "must have upload plugin")
 
-      const contents = await Promise.all(parameters.files.map((f, idx) => {
-        const options: UploadOptions = {
-          onProgress: percent => parameters.upload_progress && parameters.upload_progress(idx, percent),
-          moment: parameters as Moment
-        }
-        return plugin.upload(f, options)
-      }))
+      const contents = await Promise.all(
+        parameters.files.map((f, idx) => {
+          const options: UploadOptions = {
+            onProgress: percent =>
+              parameters.upload_progress &&
+              parameters.upload_progress(idx, percent),
+            moment: parameters as Moment,
+          }
+          return plugin.upload(f, options)
+        })
+      )
 
       switch (parameters.type) {
         case MomentType.Image: {
@@ -992,7 +1010,7 @@ export class UIMClient {
     return this.request<Moment>({
       path: "publish_moment",
       method: "post",
-      body: omit(parameters, ['files', 'upload_progress']),
+      body: omit(parameters, ["files", "upload_progress"]),
     })
   }
 
@@ -1010,8 +1028,8 @@ export class UIMClient {
 
   /**
    * 删除动态
-   * 
-   * @param id 
+   *
+   * @param id
    */
   public async deleteMoment(id: string) {
     await this.request({
@@ -1026,9 +1044,17 @@ export class UIMClient {
    * @param parameters
    * @returns
    */
-  public createTextMessage(parameters: CreateMessageParameters): SendMessageParameters {
+  public createTextMessage(
+    parameters: CreateMessageParameters
+  ): SendMessageParameters {
     invariant(parameters.text, "must have text payload")
-    const message = pick(parameters, ['from', 'to', 'conversation_type', 'conversation_id', 'text']) as Partial<Message>
+    const message = pick(parameters, [
+      "from",
+      "to",
+      "conversation_type",
+      "conversation_id",
+      "text",
+    ]) as Partial<Message>
     return { type: MessageType.Text, flow: MessageFlow.Out, ...message }
   }
 
@@ -1038,9 +1064,20 @@ export class UIMClient {
    * @param parameters
    * @returns
    */
-  public createImageMessage(parameters: CreateMessageParameters): SendMessageParameters {
-    invariant(parameters.image || parameters.file, "must have image payload or file")
-    const message = pick(parameters, ['from', 'to', 'conversation_type', 'conversation_id', 'image']) as Partial<Message>
+  public createImageMessage(
+    parameters: CreateMessageParameters
+  ): SendMessageParameters {
+    invariant(
+      parameters.image || parameters.file,
+      "must have image payload or file"
+    )
+    const message = pick(parameters, [
+      "from",
+      "to",
+      "conversation_type",
+      "conversation_id",
+      "image",
+    ]) as Partial<Message>
     if (message.image) {
       return { type: MessageType.Image, flow: MessageFlow.Out, ...message }
     } else {
@@ -1048,9 +1085,21 @@ export class UIMClient {
       if (file instanceof HTMLInputElement) {
         const f = file.files?.item(0)
         invariant(f, "must have image payload or file")
-        return { type: MessageType.Image, flow: MessageFlow.Out, ...message, file: f, upload_progress }
+        return {
+          type: MessageType.Image,
+          flow: MessageFlow.Out,
+          ...message,
+          file: f,
+          upload_progress,
+        }
       } else {
-        return { type: MessageType.Image, flow: MessageFlow.Out, ...message, file, upload_progress }
+        return {
+          type: MessageType.Image,
+          flow: MessageFlow.Out,
+          ...message,
+          file,
+          upload_progress,
+        }
       }
     }
   }
@@ -1061,9 +1110,20 @@ export class UIMClient {
    * @param parameters
    * @returns
    */
-  public createAudioMessage(parameters: CreateMessageParameters): SendMessageParameters {
-    invariant(parameters.audio || parameters.file, "must have audio payload or file")
-    const message = pick(parameters, ['from', 'to', 'conversation_type', 'conversation_id', 'audio']) as Partial<Message>
+  public createAudioMessage(
+    parameters: CreateMessageParameters
+  ): SendMessageParameters {
+    invariant(
+      parameters.audio || parameters.file,
+      "must have audio payload or file"
+    )
+    const message = pick(parameters, [
+      "from",
+      "to",
+      "conversation_type",
+      "conversation_id",
+      "audio",
+    ]) as Partial<Message>
     if (message.audio) {
       return { type: MessageType.Audio, flow: MessageFlow.Out, ...message }
     } else {
@@ -1071,9 +1131,21 @@ export class UIMClient {
       if (file instanceof HTMLInputElement) {
         const f = file.files?.item(0)
         invariant(f, "must have audio payload or file")
-        return { type: MessageType.Audio, flow: MessageFlow.Out, ...message, file: f, upload_progress }
+        return {
+          type: MessageType.Audio,
+          flow: MessageFlow.Out,
+          ...message,
+          file: f,
+          upload_progress,
+        }
       } else {
-        return { type: MessageType.Audio, flow: MessageFlow.Out, ...message, file, upload_progress }
+        return {
+          type: MessageType.Audio,
+          flow: MessageFlow.Out,
+          ...message,
+          file,
+          upload_progress,
+        }
       }
     }
   }
@@ -1083,9 +1155,20 @@ export class UIMClient {
    * @param parameters
    * @returns
    */
-  public createVieoMessage(parameters: CreateMessageParameters): SendMessageParameters {
-    invariant(parameters.video || parameters.file, "must have video payload or file")
-    const message = pick(parameters, ['from', 'to', 'conversation_type', 'conversation_id', 'video']) as Partial<Message>
+  public createVieoMessage(
+    parameters: CreateMessageParameters
+  ): SendMessageParameters {
+    invariant(
+      parameters.video || parameters.file,
+      "must have video payload or file"
+    )
+    const message = pick(parameters, [
+      "from",
+      "to",
+      "conversation_type",
+      "conversation_id",
+      "video",
+    ]) as Partial<Message>
     if (message.video) {
       return { type: MessageType.Video, flow: MessageFlow.Out, ...message }
     } else {
@@ -1093,22 +1176,36 @@ export class UIMClient {
       if (file instanceof HTMLInputElement) {
         const f = file.files?.item(0)
         invariant(f, "must have video payload or file")
-        return { type: MessageType.Video, flow: MessageFlow.Out, ...message, file: f, upload_progress }
+        return {
+          type: MessageType.Video,
+          flow: MessageFlow.Out,
+          ...message,
+          file: f,
+          upload_progress,
+        }
       } else {
-        return { type: MessageType.Video, flow: MessageFlow.Out, ...message, file, upload_progress }
+        return {
+          type: MessageType.Video,
+          flow: MessageFlow.Out,
+          ...message,
+          file,
+          upload_progress,
+        }
       }
     }
   }
 
   /**
    * 创建文本动态
-   * 
-   * @param parameters 
-   * @returns 
+   *
+   * @param parameters
+   * @returns
    */
-  public createTextMoment(parameters: CreateMomentParameters): PublishMomentParameters {
+  public createTextMoment(
+    parameters: CreateMomentParameters
+  ): PublishMomentParameters {
     invariant(parameters.text, "must have text")
-    const moment = pick(parameters, ['user_id', 'text']) as Partial<Moment>
+    const moment = pick(parameters, ["user_id", "text"]) as Partial<Moment>
     return { type: MomentType.Text, ...moment }
   }
 
@@ -1118,9 +1215,14 @@ export class UIMClient {
    * @param parameters
    * @returns
    */
-  public createImagesMoment(parameters: CreateMomentParameters): PublishMomentParameters {
-    invariant(parameters.images || parameters.files, "must have images or files")
-    const moment = pick(parameters, ['user_id', 'images']) as Partial<Moment>
+  public createImagesMoment(
+    parameters: CreateMomentParameters
+  ): PublishMomentParameters {
+    invariant(
+      parameters.images || parameters.files,
+      "must have images or files"
+    )
+    const moment = pick(parameters, ["user_id", "images"]) as Partial<Moment>
     if (moment.images && moment.images.length > 0) {
       return { type: MomentType.Image, ...moment }
     } else {
@@ -1140,13 +1242,15 @@ export class UIMClient {
 
   /**
    * 创建视频动态
-   * 
-   * @param parameters 
-   * @returns 
+   *
+   * @param parameters
+   * @returns
    */
-  public createVideoMoment(parameters: CreateMomentParameters): PublishMomentParameters {
+  public createVideoMoment(
+    parameters: CreateMomentParameters
+  ): PublishMomentParameters {
     invariant(parameters.video || parameters.files, "must have video or files")
-    const moment = pick(parameters, ['user_id', 'video']) as Partial<Moment>
+    const moment = pick(parameters, ["user_id", "video"]) as Partial<Moment>
     if (moment.video) {
       return { type: MomentType.Video, ...moment }
     } else {
@@ -1154,13 +1258,17 @@ export class UIMClient {
       if (files instanceof HTMLInputElement) {
         const f = files.files?.item(0)
         invariant(f, "must have video or files")
-        return { type: MomentType.Video, ...moment, files: [f], upload_progress }
+        return {
+          type: MomentType.Video,
+          ...moment,
+          files: [f],
+          upload_progress,
+        }
       } else {
         return { type: MomentType.Video, ...moment, files, upload_progress }
       }
     }
   }
-
 
   onNewMessage(handler: MessageHandler): () => void {
     return this.on(EventType.NEW_MESSAGE, (accountId, e) =>

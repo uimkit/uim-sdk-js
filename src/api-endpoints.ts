@@ -198,7 +198,7 @@ export type ListMomentCommentsParameters = CursorListParameters<{
 // 查询评论列表结果
 export type ListCommentsResponse = CursorList<Comment>
 
-// 对动态发表评论 
+// 对动态发表评论
 export type CommentOnMomentParameters = {
   // 发表评论的账号ID
   account_id: string
@@ -226,12 +226,13 @@ export type MessageTargetParameters =
   | Pick<Message, "conversation_id">
 
 // 创建消息参数
-export type CreateMessageParameters = MessageTargetParameters & Pick<Message, 'text' | 'image' | 'audio' | 'video'> & {
-  // 待上传的文件
-  file?: HTMLInputElement | File
-  // 文件上传进度回调
-  upload_progress?: (percent: number) => void
-}
+export type CreateMessageParameters = MessageTargetParameters &
+  Pick<Message, "text" | "image" | "audio" | "video"> & {
+    // 待上传的文件
+    file?: HTMLInputElement | File
+    // 文件上传进度回调
+    upload_progress?: (percent: number) => void
+  }
 
 // 发布动态参数
 export type PublishMomentParameters = Partial<Moment> & {
@@ -239,22 +240,25 @@ export type PublishMomentParameters = Partial<Moment> & {
   files?: Array<File>
   /**
    * 上传进度回调
-   * @param {number} idx 上传的第几个文件 
+   * @param {number} idx 上传的第几个文件
    * @param {number} percent 上传进度，范围 0~100
-   * @returns 
+   * @returns
    */
   upload_progress?: (idx: number, percent: number) => void
 }
 
 // 创建动态参数
-export type CreateMomentParameters = Pick<Moment, 'user_id' | 'text' | 'images' | 'video'> & {
+export type CreateMomentParameters = Pick<
+  Moment,
+  "user_id" | "text" | "images" | "video"
+> & {
   // 待上传的文件
   files?: HTMLInputElement | Array<File>
   /**
    * 上传进度回调
-   * @param {number} idx 上传的第几个文件 
+   * @param {number} idx 上传的第几个文件
    * @param {number} percent 上传进度，范围 0~100
-   * @returns 
+   * @returns
    */
   upload_progress?: (idx: number, percent: number) => void
 }
