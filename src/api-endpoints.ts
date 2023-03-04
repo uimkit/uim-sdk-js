@@ -193,57 +193,25 @@ export type ListContactMomentsParameters = CursorListParameters<{
 // 查询动态列表结果
 export type ListMomentsResponse = CursorList<Moment>
 
+// 发送消息请求
+export type SendMessageParameters = Partial<Message> & {
+  // 待上传的文件
+  file?: File
+  // 文件上传进度回调
+  upload_progress?: (percent: number) => void
+}
+
 // 消息发送目标
-type SendMessageTargetParameters =
+export type MessageTargetParameters =
   // 直接发送给对方
   | Pick<Message, "from" | "to" | "conversation_type">
   // 发送到会话
   | Pick<Message, "conversation_id">
 
-// 发送文本消息
-export type SendTextMessageParameters = SendMessageTargetParameters & {
-  type: MessageType
-  text: string
-}
-// 发送图片消息
-export type SendImageMessageParameters = SendMessageTargetParameters & {
-  type: MessageType
-  image: ImageMessagePayload
-}
-// 发送音频消息
-export type SendAudioMessageParameters = SendMessageTargetParameters & {
-  type: MessageType
-  audio: AudioMessagePayload
-}
-// 发送视频消息
-export type SendVideoMessageParameters = SendMessageTargetParameters & {
-  type: MessageType
-  video: VideoMessagePayload
-}
-
-// 创建文本消息
-export type CreateTextMessageParameters = SendMessageTargetParameters & {
-  text: string
-}
-// 创建图片消息
-export type CreateImageMessageParameters = SendMessageTargetParameters & {
-  image?: ImageMessagePayload
+// 创建消息参数
+export type CreateMessageParameters = MessageTargetParameters & Pick<Message, 'text' | 'image' | 'audio' | 'video'> & {
+  // 待上传的文件
   file?: HTMLInputElement | File
+  // 文件上传进度回调
+  upload_progress?: (percent: number) => void
 }
-// 创建音频消息
-export type CreateAudioMessageParameters = SendMessageTargetParameters & {
-  audio?: AudioMessagePayload
-  file?: HTMLInputElement | File
-}
-// 创建视频消息
-export type CreateVideoMessageParameters = SendMessageTargetParameters & {
-  video: VideoMessagePayload
-  file?: HTMLInputElement | File
-}
-
-// 发送消息请求
-export type SendMessageParameters =
-  | SendTextMessageParameters
-  | SendImageMessageParameters
-  | SendAudioMessageParameters
-  | SendVideoMessageParameters

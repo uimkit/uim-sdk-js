@@ -42,14 +42,7 @@ import {
   SetGroupMemberRoleParameters,
   ListGroupApplicationsParameters,
   ListGruopApplicationsResponse,
-  CreateTextMessageParameters,
-  CreateImageMessageParameters,
-  CreateAudioMessageParameters,
-  CreateVideoMessageParameters,
-  SendTextMessageParameters,
-  SendImageMessageParameters,
-  SendAudioMessageParameters,
-  SendVideoMessageParameters,
+  CreateMessageParameters,
 } from "./api-endpoints"
 import nodeFetch from "node-fetch"
 import { SupportedFetch } from "./fetch-types"
@@ -64,17 +57,19 @@ import {
 } from "./events"
 import {
   Account,
-  ConversationType,
   MessageType,
-  ImageMessagePayload,
-  AudioMessagePayload,
-  VideoMessagePayload,
   Contact,
   Group,
   GroupMember,
   Conversation,
   Message,
+  MessageFlow,
+  ImageMessagePayload,
+  AudioMessagePayload,
+  VideoMessagePayload,
 } from "./models"
+import { Plugin, PluginType, UIMUploadPlugin, UploadOptions, UploadPlugin } from "./plugins"
+import invariant from "invariant"
 
 /**
  * UIMClient 构造选项
@@ -115,6 +110,7 @@ export class UIMClient {
   _handlers: Record<string, Array<EventHandler>>
   _messageEventListener?: (msgEvent: MessageEvent) => void
   _errorHandler?: (e: unknown) => void
+  _plugins: Partial<Record<PluginType, Plugin>>
 
   public constructor(token: string, options?: UIMClientOptions) {
     this._auth = token
@@ -136,6 +132,10 @@ export class UIMClient {
     }
     this._pubsub = new PubSub(pubsubOptions)
     this._pubsub.addListener(this.onEvent.bind(this))
+    // 默认的插件
+    this._plugins = {
+      upload: new UIMUploadPlugin(jwt.sub ?? "", token, this._prefixUrl)
+    }
   }
 
   /**
@@ -297,6 +297,26 @@ export class UIMClient {
 
       throw error
     }
+  }
+
+  /**
+   * 注册插件
+   * 
+   * @param type 
+   * @param plugin 
+   */
+  public registerPlugin(type: PluginType, plugin: Plugin) {
+    this._plugins[type] = plugin
+  }
+
+  /**
+   * 获取插件
+   * 
+   * @param type 
+   * @returns 
+   */
+  private getPlugin(type: PluginType): Plugin | undefined {
+    return this._plugins[type]
   }
 
   /**
@@ -845,11 +865,38 @@ export class UIMClient {
    * @param parameters
    * @returns
    */
-  public sendMessage(parameters: SendMessageParameters): Promise<Message> {
+  public async sendMessage(parameters: SendMessageParameters): Promise<Message> {
+    // 先上传文件
+    if (parameters.file) {
+      const plugin = this.getPlugin("upload")
+      invariant(plugin, "must have upload plugin")
+
+      const options: UploadOptions = {
+        onProgress: parameters.upload_progress,
+        message: parameters as Message
+      }
+      const payload = await plugin.upload(parameters.file, options)
+
+      switch (parameters.type) {
+        case MessageType.Image: {
+          parameters.image = payload as ImageMessagePayload
+          break
+        }
+        case MessageType.Audio: {
+          parameters.audio = payload as AudioMessagePayload
+          break
+        }
+        case MessageType.Video: {
+          parameters.video = payload as VideoMessagePayload
+          break
+        }
+      }
+    }
+
     return this.request<Message>({
       path: "send_message",
       method: "post",
-      body: parameters,
+      body: omit(parameters, ['file', 'upload_progress']),
     })
   }
 
@@ -885,10 +932,10 @@ export class UIMClient {
    * @param parameters
    * @returns
    */
-  public createTextMessage(
-    parameters: CreateTextMessageParameters
-  ): SendTextMessageParameters {
-    return { type: MessageType.Text, ...parameters }
+  public createTextMessage(parameters: CreateMessageParameters): SendMessageParameters {
+    invariant(parameters.text, "must have text payload")
+    const message = pick(parameters, ['from', 'to', 'conversation_type', 'conversation_id', 'text']) as Partial<Message>
+    return { type: MessageType.Text, flow: MessageFlow.Out, ...message }
   }
 
   /**
@@ -897,14 +944,21 @@ export class UIMClient {
    * @param parameters
    * @returns
    */
-  public createImageMessage(
-    parameters: CreateImageMessageParameters
-  ): SendImageMessageParameters {
-    const { image, file, ...others } = parameters
-    if (image) {
-      return { type: MessageType.Image, image, ...others }
+  public createImageMessage(parameters: CreateMessageParameters): SendMessageParameters {
+    invariant(parameters.image || parameters.file, "must have image payload or file")
+    const message = pick(parameters, ['from', 'to', 'conversation_type', 'conversation_id', 'image']) as Partial<Message>
+    if (message.image) {
+      return { type: MessageType.Image, flow: MessageFlow.Out, ...message }
+    } else {
+      const { file, upload_progress } = parameters
+      if (file instanceof HTMLInputElement) {
+        const f = file.files?.item(0)
+        invariant(f, "must have image payload or file")
+        return { type: MessageType.Image, flow: MessageFlow.Out, ...message, file: f, upload_progress }
+      } else {
+        return { type: MessageType.Image, flow: MessageFlow.Out, ...message, file, upload_progress }
+      }
     }
-    throw new Error("not implemented")
   }
 
   /**
@@ -913,14 +967,21 @@ export class UIMClient {
    * @param parameters
    * @returns
    */
-  public createAudioMessage(
-    parameters: CreateAudioMessageParameters
-  ): SendAudioMessageParameters {
-    const { audio, file, ...others } = parameters
-    if (audio) {
-      return { type: MessageType.Audio, audio, ...others }
+  public createAudioMessage(parameters: CreateMessageParameters): SendMessageParameters {
+    invariant(parameters.audio || parameters.file, "must have audio payload or file")
+    const message = pick(parameters, ['from', 'to', 'conversation_type', 'conversation_id', 'audio']) as Partial<Message>
+    if (message.audio) {
+      return { type: MessageType.Audio, flow: MessageFlow.Out, ...message }
+    } else {
+      const { file, upload_progress } = parameters
+      if (file instanceof HTMLInputElement) {
+        const f = file.files?.item(0)
+        invariant(f, "must have audio payload or file")
+        return { type: MessageType.Audio, flow: MessageFlow.Out, ...message, file: f, upload_progress }
+      } else {
+        return { type: MessageType.Audio, flow: MessageFlow.Out, ...message, file, upload_progress }
+      }
     }
-    throw new Error("not implemented")
   }
 
   /**
@@ -928,14 +989,21 @@ export class UIMClient {
    * @param parameters
    * @returns
    */
-  public createVieoMessage(
-    parameters: CreateVideoMessageParameters
-  ): SendVideoMessageParameters {
-    const { video, file, ...others } = parameters
-    if (video) {
-      return { type: MessageType.Video, video, ...others }
+  public createVieoMessage(parameters: CreateMessageParameters): SendMessageParameters {
+    invariant(parameters.video || parameters.file, "must have video payload or file")
+    const message = pick(parameters, ['from', 'to', 'conversation_type', 'conversation_id', 'video']) as Partial<Message>
+    if (message.video) {
+      return { type: MessageType.Video, flow: MessageFlow.Out, ...message }
+    } else {
+      const { file, upload_progress } = parameters
+      if (file instanceof HTMLInputElement) {
+        const f = file.files?.item(0)
+        invariant(f, "must have video payload or file")
+        return { type: MessageType.Video, flow: MessageFlow.Out, ...message, file: f, upload_progress }
+      } else {
+        return { type: MessageType.Video, flow: MessageFlow.Out, ...message, file, upload_progress }
+      }
     }
-    throw new Error("not implemented")
   }
 
   onNewMessage(handler: MessageHandler): () => void {

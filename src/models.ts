@@ -516,6 +516,13 @@ export interface VideoMessagePayload {
   snapshot?: string
 }
 
+// 消息内容
+export type MessagePayload =
+  | string
+  | ImageMessagePayload
+  | AudioMessagePayload
+  | VideoMessagePayload
+
 // 群组
 export interface Group {
   // 群组ID
@@ -662,8 +669,10 @@ export interface Moment {
   type: MomentType
   // 文案
   text?: string
-  // 动态内容
-  content?: MomentContent
+  // 图片
+  images?: Array<ImageMomentContent>
+  // 视频
+  video?: VideoMomentContent
   // 发布时间
   published_at: Date
   // 点赞数
@@ -681,8 +690,6 @@ export interface Moment {
   // 扩展信息
   metadata?: Record<string, unknown>
 }
-
-export type MomentContent = Array<ImageMomentContent> | VideoMomentContent
 
 // 图片动态内容
 export interface ImageMomentContent {
@@ -721,6 +728,9 @@ export interface VideoMomentContent {
   // 封面图
   snapshot?: string
 }
+
+// 动态内容类型
+export type MomentContent = ImageMomentContent | VideoMomentContent
 
 // 评论
 export interface Comment {

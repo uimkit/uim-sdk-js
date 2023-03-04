@@ -36,9 +36,11 @@
     "build/**/*"
   ],
   "dependencies": {
+    "@xopenapi/xapis-js": "0.0.10",
     "browser-or-node": "^2.0.0",
     "cloudevents": "^6.0.2",
     "core-js": "^3.23.5",
+    "cos-js-sdk-v5": "^1.4.15",
     "invariant": "^2.2.4",
     "jwt-decode": "^3.1.2",
     "lodash": "^4.17.21",
@@ -48,6 +50,7 @@
     "tim-profanity-filter-plugin": "^0.9.0",
     "tim-upload-plugin": "^1.1.0",
     "uint8arrays": "^3.1.1",
+    "uuid": "^9.0.0",
     "webpubsub-js": "^1.0.2"
   },
   "devDependencies": {

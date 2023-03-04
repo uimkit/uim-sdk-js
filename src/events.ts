@@ -37,7 +37,7 @@ export enum EventType {
   // 群成员信息变更
   GROUP_MEMBER_UPDATED = "uim.group_member:update",
   // 群成员被踢出群
-  GROUP_MEMBER_KICKED = "uim.group_member:kick"
+  GROUP_MEMBER_KICKED = "uim.group_member:kick",
 }
 
 export type ConversationEvent = ClientEvent<Conversation>
