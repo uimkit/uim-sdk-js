@@ -215,3 +215,29 @@ export type CreateMessageParameters = MessageTargetParameters & Pick<Message, 't
   // 文件上传进度回调
   upload_progress?: (percent: number) => void
 }
+
+// 发布动态参数
+export type PublishMomentParameters = Partial<Moment> & {
+  // 待上传的文件列表
+  files?: Array<File>
+  /**
+   * 上传进度回调
+   * @param {number} idx 上传的第几个文件 
+   * @param {number} percent 上传进度，范围 0~100
+   * @returns 
+   */
+  upload_progress?: (idx: number, percent: number) => void
+}
+
+// 创建动态参数
+export type CreateMomentParameters = Pick<Moment, 'user_id' | 'text' | 'images' | 'video'> & {
+  // 待上传的文件
+  files?: HTMLInputElement | Array<File>
+  /**
+   * 上传进度回调
+   * @param {number} idx 上传的第几个文件 
+   * @param {number} percent 上传进度，范围 0~100
+   * @returns 
+   */
+  upload_progress?: (idx: number, percent: number) => void
+}

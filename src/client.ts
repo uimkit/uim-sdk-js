@@ -43,6 +43,8 @@ import {
   ListGroupApplicationsParameters,
   ListGruopApplicationsResponse,
   CreateMessageParameters,
+  PublishMomentParameters,
+  CreateMomentParameters,
 } from "./api-endpoints"
 import nodeFetch from "node-fetch"
 import { SupportedFetch } from "./fetch-types"
@@ -67,6 +69,11 @@ import {
   ImageMessagePayload,
   AudioMessagePayload,
   VideoMessagePayload,
+  Moment,
+  MomentContent,
+  MomentType,
+  ImageMomentContent,
+  VideoMomentContent,
 } from "./models"
 import { Plugin, PluginType, UIMUploadPlugin, UploadOptions, UploadPlugin } from "./plugins"
 import invariant from "invariant"
@@ -915,6 +922,45 @@ export class UIMClient {
   }
 
   /**
+   * 发布动态
+   * 
+   * @param parameters 
+   * @returns
+   */
+  public async publishMoment(parameters: PublishMomentParameters): Promise<Moment> {
+    // 先上传文件
+    if (parameters.files && parameters.files.length > 0) {
+      const plugin = this.getPlugin("upload")
+      invariant(plugin, "must have upload plugin")
+
+      const contents = await Promise.all(parameters.files.map((f, idx) => {
+        const options: UploadOptions = {
+          onProgress: percent => parameters.upload_progress && parameters.upload_progress(idx, percent),
+          moment: parameters as Moment
+        }
+        return plugin.upload(f, options)
+      }))
+
+      switch (parameters.type) {
+        case MomentType.Image: {
+          parameters.images = contents as Array<ImageMomentContent>
+          break
+        }
+        case MomentType.Video: {
+          parameters.video = contents[0] as VideoMomentContent
+          break
+        }
+      }
+    }
+
+    return this.request<Moment>({
+      path: "publish_moment",
+      method: "post",
+      body: omit(parameters, ['files', 'upload_progress']),
+    })
+  }
+
+  /**
    * 删除消息
    *
    * @param id
@@ -922,6 +968,18 @@ export class UIMClient {
   public async deleteMessage(id: string) {
     await this.request({
       path: `messages/${id}`,
+      method: "delete",
+    })
+  }
+
+  /**
+   * 删除动态
+   * 
+   * @param id 
+   */
+  public async deleteMoment(id: string) {
+    await this.request({
+      path: `moments/${id}`,
       method: "delete",
     })
   }
@@ -1005,6 +1063,68 @@ export class UIMClient {
       }
     }
   }
+
+  /**
+   * 创建文本动态
+   * 
+   * @param parameters 
+   * @returns 
+   */
+  public createTextMoment(parameters: CreateMomentParameters): PublishMomentParameters {
+    invariant(parameters.text, "must have text")
+    const moment = pick(parameters, ['user_id', 'text']) as Partial<Moment>
+    return { type: MomentType.Text, ...moment }
+  }
+
+  /**
+   * 创建图片动态
+   *
+   * @param parameters
+   * @returns
+   */
+  public createImagesMoment(parameters: CreateMomentParameters): PublishMomentParameters {
+    invariant(parameters.images || parameters.files, "must have images or files")
+    const moment = pick(parameters, ['user_id', 'images']) as Partial<Moment>
+    if (moment.images && moment.images.length > 0) {
+      return { type: MomentType.Image, ...moment }
+    } else {
+      const { files, upload_progress } = parameters
+      if (files instanceof HTMLInputElement) {
+        const f: Array<File> = []
+        for (let i = 0; i < (files.files?.length ?? 0); i++) {
+          f.push(files.files?.item(i)!)
+        }
+        invariant(f && f.length > 0, "must have images or files")
+        return { type: MomentType.Image, ...moment, files: f, upload_progress }
+      } else {
+        return { type: MomentType.Image, ...moment, files, upload_progress }
+      }
+    }
+  }
+
+  /**
+   * 创建视频动态
+   * 
+   * @param parameters 
+   * @returns 
+   */
+  public createVideoMoment(parameters: CreateMomentParameters): PublishMomentParameters {
+    invariant(parameters.video || parameters.files, "must have video or files")
+    const moment = pick(parameters, ['user_id', 'video']) as Partial<Moment>
+    if (moment.video) {
+      return { type: MomentType.Video, ...moment }
+    } else {
+      const { files, upload_progress } = parameters
+      if (files instanceof HTMLInputElement) {
+        const f = files.files?.item(0)
+        invariant(f, "must have video or files")
+        return { type: MomentType.Video, ...moment, files: [f], upload_progress }
+      } else {
+        return { type: MomentType.Video, ...moment, files, upload_progress }
+      }
+    }
+  }
+
 
   onNewMessage(handler: MessageHandler): () => void {
     return this.on(EventType.NEW_MESSAGE, (accountId, e) =>
