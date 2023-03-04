@@ -73,19 +73,12 @@ import {
   AudioMessagePayload,
   VideoMessagePayload,
   Moment,
-  MomentContent,
   MomentType,
   ImageMomentContent,
   VideoMomentContent,
   Comment,
 } from "./models"
-import {
-  Plugin,
-  PluginType,
-  UIMUploadPlugin,
-  UploadOptions,
-  UploadPlugin,
-} from "./plugins"
+import { Plugin, PluginType, UIMUploadPlugin, UploadOptions } from "./plugins"
 import invariant from "invariant"
 
 /**
@@ -1054,6 +1047,7 @@ export class UIMClient {
       "conversation_type",
       "conversation_id",
       "text",
+      "mentioned_users",
     ]) as Partial<Message>
     return { type: MessageType.Text, flow: MessageFlow.Out, ...message }
   }

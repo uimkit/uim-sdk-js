@@ -227,7 +227,7 @@ export type MessageTargetParameters =
 
 // 创建消息参数
 export type CreateMessageParameters = MessageTargetParameters &
-  Pick<Message, "text" | "image" | "audio" | "video"> & {
+  Pick<Message, "text" | "image" | "audio" | "video" | "mentioned_users"> & {
     // 待上传的文件
     file?: HTMLInputElement | File
     // 文件上传进度回调

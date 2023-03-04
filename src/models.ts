@@ -414,6 +414,8 @@ export enum MessageFlow {
   Out = "out",
 }
 
+export const MESSAGE_MENTIONED_ALL = "@all"
+
 // 消息
 export interface Message {
   // 消息ID
@@ -448,6 +450,8 @@ export interface Message {
   audio?: AudioMessagePayload
   // 视频消息内容
   video?: VideoMessagePayload
+  // 群文本消息@用户ID列表，如果是 @all 则是 MESSAGE_MENTIONED_ALL
+  mentioned_users?: Array<string>
   // 消息编号，在会话内递增
   seq: number
   // 发送时间
