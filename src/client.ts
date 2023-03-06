@@ -830,82 +830,6 @@ export class UIMClient {
   }
 
   /**
-   * 查询账号的动态列表
-   *
-   * @param parameters
-   * @returns
-   */
-  public listAccountMoments(
-    parameters: ListAccountMomentsParameters
-  ): Promise<ListMomentsResponse> {
-    return this.request<ListMomentsResponse>({
-      path: `im_accounts/${parameters.account_id}/moments`,
-      method: "get",
-      query: pick(parameters, [
-        "cursor",
-        "direction",
-        "limit",
-      ]) as PlainQueryParams,
-    })
-  }
-
-  /**
-   * 查询好友的动态列表
-   *
-   * @param parameters
-   * @returns
-   */
-  public listContactMoments(
-    parameters: ListContactMomentsParameters
-  ): Promise<ListMomentsResponse> {
-    return this.request<ListMomentsResponse>({
-      path: `contacts/${parameters.contact_id}/moments`,
-      method: "get",
-      query: pick(parameters, [
-        "cursor",
-        "direction",
-        "limit",
-      ]) as PlainQueryParams,
-    })
-  }
-
-  /**
-   * 查询动态的评论列表
-   *
-   * @param parameters
-   * @returns
-   */
-  public listMomentComments(
-    parameters: ListMomentCommentsParameters
-  ): Promise<ListCommentsResponse> {
-    return this.request<ListCommentsResponse>({
-      path: `moments/${parameters.moment_id}/comments`,
-      method: "get",
-      query: pick(parameters, [
-        "cursor",
-        "direction",
-        "limit",
-      ]) as PlainQueryParams,
-    })
-  }
-
-  /**
-   * 对动态发表评论
-   *
-   * @param parameters
-   * @returns
-   */
-  public commentOnMoment(
-    parameters: CommentOnMomentParameters
-  ): Promise<Comment> {
-    return this.request<Comment>({
-      path: `moments/${parameters.moment_id}/comments`,
-      method: "post",
-      body: omit(parameters, ["moment_id"]),
-    })
-  }
-
-  /**
    * 发送消息
    *
    * @param parameters
@@ -962,50 +886,6 @@ export class UIMClient {
     })
   }
 
-  /**
-   * 发布动态
-   *
-   * @param parameters
-   * @returns
-   */
-  public async publishMoment(
-    parameters: PublishMomentParameters
-  ): Promise<Moment> {
-    // 先上传文件
-    if (parameters.files && parameters.files.length > 0) {
-      const plugin = this.getPlugin("upload")
-      invariant(plugin, "must have upload plugin")
-
-      const contents = await Promise.all(
-        parameters.files.map((f, idx) => {
-          const options: UploadOptions = {
-            onProgress: percent =>
-              parameters.upload_progress &&
-              parameters.upload_progress(idx, percent),
-            moment: parameters as Moment,
-          }
-          return plugin.upload(f, options)
-        })
-      )
-
-      switch (parameters.type) {
-        case MomentType.Image: {
-          parameters.images = contents as Array<ImageMomentContent>
-          break
-        }
-        case MomentType.Video: {
-          parameters.video = contents[0] as VideoMomentContent
-          break
-        }
-      }
-    }
-
-    return this.request<Moment>({
-      path: "publish_moment",
-      method: "post",
-      body: omit(parameters, ["files", "upload_progress"]),
-    })
-  }
 
   /**
    * 删除消息
@@ -1015,18 +895,6 @@ export class UIMClient {
   public async deleteMessage(id: string) {
     await this.request({
       path: `messages/${id}`,
-      method: "delete",
-    })
-  }
-
-  /**
-   * 删除动态
-   *
-   * @param id
-   */
-  public async deleteMoment(id: string) {
-    await this.request({
-      path: `moments/${id}`,
       method: "delete",
     })
   }
@@ -1187,6 +1055,139 @@ export class UIMClient {
         }
       }
     }
+  }
+
+  /**
+   * 查询账号的动态列表
+   *
+   * @param parameters
+   * @returns
+   */
+  public listAccountMoments(
+    parameters: ListAccountMomentsParameters
+  ): Promise<ListMomentsResponse> {
+    return this.request<ListMomentsResponse>({
+      path: `im_accounts/${parameters.account_id}/moments`,
+      method: "get",
+      query: pick(parameters, [
+        "cursor",
+        "direction",
+        "limit",
+      ]) as PlainQueryParams,
+    })
+  }
+
+  /**
+   * 查询好友的动态列表
+   *
+   * @param parameters
+   * @returns
+   */
+  public listContactMoments(
+    parameters: ListContactMomentsParameters
+  ): Promise<ListMomentsResponse> {
+    return this.request<ListMomentsResponse>({
+      path: `contacts/${parameters.contact_id}/moments`,
+      method: "get",
+      query: pick(parameters, [
+        "cursor",
+        "direction",
+        "limit",
+      ]) as PlainQueryParams,
+    })
+  }
+
+  /**
+   * 查询动态的评论列表
+   *
+   * @param parameters
+   * @returns
+   */
+  public listMomentComments(
+    parameters: ListMomentCommentsParameters
+  ): Promise<ListCommentsResponse> {
+    return this.request<ListCommentsResponse>({
+      path: `moments/${parameters.moment_id}/comments`,
+      method: "get",
+      query: pick(parameters, [
+        "cursor",
+        "direction",
+        "limit",
+      ]) as PlainQueryParams,
+    })
+  }
+
+  /**
+   * 发布动态
+   *
+   * @param parameters
+   * @returns
+   */
+  public async publishMoment(
+    parameters: PublishMomentParameters
+  ): Promise<Moment> {
+    // 先上传文件
+    if (parameters.files && parameters.files.length > 0) {
+      const plugin = this.getPlugin("upload")
+      invariant(plugin, "must have upload plugin")
+
+      const contents = await Promise.all(
+        parameters.files.map((f, idx) => {
+          const options: UploadOptions = {
+            onProgress: percent =>
+              parameters.upload_progress &&
+              parameters.upload_progress(idx, percent),
+            moment: parameters as Moment,
+          }
+          return plugin.upload(f, options)
+        })
+      )
+
+      switch (parameters.type) {
+        case MomentType.Image: {
+          parameters.images = contents as Array<ImageMomentContent>
+          break
+        }
+        case MomentType.Video: {
+          parameters.video = contents[0] as VideoMomentContent
+          break
+        }
+      }
+    }
+
+    return this.request<Moment>({
+      path: "publish_moment",
+      method: "post",
+      body: omit(parameters, ["files", "upload_progress"]),
+    })
+  }
+
+  /**
+   * 对动态发表评论
+   *
+   * @param parameters
+   * @returns
+   */
+  public commentOnMoment(
+    parameters: CommentOnMomentParameters
+  ): Promise<Comment> {
+    return this.request<Comment>({
+      path: `moments/${parameters.moment_id}/comments`,
+      method: "post",
+      body: omit(parameters, ["moment_id"]),
+    })
+  }
+
+  /**
+   * 删除动态
+   *
+   * @param id
+   */
+  public async deleteMoment(id: string) {
+    await this.request({
+      path: `moments/${id}`,
+      method: "delete",
+    })
   }
 
   /**
