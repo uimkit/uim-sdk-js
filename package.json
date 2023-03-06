@@ -17,8 +17,8 @@
     "rest"
   ],
   "source": "src/index.ts",
-  "main": "./build",
-  "types": "./build/index.d.ts",
+  "main": "./dist",
+  "types": "./dist/index.d.ts",
   "scripts": {
     "build": "tsc",
     "prettier": "prettier --write ./src ./test",
@@ -27,7 +27,7 @@
     "test": "jest",
     "check-links": "git ls-files | grep md$ | xargs -n 1 markdown-link-check",
     "prebuild": "npm run clean",
-    "clean": "rm -rf ./build",
+    "clean": "rm -rf ./dist",
     "checkLoggedIn": "./scripts/verifyLoggedIn.sh"
   },
   "author": "",

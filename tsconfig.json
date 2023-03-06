@@ -11,7 +11,7 @@
     "allowJs": true,
     "noEmitOnError": true,
     "strict": true,
-    "outDir": "./build",
+    "outDir": "./dist",
     "downlevelIteration": true,
     "declarationMap": true,
     "sourceMap": true,
