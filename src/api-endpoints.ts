@@ -16,249 +16,246 @@ import {
   GroupMemberRole,
   GroupApplication,
   Comment,
-} from "./models"
+} from './models';
 
 // 查询账号列表请求
 export type ListAccountsParameters = PageListParameters<{
   // 查询指定服务商的账号
-  provider?: string
+  provider?: string;
   // 获得账号后是否订阅账号事件
-  subscribe?: boolean
-}>
+  subscribe?: boolean;
+}>;
 
 // 查询账号列表结果
-export type ListAccountsResponse = PageList<Account>
+export type ListAccountsResponse = PageList<Account>;
 
 // 查询好友列表请求
 export type ListContactsParameters = CursorListParameters<{
   // 查询指定账号的好友列表
-  account_id: string
-}>
+  account_id: string;
+}>;
 
 // 查询好友列表结果
-export type ListContactsResponse = CursorList<Contact>
+export type ListContactsResponse = CursorList<Contact>;
 
 // 查询好友申请列表请求
 export type ListFriendApplicationsParameters = PageListParameters<{
   // 查询指定账号的好友申请列表
-  account_id: string
-}>
+  account_id: string;
+}>;
 
 // 查询好友申请列表结果
-export type ListFriendApplicationsResponse = PageList<FriendApplication>
+export type ListFriendApplicationsResponse = PageList<FriendApplication>;
 
 // 查询群组列表
 export type ListGroupsParameters = PageListParameters<{
   // 查询指定账号的群组列表
-  account_id: string
+  account_id: string;
   // 根据标记状态过滤群组
-  marked?: boolean
-}>
+  marked?: boolean;
+}>;
 
 // 创建群组请求
 export type CreateGroupParameters = {
   // 用于创建群组的账号
-  account_id: string
+  account_id: string;
   // 邀请的好友ID列表
-  members: Array<string>
-  // 邀请成员留言
-  hello_message?: string
-  // 群组名称
-  name?: string
-  // 群组头像
-  avatar?: string
-  // 群二维码
-  qrcode?: string
+  members: Array<string>;
   // 群组备注名
-  alias?: string
-  // 备注说明
-  remark?: string
+  alias?: string;
   // 群公告
-  announcement?: string
+  announcement?: string;
+  // 群组头像
+  avatar?: string;
   // 简介
-  description?: string
-}
+  description?: string;
+  // 邀请成员留言
+  hello_message?: string;
+  // 群组名称
+  name?: string;
+  // 群二维码
+  qrcode?: string;
+  // 备注说明
+  remark?: string;
+};
 
 // 转让群组
 export type TransferGroupParameters = {
   // 群组ID
-  group_id: string
+  group_id: string;
   // 新群主ID
-  owner_id: string
-}
+  owner_id: string;
+};
 
 // 查询群组列表结果
-export type ListGroupsResponse = PageList<Group>
+export type ListGroupsResponse = PageList<Group>;
 
 // 查询会话列表请求
 export type ListConversationsParameters = CursorListParameters<{
-  account_id: string
-}>
+  account_id: string;
+}>;
 
 // 查询会话列表结果
-export type ListConversationsResponse = CursorList<Conversation>
+export type ListConversationsResponse = CursorList<Conversation>;
 
 // 添加好友请求
 export type AddContactParameters = {
   // 账号ID
-  account_id: string
+  account_id: string;
   // 联系人，可以为手机号、平台ID等
-  contact: string
+  contact: string;
   // 打招呼留言
-  hello_message?: string
-}
+  hello_message?: string;
+};
 
 // 添加好友结果
 export type AddContactResponse = {
   // 好友申请是否发送成功
-  success: boolean
+  success: boolean;
   // 如果失败，返回失败的原因
-  reason?: string
-}
+  reason?: string;
+};
 
 // 查询群成员列表请求
 export type ListGroupMembersParameters = PageListParameters<{
-  group_id: string
-}>
+  group_id: string;
+}>;
 
 // 查询群成员列表结果
-export type ListGroupMembersResponse = PageList<GroupMember>
+export type ListGroupMembersResponse = PageList<GroupMember>;
 
 // 邀请好友加入群组
 export type InviteGroupMembersParameters = {
   // 发出邀请的账号
-  account_id: string
-  // 群组ID
-  group_id: string
+  account_id: string;
   // 邀请好友ID列表
-  contacts: Array<string>
+  contacts: Array<string>;
+  // 群组ID
+  group_id: string;
   // 邀请留言
-  hello_message?: string
-}
+  hello_message?: string;
+};
 
 // 邀请好友加入群组结果
 export type InviteGroupMembersResponse = {
-  // 邀请是否全部发送成功
-  success: boolean
   // 邀请失败的好友及原因
   failed_contacts: Array<{
     // 失败的好友ID
-    contact_id: string
+    contact_id: string;
     // 失败的原因
-    reason?: string
-  }>
-}
+    reason?: string;
+  }>;
+  // 邀请是否全部发送成功
+  success: boolean;
+};
 
 // 设置群成员角色
 export type SetGroupMemberRoleParameters = {
   // 操作的群管理员账号
-  account_id: string
+  account_id: string;
   // 群组ID
-  group_id: string
+  group_id: string;
   // 群成员ID
-  member_id: string
+  member_id: string;
   // 设置角色
-  role: GroupMemberRole
-}
+  role: GroupMemberRole;
+};
 
 // 查询入群申请列表请求
 export type ListGroupApplicationsParameters = PageListParameters<{
-  group_id: string
-}>
+  group_id: string;
+}>;
 
 // 查询入群申请列表结果
-export type ListGruopApplicationsResponse = PageList<GroupApplication>
+export type ListGruopApplicationsResponse = PageList<GroupApplication>;
 
 // 查询消息列表请求
 export type ListMessagesParameters = CursorListParameters<{
-  conversation_id: string
-}>
+  conversation_id: string;
+}>;
 
 // 查询消息列表结果
-export type ListMessagesResponse = CursorList<Message>
+export type ListMessagesResponse = CursorList<Message>;
 
 // 查询账号的动态列表请求
 export type ListAccountMomentsParameters = CursorListParameters<{
-  account_id: string
-}>
+  account_id: string;
+}>;
 
 // 查询好友的动态列表请求
 export type ListContactMomentsParameters = CursorListParameters<{
-  contact_id: string
-}>
+  contact_id: string;
+}>;
 
 // 查询动态列表结果
-export type ListMomentsResponse = CursorList<Moment>
+export type ListMomentsResponse = CursorList<Moment>;
 
 // 查询动态的评论列表
 export type ListMomentCommentsParameters = CursorListParameters<{
-  moment_id: string
-}>
+  moment_id: string;
+}>;
 
 // 查询评论列表结果
-export type ListCommentsResponse = CursorList<Comment>
+export type ListCommentsResponse = CursorList<Comment>;
 
 // 对动态发表评论
 export type CommentOnMomentParameters = {
   // 发表评论的账号ID
-  account_id: string
+  account_id: string;
   // 动态ID
-  moment_id: string
-  // 回复的评论ID
-  reply_to?: string
+  moment_id: string;
   // 评论内容
-  text: string
-}
+  text: string;
+  // 回复的评论ID
+  reply_to?: string;
+};
 
 // 发送消息请求
 export type SendMessageParameters = Partial<Message> & {
   // 待上传的文件
-  file?: File
+  file?: File;
   // 文件上传进度回调
-  upload_progress?: (percent: number) => void
-}
+  upload_progress?: (percent: number) => void;
+};
 
 // 消息发送目标
 export type MessageTargetParameters =
   // 直接发送给对方
-  | Pick<Message, "from" | "to" | "conversation_type">
+  | Pick<Message, 'from' | 'to' | 'conversation_type'>
   // 发送到会话
-  | Pick<Message, "conversation_id">
+  | Pick<Message, 'conversation_id'>;
 
 // 创建消息参数
 export type CreateMessageParameters = MessageTargetParameters &
-  Pick<Message, "text" | "image" | "audio" | "video" | "mentioned_users"> & {
+  Pick<Message, 'text' | 'image' | 'audio' | 'video' | 'mentioned_users'> & {
     // 待上传的文件
-    file?: HTMLInputElement | File
+    file?: HTMLInputElement | File;
     // 文件上传进度回调
-    upload_progress?: (percent: number) => void
-  }
+    upload_progress?: (percent: number) => void;
+  };
 
 // 发布动态参数
 export type PublishMomentParameters = Partial<Moment> & {
   // 待上传的文件列表
-  files?: Array<File>
+  files?: Array<File>;
   /**
    * 上传进度回调
    * @param {number} idx 上传的第几个文件
    * @param {number} percent 上传进度，范围 0~100
    * @returns
    */
-  upload_progress?: (idx: number, percent: number) => void
-}
+  upload_progress?: (idx: number, percent: number) => void;
+};
 
 // 创建动态参数
-export type CreateMomentParameters = Pick<
-  Moment,
-  "user_id" | "text" | "images" | "video"
-> & {
+export type CreateMomentParameters = Pick<Moment, 'user_id' | 'text' | 'images' | 'video'> & {
   // 待上传的文件
-  files?: HTMLInputElement | Array<File>
+  files?: HTMLInputElement | Array<File>;
   /**
    * 上传进度回调
    * @param {number} idx 上传的第几个文件
    * @param {number} percent 上传进度，范围 0~100
    * @returns
    */
-  upload_progress?: (idx: number, percent: number) => void
-}
+  upload_progress?: (idx: number, percent: number) => void;
+};

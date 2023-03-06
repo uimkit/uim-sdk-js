@@ -10,11 +10,5 @@
   // This is useful for offensive words and common spelling errors.
   // For example "hte" should be "the"
   "flagWords": ["hte"],
-  "ignorePaths": [
-    "package.json",
-    "package-lock.json",
-    "node_modules/**",
-    "examples/**/node_modules/**",
-    "build/**"
-  ]
+  "ignorePaths": ["package.json", "package-lock.json", "node_modules/**", "examples/**/node_modules/**", "build/**"]
 }

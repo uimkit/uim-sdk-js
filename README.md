@@ -22,10 +22,10 @@ npm install @uimkit/uim-js
 Import and initialize a client using an **integration token** or an OAuth **access token**.
 
 ```js
-const Client = require("@uimkit/uim-js")
+const Client = require('@uimkit/uim-js');
 
 // Initializing a client
-const client = new Client(process.env.ACCESS_TOKEN, {})
+const client = new Client(process.env.ACCESS_TOKEN, {});
 ```
 
 Make a request to any UIM API endpoint.
@@ -33,15 +33,15 @@ Make a request to any UIM API endpoint.
 > See the complete list of endpoints in the [API reference](https://docs.uimkit.chat/reference).
 
 ```js
-;(async () => {
-  const response = await client.listIMAccounts({})
-})()
+(async () => {
+  const response = await client.listIMAccounts({});
+})();
 ```
 
 Each method returns a `Promise` which resolves the response.
 
 ```js
-console.log(response)
+console.log(response);
 ```
 
 ```json
@@ -51,11 +51,11 @@ console.log(response)
     "user": {
       "id": "douyin|8b3f7f39-d27b-4e73-8290-d2949a79bc21",
       "connection_id": "F7-I0jScfZ0pa2_Y76Q9x",
-      "user_id": "8b3f7f39-d27b-4e73-8290-d2949a79bc21",
+      "user_id": "8b3f7f39-d27b-4e73-8290-d2949a79bc21"
       // ...
     },
-    "presence": 0,
-  },
+    "presence": 0
+  }
   // ...
 ]
 ```
@@ -64,9 +64,9 @@ Endpoint parameters are grouped into a single object. You don't need to remember
 
 ```js
 const response = await client.listContacts({
-  im_account_id: "897e5a76-ae52-4b48-9fdf-e71f5945d1af",
-  limit: 50
-})
+  im_account_id: '897e5a76-ae52-4b48-9fdf-e71f5945d1af',
+  limit: 50,
+});
 ```
 
 Send accounts' commands to UIM API
@@ -75,15 +75,15 @@ Send accounts' commands to UIM API
 
 ```js
 await client.sendPrivateMessage({
-  account_id: "897e5a76-ae52-4b48-9fdf-e71f5945d1af@douyin",
-  user_id: "897e5a76-ae52-4b48-9fdf-e71f5945d1af@douyin",
+  account_id: '897e5a76-ae52-4b48-9fdf-e71f5945d1af@douyin',
+  user_id: '897e5a76-ae52-4b48-9fdf-e71f5945d1af@douyin',
   message: {
     type: MessageType.Text,
     body: {
-      content: "hello",
+      content: 'hello',
     },
   },
-})
+});
 ```
 
 Handle accounts' events from UIM API.
@@ -92,8 +92,8 @@ Handle accounts' events from UIM API.
 
 ```js
 client.onNewMessageReceived((evt: MessageReceivedEvent) => {
-  console.log(`new message id: ${evt.data.id}`)
-})
+  console.log(`new message id: ${evt.data.id}`);
+});
 ```
 
 ### Handling errors
@@ -103,12 +103,12 @@ If the API returns an unsuccessful response, the returned `Promise` rejects with
 The error contains properties from the response, and the most helpful is `code`. You can compare `code` to the values in the `APIErrorCode` object to avoid misspelling error codes.
 
 ```js
-const { Client, APIErrorCode } = require("@uimkit/uim-js")
+const { Client, APIErrorCode } = require('@uimkit/uim-js');
 
 try {
   const response = await client.listContacts({
-    account_id: "897e5a76-ae52-4b48-9fdf-e71f5945d1af",
-  })
+    account_id: '897e5a76-ae52-4b48-9fdf-e71f5945d1af',
+  });
 } catch (error) {
   if (error.code === APIErrorCode.ObjectNotFound) {
     //
@@ -116,7 +116,7 @@ try {
     //
   } else {
     // Other error handling code
-    console.error(error)
+    console.error(error);
   }
 }
 ```
@@ -128,11 +128,11 @@ The client emits useful information to a logger. By default, it only emits warni
 If you're debugging an application, and would like the client to log response bodies, set the `logLevel` option to `LogLevel.DEBUG`.
 
 ```js
-const { Client, LogLevel } = require("@uimkit/uim-js")
+const { Client, LogLevel } = require('@uimkit/uim-js');
 
 const client = new Client(process.env.ACCESS_TOKEN, {
   logLevel: LogLevel.DEBUG,
-})
+});
 ```
 
 You may also set a custom `logger` to emit logs to a destination other than `stdout`. A custom logger is a function which is called with 3 parameters: `logLevel`, `message`, and `extraInfo`. The custom logger should not return a value.
@@ -141,13 +141,13 @@ You may also set a custom `logger` to emit logs to a destination other than `std
 
 The `Client` supports the following options on initialization. These options are all keys in the single constructor parameter.
 
-| Option      | Default value               | Type         | Description                                                                                                                                                  |
-| ----------- | --------------------------- | ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `logLevel`  | `LogLevel.WARN`             | `LogLevel`   | Verbosity of logs the instance will produce. By default, logs are written to `stdout`.                                                                       |
-| `timeoutMs` | `60_000`                    | `number`     | Number of milliseconds to wait before emitting a `RequestTimeoutError`                                                                                       |
+| Option      | Default value                         | Type         | Description                                                                                                                                                  |
+| ----------- | ------------------------------------- | ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `logLevel`  | `LogLevel.WARN`                       | `LogLevel`   | Verbosity of logs the instance will produce. By default, logs are written to `stdout`.                                                                       |
+| `timeoutMs` | `60_000`                              | `number`     | Number of milliseconds to wait before emitting a `RequestTimeoutError`                                                                                       |
 | `baseUrl`   | `"https://api.uimkit.chat/client/v1"` | `string`     | The root URL for sending API requests. This can be changed to test with a mock server.                                                                       |
-| `logger`    | Log to console              | `Logger`     | A custom logging function. This function is only called when the client emits a log that is equal or greater severity than `logLevel`.                       |
-| `agent`     | Default node agent          | `http.Agent` | Used to control creation of TCP sockets. A common use is to proxy requests with [`https-proxy-agent`](https://github.com/TooTallNate/node-https-proxy-agent) |
+| `logger`    | Log to console                        | `Logger`     | A custom logging function. This function is only called when the client emits a log that is equal or greater severity than `logLevel`.                       |
+| `agent`     | Default node agent                    | `http.Agent` | Used to control creation of TCP sockets. A common use is to proxy requests with [`https-proxy-agent`](https://github.com/TooTallNate/node-https-proxy-agent) |
 
 ### TypeScript
 
@@ -163,24 +163,24 @@ the `APIErrorCode` enum are returned from the server. Codes in the
 try {
   const response = await client.listContacts({
     /* ... */
-  })
+  });
 } catch (error: unknown) {
   if (isUIMClientError(error)) {
     // error is now strongly typed to UIMClientError
     switch (error.code) {
       case ClientErrorCode.RequestTimeout:
         // ...
-        break
+        break;
       case APIErrorCode.ObjectNotFound:
         // ...
-        break
+        break;
       case APIErrorCode.Unauthorized:
         // ...
-        break
+        break;
       // ...
       default:
         // you could even take advantage of exhaustiveness checking
-        assertNever(error.code)
+        assertNever(error.code);
     }
   }
 }

@@ -1,19 +1,9 @@
-import { isNode, isBrowser } from "browser-or-node"
-import jwtdecode, { JwtPayload } from "jwt-decode"
-import { omit, pick, indexOf } from "lodash"
-import {
-  Logger,
-  LogLevel,
-  logLevelSeverity,
-  makeConsoleLogger,
-} from "./logging"
-import {
-  buildRequestError,
-  isHTTPResponseError,
-  isUIMClientError,
-  RequestTimeoutError,
-} from "./errors"
-import { createQueryParams, createRandomString, popup } from "./helpers"
+import { isNode, isBrowser } from 'browser-or-node';
+import jwtdecode, { JwtPayload } from 'jwt-decode';
+import { omit, pick, indexOf } from 'lodash';
+import { Logger, LogLevel, logLevelSeverity, makeConsoleLogger } from './logging';
+import { buildRequestError, isHTTPResponseError, isUIMClientError, RequestTimeoutError } from './errors';
+import { createQueryParams, createRandomString, popup } from './helpers';
 import {
   ListAccountsParameters,
   ListAccountsResponse,
@@ -48,11 +38,11 @@ import {
   ListMomentCommentsParameters,
   ListCommentsResponse,
   CommentOnMomentParameters,
-} from "./api-endpoints"
-import nodeFetch from "node-fetch"
-import { SupportedFetch } from "./fetch-types"
-import { SupportedPubSub, PubSubOptions, default as PubSub } from "./pubsub"
-import { Event, EventHandler, EventType } from "./events"
+} from './api-endpoints';
+import nodeFetch from 'node-fetch';
+import { SupportedFetch } from './fetch-types';
+import { SupportedPubSub, PubSubOptions, default as PubSub } from './pubsub';
+import { Event, EventHandler, EventType } from './events';
 import {
   Account,
   MessageType,
@@ -70,75 +60,75 @@ import {
   ImageMomentContent,
   VideoMomentContent,
   Comment,
-} from "./models"
-import { Plugin, PluginType, UIMUploadPlugin, UploadOptions } from "./plugins"
-import invariant from "invariant"
+} from './models';
+import { Plugin, PluginType, UIMUploadPlugin, UploadOptions } from './plugins';
+import invariant from 'invariant';
 
 /**
  * UIMClient 构造选项
  */
 export interface UIMClientOptions {
-  timeoutMs?: number
-  baseUrl?: string
-  logLevel?: LogLevel
-  uimVersion?: string
+  baseUrl?: string;
+  errorHandler?: (e: unknown) => void;
+  logLevel?: LogLevel;
+  publishKey?: string;
+  secretKey?: string;
   /** Options for pubsub */
-  subscribeKey?: string
-  publishKey?: string
-  secretKey?: string
-  errorHandler?: (e: unknown) => void
+  subscribeKey?: string;
+  timeoutMs?: number;
+  uimVersion?: string;
 }
 
 /**
  * 账号授权结果
  */
 interface AuthorizeResult {
-  // 账号ID
-  id?: string
-  // 回传的自定义参数
-  state?: string
   // 错误信息
-  error?: string
+  error?: string;
+  // 账号ID
+  id?: string;
+  // 回传的自定义参数
+  state?: string;
 }
 
 export class UIMClient {
-  _auth?: string
-  _logLevel: LogLevel
-  _logger: Logger
-  _prefixUrl: string
-  _timeoutMs: number
-  _fetch: SupportedFetch
-  _pubsub: SupportedPubSub
-  _channels: Array<string>
-  _handlers: Record<string, Array<EventHandler>>
-  _messageEventListener?: (msgEvent: MessageEvent) => void
-  _errorHandler?: (e: unknown) => void
-  _plugins: Partial<Record<PluginType, Plugin>>
+  _auth?: string;
+  _logLevel: LogLevel;
+  _logger: Logger;
+  _prefixUrl: string;
+  _timeoutMs: number;
+  _fetch: SupportedFetch;
+  _pubsub: SupportedPubSub;
+  _channels: Array<string>;
+  _handlers: Record<string, Array<EventHandler>>;
+  _messageEventListener?: (msgEvent: MessageEvent) => void;
+  _errorHandler?: (e: unknown) => void;
+  _plugins: Partial<Record<PluginType, Plugin>>;
 
   public constructor(token: string, options?: UIMClientOptions) {
-    this._auth = token
-    this._logLevel = options?.logLevel ?? LogLevel.WARN
-    this._logger = makeConsoleLogger("uim-js")
-    this._prefixUrl = options?.baseUrl ?? "https://api.uimkit.chat/client/v1/"
-    this._timeoutMs = options?.timeoutMs ?? 60_000
-    this._fetch = isNode ? nodeFetch : window.fetch.bind(window)
-    this._channels = []
-    this._handlers = {}
-    this._messageEventListener = undefined
-    this._errorHandler = options?.errorHandler
-    const jwt = jwtdecode<JwtPayload>(token)
+    this._auth = token;
+    this._logLevel = options?.logLevel ?? LogLevel.WARN;
+    this._logger = makeConsoleLogger('uim-js');
+    this._prefixUrl = options?.baseUrl ?? 'https://api.uimkit.chat/client/v1/';
+    this._timeoutMs = options?.timeoutMs ?? 60_000;
+    this._fetch = isNode ? nodeFetch : window.fetch.bind(window);
+    this._channels = [];
+    this._handlers = {};
+    this._messageEventListener = undefined;
+    this._errorHandler = options?.errorHandler;
+    const jwt = jwtdecode<JwtPayload>(token);
     const pubsubOptions: PubSubOptions = {
-      uuid: jwt.sub ?? "",
-      subscribeKey: options?.subscribeKey ?? "",
+      uuid: jwt.sub ?? '',
+      subscribeKey: options?.subscribeKey ?? '',
       publishKey: options?.publishKey,
       secretKey: options?.secretKey,
-    }
-    this._pubsub = new PubSub(pubsubOptions)
-    this._pubsub.addListener(this.onEvent.bind(this))
+    };
+    this._pubsub = new PubSub(pubsubOptions);
+    this._pubsub.addListener(this.onEvent.bind(this));
     // 默认的插件
     this._plugins = {
-      upload: new UIMUploadPlugin(jwt.sub ?? "", token, this._prefixUrl),
-    }
+      upload: new UIMUploadPlugin(jwt.sub ?? '', token, this._prefixUrl),
+    };
   }
 
   /**
@@ -148,57 +138,54 @@ export class UIMClient {
    * @param cb
    * @returns
    */
-  public async authorize(
-    provider: string,
-    cb?: (id?: string) => void
-  ): Promise<string | undefined> {
+  public async authorize(provider: string, cb?: (id?: string) => void): Promise<string | undefined> {
     if (!isBrowser) {
-      throw new Error("authorize must run in browser")
+      throw new Error('authorize must run in browser');
     }
-    const state = createRandomString(16)
-    const token = this._auth ?? ""
-    const params = { provider, token, state }
-    const url = `${this._prefixUrl}authorize?${createQueryParams(params)}`
-    const win = popup(url, "uim-authorize-window")
+    const state = createRandomString(16);
+    const token = this._auth ?? '';
+    const params = { provider, token, state };
+    const url = `${this._prefixUrl}authorize?${createQueryParams(params)}`;
+    const win = popup(url, 'uim-authorize-window');
     if (!win) {
-      throw new Error("open authorize window error")
+      throw new Error('open authorize window error');
     }
 
     const res = await Promise.race([
       // 等待授权页面返回
       this.listenToAuthorizeResult(),
       // 检测授权页面关闭
-      new Promise<null>(resolve => {
+      new Promise<null>((resolve) => {
         const handle = setInterval(() => {
           if (win.closed) {
-            clearInterval(handle)
+            clearInterval(handle);
             // 授权页 postMessage 后会关闭自己，这里延后让 message 先得到处理
-            setTimeout(() => resolve(null), 500)
+            setTimeout(() => resolve(null), 500);
           }
-        }, 500)
+        }, 500);
       }),
-    ])
+    ]);
     if (this._messageEventListener) {
-      window.removeEventListener("message", this._messageEventListener)
+      window.removeEventListener('message', this._messageEventListener);
     }
-    this._messageEventListener = undefined
+    this._messageEventListener = undefined;
 
     if (!res) {
       // 授权页窗口被用户关闭了
-      cb && cb()
-      return
+      cb && cb();
+      return;
     }
 
     if (res.error) {
-      throw new Error(res.error)
+      throw new Error(res.error);
     }
 
     if (res.state !== state) {
-      throw new Error("invalid authorize state")
+      throw new Error('invalid authorize state');
     }
 
-    cb && cb(res.id!)
-    return res.id!
+    cb && cb(res.id!);
+    return res.id!;
   }
 
   /**
@@ -207,23 +194,20 @@ export class UIMClient {
    * @returns
    */
   private async listenToAuthorizeResult(): Promise<AuthorizeResult> {
-    const { origin } = new URL(this._prefixUrl)
-    return new Promise<AuthorizeResult>(resolve => {
+    const { origin } = new URL(this._prefixUrl);
+    return new Promise<AuthorizeResult>((resolve) => {
       const msgEventListener = (msgEvent: MessageEvent) => {
-        if (
-          msgEvent.origin !== origin ||
-          msgEvent.data?.type !== "authorization_response"
-        ) {
-          return
+        if (msgEvent.origin !== origin || msgEvent.data?.type !== 'authorization_response') {
+          return;
         }
-        window.removeEventListener("message", msgEventListener)
-        this._messageEventListener = undefined
-        return resolve(msgEvent.data)
-      }
+        window.removeEventListener('message', msgEventListener);
+        this._messageEventListener = undefined;
+        return resolve(msgEvent.data);
+      };
 
-      this._messageEventListener = msgEventListener
-      window.addEventListener("message", msgEventListener)
-    })
+      this._messageEventListener = msgEventListener;
+      window.addEventListener('message', msgEventListener);
+    });
   }
 
   /**
@@ -233,28 +217,25 @@ export class UIMClient {
    * @returns
    */
   private async request<T>(parameters: RequestParameters): Promise<T> {
-    const { path, method, query, body, auth } = parameters
-    this.log(LogLevel.INFO, "request start", { method, path })
+    const { path, method, query, body, auth } = parameters;
+    this.log(LogLevel.INFO, 'request start', { method, path });
 
     // If the body is empty, don't send the body in the HTTP request
-    const bodyAsJsonString =
-      !body || Object.entries(body).length === 0
-        ? undefined
-        : JSON.stringify(body)
+    const bodyAsJsonString = !body || Object.entries(body).length === 0 ? undefined : JSON.stringify(body);
 
-    const url = new URL(`${this._prefixUrl}${path}`)
+    const url = new URL(`${this._prefixUrl}${path}`);
     if (query) {
       for (const [key, value] of Object.entries(query)) {
         if (value !== undefined) {
-          url.searchParams.append(key, String(value))
+          url.searchParams.append(key, String(value));
         }
       }
     }
 
-    const authHeaders = await this.authAsHeaders(auth)
-    const headers: Record<string, string> = { ...authHeaders }
+    const authHeaders = await this.authAsHeaders(auth);
+    const headers: Record<string, string> = { ...authHeaders };
     if (bodyAsJsonString !== undefined) {
-      headers["content-type"] = "application/json"
+      headers['content-type'] = 'application/json';
     }
 
     try {
@@ -264,44 +245,44 @@ export class UIMClient {
           headers,
           body: bodyAsJsonString,
         }),
-        this._timeoutMs
-      )
+        this._timeoutMs,
+      );
 
-      const responseText = await response.text()
+      const responseText = await response.text();
       if (!response.ok) {
-        throw buildRequestError(response, responseText)
+        throw buildRequestError(response, responseText);
       }
 
-      if (responseText !== "") {
-        const responseJson: T = JSON.parse(responseText)
-        this.log(LogLevel.INFO, `request success`, { method, path })
-        return responseJson
+      if (responseText !== '') {
+        const responseJson: T = JSON.parse(responseText);
+        this.log(LogLevel.INFO, `request success`, { method, path });
+        return responseJson;
       } else {
-        return {} as T
+        return {} as T;
       }
     } catch (error: unknown) {
       if (this._errorHandler) {
-        this._errorHandler(error)
+        this._errorHandler(error);
       }
 
       if (!isUIMClientError(error)) {
-        throw error
+        throw error;
       }
 
       // Log the error if it's one of our known error types
       this.log(LogLevel.WARN, `request fail`, {
         code: error.code,
         message: error.message,
-      })
+      });
 
       if (isHTTPResponseError(error)) {
         // The response body may contain sensitive information so it is logged separately at the DEBUG level
         this.log(LogLevel.DEBUG, `failed response body`, {
           body: error.body,
-        })
+        });
       }
 
-      throw error
+      throw error;
     }
   }
 
@@ -312,7 +293,7 @@ export class UIMClient {
    * @param plugin
    */
   public registerPlugin(type: PluginType, plugin: Plugin) {
-    this._plugins[type] = plugin
+    this._plugins[type] = plugin;
   }
 
   /**
@@ -322,7 +303,7 @@ export class UIMClient {
    * @returns
    */
   private getPlugin(type: PluginType): Plugin | undefined {
-    return this._plugins[type]
+    return this._plugins[type];
   }
 
   /**
@@ -331,27 +312,19 @@ export class UIMClient {
    * @param args
    * @returns
    */
-  public async listAccounts(
-    parameters: ListAccountsParameters
-  ): Promise<ListAccountsResponse> {
+  public async listAccounts(parameters: ListAccountsParameters): Promise<ListAccountsResponse> {
     const resp = await this.request<ListAccountsResponse>({
-      method: "get",
-      path: "im_accounts",
-      query: pick(parameters, [
-        "offset",
-        "limit",
-        "provider",
-      ]) as PlainQueryParams,
-    })
+      method: 'get',
+      path: 'im_accounts',
+      query: pick(parameters, ['offset', 'limit', 'provider']) as PlainQueryParams,
+    });
     if (parameters.subscribe && resp.data.length > 0) {
       // 只需要订阅之前没有订阅过的
-      const channels = resp.data
-        .map(it => it.id)
-        .filter(it => indexOf(this._channels, it) < 0)
-      this._channels = [...channels, ...this._channels]
-      this._pubsub.subscribe(this._channels)
+      const channels = resp.data.map((it) => it.id).filter((it) => indexOf(this._channels, it) < 0);
+      this._channels = [...channels, ...this._channels];
+      this._pubsub.subscribe(this._channels);
     }
-    return resp
+    return resp;
   }
 
   /**
@@ -364,16 +337,17 @@ export class UIMClient {
   public async getAccount(id: string, subscribe?: boolean): Promise<Account> {
     const account = await this.request<Account>({
       path: `im_accounts/${id}`,
-      method: "get",
-    })
+      method: 'get',
+    });
     if (subscribe) {
       // 注意不需要重复订阅
-      if (indexOf(this._channels, account.id) < 0) {
-        this._channels = [account.id, ...this._channels]
-        this._pubsub.subscribe(this._channels)
+      const notSubscribed = indexOf(this._channels, account.id) < 0;
+      if (notSubscribed) {
+        this._channels = [account.id, ...this._channels];
+        this._pubsub.subscribe(this._channels);
       }
     }
-    return account
+    return account;
   }
 
   /**
@@ -382,10 +356,10 @@ export class UIMClient {
    * @param {string} id 账号ID
    */
   public async logout(id: string) {
-    await this.request({ path: `im_accounts/${id}/logout`, method: "post" })
+    await this.request({ path: `im_accounts/${id}/logout`, method: 'post' });
     // 取消订阅账号
     if (indexOf(this._channels, id) >= 0) {
-      this._pubsub.unsubscribe([id])
+      this._pubsub.unsubscribe([id]);
     }
   }
 
@@ -395,18 +369,12 @@ export class UIMClient {
    * @param parameters
    * @returns
    */
-  public listContacts(
-    parameters: ListContactsParameters
-  ): Promise<ListContactsResponse> {
+  public listContacts(parameters: ListContactsParameters): Promise<ListContactsResponse> {
     return this.request<ListContactsResponse>({
       path: `im_accounts/${parameters.account_id}/contacts`,
-      method: "get",
-      query: pick(parameters, [
-        "cursor",
-        "direction",
-        "limit",
-      ]) as PlainQueryParams,
-    })
+      method: 'get',
+      query: pick(parameters, ['cursor', 'direction', 'limit']) as PlainQueryParams,
+    });
   }
 
   /**
@@ -418,8 +386,8 @@ export class UIMClient {
   public getContact(id: string): Promise<Contact> {
     return this.request<Contact>({
       path: `contacts/${id}`,
-      method: "get",
-    })
+      method: 'get',
+    });
   }
 
   /**
@@ -428,7 +396,7 @@ export class UIMClient {
    * @param id
    */
   public async deleteContact(id: string) {
-    await this.request({ path: `contacts/${id}`, method: "delete" })
+    await this.request({ path: `contacts/${id}`, method: 'delete' });
   }
 
   /**
@@ -437,7 +405,7 @@ export class UIMClient {
    * @param id
    */
   public async markContact(id: string) {
-    await this.request({ path: `contacts/${id}/mark`, method: "post" })
+    await this.request({ path: `contacts/${id}/mark`, method: 'post' });
   }
 
   /**
@@ -446,7 +414,7 @@ export class UIMClient {
    * @param id
    */
   public async unmarkContact(id: string) {
-    await this.request({ path: `contacts/${id}/unmark`, method: "post" })
+    await this.request({ path: `contacts/${id}/unmark`, method: 'post' });
   }
 
   /**
@@ -455,14 +423,12 @@ export class UIMClient {
    * @param parameters
    * @returns 返回好友申请发送结果，成功仅代表好友申请发送成功
    */
-  public addContact(
-    parameters: AddContactParameters
-  ): Promise<AddContactResponse> {
+  public addContact(parameters: AddContactParameters): Promise<AddContactResponse> {
     return this.request<AddContactResponse>({
       path: `im_accounts/${parameters.account_id}/contacts/add`,
-      method: "post",
-      body: omit(parameters, ["account_id"]),
-    })
+      method: 'post',
+      body: omit(parameters, ['account_id']),
+    });
   }
 
   /**
@@ -471,14 +437,12 @@ export class UIMClient {
    * @param parameters
    * @returns
    */
-  public listFriendApplications(
-    parameters: ListFriendApplicationsParameters
-  ): Promise<ListFriendApplicationsResponse> {
+  public listFriendApplications(parameters: ListFriendApplicationsParameters): Promise<ListFriendApplicationsResponse> {
     return this.request<ListFriendApplicationsResponse>({
       path: `im_accounts/${parameters.account_id}/friend_applications`,
-      method: "get",
-      query: pick(parameters, ["offset", "limit"]) as PlainQueryParams,
-    })
+      method: 'get',
+      query: pick(parameters, ['offset', 'limit']) as PlainQueryParams,
+    });
   }
 
   /**
@@ -489,8 +453,8 @@ export class UIMClient {
   public async acceptFriendApplication(application_id: string) {
     await this.request({
       path: `friend_applications/${application_id}/accept`,
-      method: "post",
-    })
+      method: 'post',
+    });
   }
 
   /**
@@ -499,14 +463,12 @@ export class UIMClient {
    * @param parameters
    * @returns
    */
-  public listGroups(
-    parameters: ListGroupsParameters
-  ): Promise<ListGroupsResponse> {
+  public listGroups(parameters: ListGroupsParameters): Promise<ListGroupsResponse> {
     return this.request<ListGroupsResponse>({
       path: `im_accounts/${parameters.account_id}/groups`,
-      method: "get",
-      query: pick(parameters, ["offset", "limit"]) as PlainQueryParams,
-    })
+      method: 'get',
+      query: pick(parameters, ['offset', 'limit']) as PlainQueryParams,
+    });
   }
 
   /**
@@ -518,8 +480,8 @@ export class UIMClient {
   public getGroup(id: string): Promise<Group> {
     return this.request<Group>({
       path: `groups/${id}`,
-      method: "get",
-    })
+      method: 'get',
+    });
   }
 
   /**
@@ -530,9 +492,9 @@ export class UIMClient {
   public createGroup(parameters: CreateGroupParameters): Promise<Group> {
     return this.request<Group>({
       path: `im_accounts/${parameters.account_id}/groups`,
-      method: "post",
-      body: omit(parameters, ["account_id"]),
-    })
+      method: 'post',
+      body: omit(parameters, ['account_id']),
+    });
   }
 
   /**
@@ -548,8 +510,8 @@ export class UIMClient {
   public async quitGroup(account_id: string, group_id: string) {
     await this.request({
       path: `im_accounts/${account_id}/groups/${group_id}/quit`,
-      method: "post",
-    })
+      method: 'post',
+    });
   }
 
   /**
@@ -561,8 +523,8 @@ export class UIMClient {
   public async dismissGroup(group_id: string) {
     await this.request({
       path: `groups/${group_id}/dismiss`,
-      method: "post",
-    })
+      method: 'post',
+    });
   }
 
   /**
@@ -573,9 +535,9 @@ export class UIMClient {
   public async transferGroup(parameters: TransferGroupParameters) {
     await this.request({
       path: `groups/${parameters.group_id}/transfer`,
-      method: "post",
-      body: omit(parameters, ["group_id"]),
-    })
+      method: 'post',
+      body: omit(parameters, ['group_id']),
+    });
   }
 
   /**
@@ -587,8 +549,8 @@ export class UIMClient {
   public async markGroup(account_id: string, group_id: string) {
     await this.request({
       path: `im_accounts/${account_id}/groups/${group_id}/mark`,
-      method: "post",
-    })
+      method: 'post',
+    });
   }
 
   /**
@@ -600,8 +562,8 @@ export class UIMClient {
   public async unmarkGroup(account_id: string, group_id: string) {
     await this.request({
       path: `im_accounts/${account_id}/groups/${group_id}/unmark`,
-      method: "post",
-    })
+      method: 'post',
+    });
   }
 
   /**
@@ -610,14 +572,12 @@ export class UIMClient {
    * @param parameters
    * @returns
    */
-  public listGroupMembers(
-    parameters: ListGroupMembersParameters
-  ): Promise<ListGroupMembersResponse> {
+  public listGroupMembers(parameters: ListGroupMembersParameters): Promise<ListGroupMembersResponse> {
     return this.request<ListGroupMembersResponse>({
       path: `groups/${parameters.group_id}/members`,
-      method: "get",
-      query: pick(parameters, ["offset", "limit"]) as PlainQueryParams,
-    })
+      method: 'get',
+      query: pick(parameters, ['offset', 'limit']) as PlainQueryParams,
+    });
   }
 
   /**
@@ -629,8 +589,8 @@ export class UIMClient {
   public getGroupMember(member_id: string): Promise<GroupMember> {
     return this.request<GroupMember>({
       path: `group_members/${member_id}`,
-      method: "get",
-    })
+      method: 'get',
+    });
   }
 
   /**
@@ -638,14 +598,12 @@ export class UIMClient {
    *
    * @param parameters
    */
-  public inviteGroupMembers(
-    parameters: InviteGroupMembersParameters
-  ): Promise<InviteGroupMembersResponse> {
+  public inviteGroupMembers(parameters: InviteGroupMembersParameters): Promise<InviteGroupMembersResponse> {
     return this.request<InviteGroupMembersResponse>({
       path: `im_accounts/${parameters.account_id}/groups/${parameters.group_id}/invite`,
-      method: "post",
-      body: omit(parameters, ["account_id", "group_id"]),
-    })
+      method: 'post',
+      body: omit(parameters, ['account_id', 'group_id']),
+    });
   }
 
   /**
@@ -655,15 +613,11 @@ export class UIMClient {
    * @param group_id
    * @param member_id
    */
-  public async kickGroupMember(
-    account_id: string,
-    group_id: string,
-    member_id: string
-  ) {
+  public async kickGroupMember(account_id: string, group_id: string, member_id: string) {
     await this.request<InviteGroupMembersResponse>({
       path: `im_accounts/${account_id}/groups/${group_id}/members/${member_id}/kick`,
-      method: "post",
-    })
+      method: 'post',
+    });
   }
 
   /**
@@ -674,9 +628,9 @@ export class UIMClient {
   public async setGroupMemberRole(parameters: SetGroupMemberRoleParameters) {
     await this.request({
       path: `im_accounts/${parameters.account_id}/groups/${parameters.group_id}/members/${parameters.member_id}/set_role`,
-      method: "post",
-      body: pick(parameters, ["role"]),
-    })
+      method: 'post',
+      body: pick(parameters, ['role']),
+    });
   }
 
   /**
@@ -685,14 +639,12 @@ export class UIMClient {
    * @param parameters
    * @returns
    */
-  public listGroupApplications(
-    parameters: ListGroupApplicationsParameters
-  ): Promise<ListGruopApplicationsResponse> {
+  public listGroupApplications(parameters: ListGroupApplicationsParameters): Promise<ListGruopApplicationsResponse> {
     return this.request<ListGruopApplicationsResponse>({
       path: `groups/${parameters.group_id}/group_applications`,
-      method: "get",
-      query: pick(parameters, ["offset", "limit"]) as PlainQueryParams,
-    })
+      method: 'get',
+      query: pick(parameters, ['offset', 'limit']) as PlainQueryParams,
+    });
   }
 
   /**
@@ -701,15 +653,12 @@ export class UIMClient {
    * @param account_id
    * @param application_id
    */
-  public async acceptGroupApplication(
-    account_id: string,
-    application_id: string
-  ) {
+  public async acceptGroupApplication(account_id: string, application_id: string) {
     await this.request({
       path: `group_applications/${application_id}/accept`,
-      method: "post",
+      method: 'post',
       body: { account_id },
-    })
+    });
   }
 
   /**
@@ -718,18 +667,12 @@ export class UIMClient {
    * @param parameters
    * @returns
    */
-  public listConversations(
-    parameters: ListConversationsParameters
-  ): Promise<ListConversationsResponse> {
+  public listConversations(parameters: ListConversationsParameters): Promise<ListConversationsResponse> {
     return this.request<ListConversationsResponse>({
       path: `im_accounts/${parameters.account_id}/conversations`,
-      method: "get",
-      query: pick(parameters, [
-        "cursor",
-        "direction",
-        "limit",
-      ]) as PlainQueryParams,
-    })
+      method: 'get',
+      query: pick(parameters, ['cursor', 'direction', 'limit']) as PlainQueryParams,
+    });
   }
 
   /**
@@ -741,8 +684,8 @@ export class UIMClient {
   public getConversation(id: string): Promise<Conversation> {
     return this.request<Conversation>({
       path: `conversations/${id}`,
-      method: "get",
-    })
+      method: 'get',
+    });
   }
 
   /**
@@ -752,14 +695,11 @@ export class UIMClient {
    * @param contact_id
    * @returns
    */
-  public getConversationWithContact(
-    account_id: string,
-    contact_id: string
-  ): Promise<Conversation> {
+  public getConversationWithContact(account_id: string, contact_id: string): Promise<Conversation> {
     return this.request<Conversation>({
       path: `im_accounts/${account_id}/contacts/${contact_id}/conversation`,
-      method: "get",
-    })
+      method: 'get',
+    });
   }
 
   /**
@@ -769,14 +709,11 @@ export class UIMClient {
    * @param group_id
    * @returns
    */
-  public getConversationWithGroup(
-    account_id: string,
-    group_id: string
-  ): Promise<Conversation> {
+  public getConversationWithGroup(account_id: string, group_id: string): Promise<Conversation> {
     return this.request<Conversation>({
       path: `im_accounts/${account_id}/groups/${group_id}/conversation`,
-      method: "get",
-    })
+      method: 'get',
+    });
   }
 
   /**
@@ -788,9 +725,9 @@ export class UIMClient {
   public setConversationRead(id: string): Promise<Conversation> {
     return this.request<Conversation>({
       path: `conversations/${id}/read`,
-      method: "post",
+      method: 'post',
       body: {},
-    })
+    });
   }
 
   /**
@@ -801,8 +738,8 @@ export class UIMClient {
   public async deleteConversation(id: string) {
     await this.request({
       path: `conversations/${id}`,
-      method: "delete",
-    })
+      method: 'delete',
+    });
   }
 
   /**
@@ -811,18 +748,12 @@ export class UIMClient {
    * @param args
    * @returns
    */
-  public listMessages(
-    parameters: ListMessagesParameters
-  ): Promise<ListMessagesResponse> {
+  public listMessages(parameters: ListMessagesParameters): Promise<ListMessagesResponse> {
     return this.request<ListMessagesResponse>({
       path: `conversations/${parameters.conversation_id}/messages`,
-      method: "get",
-      query: pick(parameters, [
-        "cursor",
-        "direction",
-        "limit",
-      ]) as PlainQueryParams,
-    })
+      method: 'get',
+      query: pick(parameters, ['cursor', 'direction', 'limit']) as PlainQueryParams,
+    });
   }
 
   /**
@@ -831,41 +762,42 @@ export class UIMClient {
    * @param parameters
    * @returns
    */
-  public async sendMessage(
-    parameters: SendMessageParameters
-  ): Promise<Message> {
+  public async sendMessage(parameters: SendMessageParameters): Promise<Message> {
     // 先上传文件
     if (parameters.file) {
-      const plugin = this.getPlugin("upload")
-      invariant(plugin, "must have upload plugin")
+      const plugin = this.getPlugin('upload');
+      invariant(plugin, 'must have upload plugin');
 
       const options: UploadOptions = {
         onProgress: parameters.upload_progress,
         message: parameters as Message,
-      }
-      const payload = await plugin.upload(parameters.file, options)
+      };
+      const payload = await plugin.upload(parameters.file, options);
 
       switch (parameters.type) {
         case MessageType.Image: {
-          parameters.image = payload as ImageMessagePayload
-          break
+          parameters.image = payload as ImageMessagePayload;
+          break;
         }
         case MessageType.Audio: {
-          parameters.audio = payload as AudioMessagePayload
-          break
+          parameters.audio = payload as AudioMessagePayload;
+          break;
         }
         case MessageType.Video: {
-          parameters.video = payload as VideoMessagePayload
-          break
+          parameters.video = payload as VideoMessagePayload;
+          break;
+        }
+        default: {
+          throw new Error('unsupported message type');
         }
       }
     }
 
     return this.request<Message>({
-      path: "send_message",
-      method: "post",
-      body: omit(parameters, ["file", "upload_progress"]),
-    })
+      path: 'send_message',
+      method: 'post',
+      body: omit(parameters, ['file', 'upload_progress']),
+    });
   }
 
   /**
@@ -876,10 +808,10 @@ export class UIMClient {
    */
   public resendMessage(message_id: string): Promise<Message> {
     return this.request<Message>({
-      path: "resend_message",
-      method: "post",
+      path: 'resend_message',
+      method: 'post',
       body: { message_id },
-    })
+    });
   }
 
   /**
@@ -890,8 +822,8 @@ export class UIMClient {
   public async deleteMessage(id: string) {
     await this.request({
       path: `messages/${id}`,
-      method: "delete",
-    })
+      method: 'delete',
+    });
   }
 
   /**
@@ -900,19 +832,17 @@ export class UIMClient {
    * @param parameters
    * @returns
    */
-  public createTextMessage(
-    parameters: CreateMessageParameters
-  ): SendMessageParameters {
-    invariant(parameters.text, "must have text payload")
+  public createTextMessage(parameters: CreateMessageParameters): SendMessageParameters {
+    invariant(parameters.text, 'must have text payload');
     const message = pick(parameters, [
-      "from",
-      "to",
-      "conversation_type",
-      "conversation_id",
-      "text",
-      "mentioned_users",
-    ]) as Partial<Message>
-    return { type: MessageType.Text, flow: MessageFlow.Out, ...message }
+      'from',
+      'to',
+      'conversation_type',
+      'conversation_id',
+      'text',
+      'mentioned_users',
+    ]) as Partial<Message>;
+    return { type: MessageType.Text, flow: MessageFlow.Out, ...message };
   }
 
   /**
@@ -921,34 +851,29 @@ export class UIMClient {
    * @param parameters
    * @returns
    */
-  public createImageMessage(
-    parameters: CreateMessageParameters
-  ): SendMessageParameters {
-    invariant(
-      parameters.image || parameters.file,
-      "must have image payload or file"
-    )
+  public createImageMessage(parameters: CreateMessageParameters): SendMessageParameters {
+    invariant(parameters.image || parameters.file, 'must have image payload or file');
     const message = pick(parameters, [
-      "from",
-      "to",
-      "conversation_type",
-      "conversation_id",
-      "image",
-    ]) as Partial<Message>
+      'from',
+      'to',
+      'conversation_type',
+      'conversation_id',
+      'image',
+    ]) as Partial<Message>;
     if (message.image) {
-      return { type: MessageType.Image, flow: MessageFlow.Out, ...message }
+      return { type: MessageType.Image, flow: MessageFlow.Out, ...message };
     } else {
-      const { file, upload_progress } = parameters
+      const { file, upload_progress } = parameters;
       if (file instanceof HTMLInputElement) {
-        const f = file.files?.item(0)
-        invariant(f, "must have image payload or file")
+        const f = file.files?.item(0);
+        invariant(f, 'must have image payload or file');
         return {
           type: MessageType.Image,
           flow: MessageFlow.Out,
           ...message,
           file: f,
           upload_progress,
-        }
+        };
       } else {
         return {
           type: MessageType.Image,
@@ -956,7 +881,7 @@ export class UIMClient {
           ...message,
           file,
           upload_progress,
-        }
+        };
       }
     }
   }
@@ -967,34 +892,29 @@ export class UIMClient {
    * @param parameters
    * @returns
    */
-  public createAudioMessage(
-    parameters: CreateMessageParameters
-  ): SendMessageParameters {
-    invariant(
-      parameters.audio || parameters.file,
-      "must have audio payload or file"
-    )
+  public createAudioMessage(parameters: CreateMessageParameters): SendMessageParameters {
+    invariant(parameters.audio || parameters.file, 'must have audio payload or file');
     const message = pick(parameters, [
-      "from",
-      "to",
-      "conversation_type",
-      "conversation_id",
-      "audio",
-    ]) as Partial<Message>
+      'from',
+      'to',
+      'conversation_type',
+      'conversation_id',
+      'audio',
+    ]) as Partial<Message>;
     if (message.audio) {
-      return { type: MessageType.Audio, flow: MessageFlow.Out, ...message }
+      return { type: MessageType.Audio, flow: MessageFlow.Out, ...message };
     } else {
-      const { file, upload_progress } = parameters
+      const { file, upload_progress } = parameters;
       if (file instanceof HTMLInputElement) {
-        const f = file.files?.item(0)
-        invariant(f, "must have audio payload or file")
+        const f = file.files?.item(0);
+        invariant(f, 'must have audio payload or file');
         return {
           type: MessageType.Audio,
           flow: MessageFlow.Out,
           ...message,
           file: f,
           upload_progress,
-        }
+        };
       } else {
         return {
           type: MessageType.Audio,
@@ -1002,7 +922,7 @@ export class UIMClient {
           ...message,
           file,
           upload_progress,
-        }
+        };
       }
     }
   }
@@ -1012,34 +932,29 @@ export class UIMClient {
    * @param parameters
    * @returns
    */
-  public createVieoMessage(
-    parameters: CreateMessageParameters
-  ): SendMessageParameters {
-    invariant(
-      parameters.video || parameters.file,
-      "must have video payload or file"
-    )
+  public createVieoMessage(parameters: CreateMessageParameters): SendMessageParameters {
+    invariant(parameters.video || parameters.file, 'must have video payload or file');
     const message = pick(parameters, [
-      "from",
-      "to",
-      "conversation_type",
-      "conversation_id",
-      "video",
-    ]) as Partial<Message>
+      'from',
+      'to',
+      'conversation_type',
+      'conversation_id',
+      'video',
+    ]) as Partial<Message>;
     if (message.video) {
-      return { type: MessageType.Video, flow: MessageFlow.Out, ...message }
+      return { type: MessageType.Video, flow: MessageFlow.Out, ...message };
     } else {
-      const { file, upload_progress } = parameters
+      const { file, upload_progress } = parameters;
       if (file instanceof HTMLInputElement) {
-        const f = file.files?.item(0)
-        invariant(f, "must have video payload or file")
+        const f = file.files?.item(0);
+        invariant(f, 'must have video payload or file');
         return {
           type: MessageType.Video,
           flow: MessageFlow.Out,
           ...message,
           file: f,
           upload_progress,
-        }
+        };
       } else {
         return {
           type: MessageType.Video,
@@ -1047,7 +962,7 @@ export class UIMClient {
           ...message,
           file,
           upload_progress,
-        }
+        };
       }
     }
   }
@@ -1058,18 +973,12 @@ export class UIMClient {
    * @param parameters
    * @returns
    */
-  public listAccountMoments(
-    parameters: ListAccountMomentsParameters
-  ): Promise<ListMomentsResponse> {
+  public listAccountMoments(parameters: ListAccountMomentsParameters): Promise<ListMomentsResponse> {
     return this.request<ListMomentsResponse>({
       path: `im_accounts/${parameters.account_id}/moments`,
-      method: "get",
-      query: pick(parameters, [
-        "cursor",
-        "direction",
-        "limit",
-      ]) as PlainQueryParams,
-    })
+      method: 'get',
+      query: pick(parameters, ['cursor', 'direction', 'limit']) as PlainQueryParams,
+    });
   }
 
   /**
@@ -1078,18 +987,12 @@ export class UIMClient {
    * @param parameters
    * @returns
    */
-  public listContactMoments(
-    parameters: ListContactMomentsParameters
-  ): Promise<ListMomentsResponse> {
+  public listContactMoments(parameters: ListContactMomentsParameters): Promise<ListMomentsResponse> {
     return this.request<ListMomentsResponse>({
       path: `contacts/${parameters.contact_id}/moments`,
-      method: "get",
-      query: pick(parameters, [
-        "cursor",
-        "direction",
-        "limit",
-      ]) as PlainQueryParams,
-    })
+      method: 'get',
+      query: pick(parameters, ['cursor', 'direction', 'limit']) as PlainQueryParams,
+    });
   }
 
   /**
@@ -1098,18 +1001,12 @@ export class UIMClient {
    * @param parameters
    * @returns
    */
-  public listMomentComments(
-    parameters: ListMomentCommentsParameters
-  ): Promise<ListCommentsResponse> {
+  public listMomentComments(parameters: ListMomentCommentsParameters): Promise<ListCommentsResponse> {
     return this.request<ListCommentsResponse>({
       path: `moments/${parameters.moment_id}/comments`,
-      method: "get",
-      query: pick(parameters, [
-        "cursor",
-        "direction",
-        "limit",
-      ]) as PlainQueryParams,
-    })
+      method: 'get',
+      query: pick(parameters, ['cursor', 'direction', 'limit']) as PlainQueryParams,
+    });
   }
 
   /**
@@ -1118,43 +1015,42 @@ export class UIMClient {
    * @param parameters
    * @returns
    */
-  public async publishMoment(
-    parameters: PublishMomentParameters
-  ): Promise<Moment> {
+  public async publishMoment(parameters: PublishMomentParameters): Promise<Moment> {
     // 先上传文件
     if (parameters.files && parameters.files.length > 0) {
-      const plugin = this.getPlugin("upload")
-      invariant(plugin, "must have upload plugin")
+      const plugin = this.getPlugin('upload');
+      invariant(plugin, 'must have upload plugin');
 
       const contents = await Promise.all(
         parameters.files.map((f, idx) => {
           const options: UploadOptions = {
-            onProgress: percent =>
-              parameters.upload_progress &&
-              parameters.upload_progress(idx, percent),
+            onProgress: (percent) => parameters.upload_progress && parameters.upload_progress(idx, percent),
             moment: parameters as Moment,
-          }
-          return plugin.upload(f, options)
-        })
-      )
+          };
+          return plugin.upload(f, options);
+        }),
+      );
 
       switch (parameters.type) {
         case MomentType.Image: {
-          parameters.images = contents as Array<ImageMomentContent>
-          break
+          parameters.images = contents as Array<ImageMomentContent>;
+          break;
         }
         case MomentType.Video: {
-          parameters.video = contents[0] as VideoMomentContent
-          break
+          parameters.video = contents[0] as VideoMomentContent;
+          break;
+        }
+        default: {
+          throw new Error('unsupported message type');
         }
       }
     }
 
     return this.request<Moment>({
-      path: "publish_moment",
-      method: "post",
-      body: omit(parameters, ["files", "upload_progress"]),
-    })
+      path: 'publish_moment',
+      method: 'post',
+      body: omit(parameters, ['files', 'upload_progress']),
+    });
   }
 
   /**
@@ -1163,14 +1059,12 @@ export class UIMClient {
    * @param parameters
    * @returns
    */
-  public commentOnMoment(
-    parameters: CommentOnMomentParameters
-  ): Promise<Comment> {
+  public commentOnMoment(parameters: CommentOnMomentParameters): Promise<Comment> {
     return this.request<Comment>({
       path: `moments/${parameters.moment_id}/comments`,
-      method: "post",
-      body: omit(parameters, ["moment_id"]),
-    })
+      method: 'post',
+      body: omit(parameters, ['moment_id']),
+    });
   }
 
   /**
@@ -1181,8 +1075,8 @@ export class UIMClient {
   public async deleteMoment(id: string) {
     await this.request({
       path: `moments/${id}`,
-      method: "delete",
-    })
+      method: 'delete',
+    });
   }
 
   /**
@@ -1191,12 +1085,10 @@ export class UIMClient {
    * @param parameters
    * @returns
    */
-  public createTextMoment(
-    parameters: CreateMomentParameters
-  ): PublishMomentParameters {
-    invariant(parameters.text, "must have text")
-    const moment = pick(parameters, ["user_id", "text"]) as Partial<Moment>
-    return { type: MomentType.Text, ...moment }
+  public createTextMoment(parameters: CreateMomentParameters): PublishMomentParameters {
+    invariant(parameters.text, 'must have text');
+    const moment = pick(parameters, ['user_id', 'text']) as Partial<Moment>;
+    return { type: MomentType.Text, ...moment };
   }
 
   /**
@@ -1205,27 +1097,24 @@ export class UIMClient {
    * @param parameters
    * @returns
    */
-  public createImagesMoment(
-    parameters: CreateMomentParameters
-  ): PublishMomentParameters {
-    invariant(
-      parameters.images || parameters.files,
-      "must have images or files"
-    )
-    const moment = pick(parameters, ["user_id", "images"]) as Partial<Moment>
+  public createImagesMoment(parameters: CreateMomentParameters): PublishMomentParameters {
+    invariant(parameters.images || parameters.files, 'must have images or files');
+    const moment = pick(parameters, ['user_id', 'images']) as Partial<Moment>;
     if (moment.images && moment.images.length > 0) {
-      return { type: MomentType.Image, ...moment }
+      return { type: MomentType.Image, ...moment };
     } else {
-      const { files, upload_progress } = parameters
+      const { files, upload_progress } = parameters;
       if (files instanceof HTMLInputElement) {
-        const f: Array<File> = []
-        for (let i = 0; i < (files.files?.length ?? 0); i++) {
-          f.push(files.files?.item(i)!)
+        const f: Array<File> = [];
+        const len = files.files?.length ?? 0;
+        for (let i = 0; i < len; i++) {
+          const file = files.files?.item(i);
+          if (file) f.push(file);
         }
-        invariant(f && f.length > 0, "must have images or files")
-        return { type: MomentType.Image, ...moment, files: f, upload_progress }
+        invariant(f && f.length > 0, 'must have images or files');
+        return { type: MomentType.Image, ...moment, files: f, upload_progress };
       } else {
-        return { type: MomentType.Image, ...moment, files, upload_progress }
+        return { type: MomentType.Image, ...moment, files, upload_progress };
       }
     }
   }
@@ -1236,26 +1125,24 @@ export class UIMClient {
    * @param parameters
    * @returns
    */
-  public createVideoMoment(
-    parameters: CreateMomentParameters
-  ): PublishMomentParameters {
-    invariant(parameters.video || parameters.files, "must have video or files")
-    const moment = pick(parameters, ["user_id", "video"]) as Partial<Moment>
+  public createVideoMoment(parameters: CreateMomentParameters): PublishMomentParameters {
+    invariant(parameters.video || parameters.files, 'must have video or files');
+    const moment = pick(parameters, ['user_id', 'video']) as Partial<Moment>;
     if (moment.video) {
-      return { type: MomentType.Video, ...moment }
+      return { type: MomentType.Video, ...moment };
     } else {
-      const { files, upload_progress } = parameters
+      const { files, upload_progress } = parameters;
       if (files instanceof HTMLInputElement) {
-        const f = files.files?.item(0)
-        invariant(f, "must have video or files")
+        const f = files.files?.item(0);
+        invariant(f, 'must have video or files');
         return {
           type: MomentType.Video,
           ...moment,
           files: [f],
           upload_progress,
-        }
+        };
       } else {
-        return { type: MomentType.Video, ...moment, files, upload_progress }
+        return { type: MomentType.Video, ...moment, files, upload_progress };
       }
     }
   }
@@ -1268,15 +1155,15 @@ export class UIMClient {
    * @returns  取消监听事件函数
    */
   public on(type: EventType, handler: EventHandler): () => void {
-    this._handlers[type] = [...(this._handlers[type] ?? []), handler]
+    this._handlers[type] = [...(this._handlers[type] ?? []), handler];
     return () => {
-      const handlers = this._handlers[type] ?? []
-      const idx = handlers.findIndex(it => it === handler)
+      const handlers = this._handlers[type] ?? [];
+      const idx = handlers.findIndex((it) => it === handler);
       if (idx >= 0) {
-        handlers.splice(idx, 1)
+        handlers.splice(idx, 1);
       }
-      this._handlers[type] = [...handlers]
-    }
+      this._handlers[type] = [...handlers];
+    };
   }
 
   /**
@@ -1287,9 +1174,9 @@ export class UIMClient {
    * @param _extra
    */
   private onEvent(account_id: string, e: unknown, _extra?: unknown) {
-    const evt = e as Event
-    const handlers = this._handlers[evt.type] ?? []
-    handlers.forEach(h => h(account_id, evt))
+    const evt = e as Event;
+    const handlers = this._handlers[evt.type] ?? [];
+    handlers.forEach((h) => h(account_id, evt));
   }
 
   /**
@@ -1298,13 +1185,9 @@ export class UIMClient {
    * @param level The level for this message
    * @param args Arguments to send to the console
    */
-  private log(
-    level: LogLevel,
-    message: string,
-    extraInfo: Record<string, unknown>
-  ) {
+  private log(level: LogLevel, message: string, extraInfo: Record<string, unknown>) {
     if (logLevelSeverity(level) >= logLevelSeverity(this._logLevel)) {
-      this._logger(level, message, extraInfo)
+      this._logger(level, message, extraInfo);
     }
   }
 
@@ -1318,27 +1201,27 @@ export class UIMClient {
    * @returns headers key-value object
    */
   private async authAsHeaders(auth?: string): Promise<Record<string, string>> {
-    const headers: Record<string, string> = {}
-    const authHeaderValue = auth ?? this._auth
-    if (!authHeaderValue) return headers
-    headers["authorization"] = `Bearer ${authHeaderValue}`
-    return headers
+    const headers: Record<string, string> = {};
+    const authHeaderValue = auth ?? this._auth;
+    if (!authHeaderValue) return headers;
+    headers['authorization'] = `Bearer ${authHeaderValue}`;
+    return headers;
   }
 }
 
 /*
  * Type aliases to support the generic request interface.
  */
-type Method = "get" | "post" | "patch" | "delete"
+type Method = 'get' | 'post' | 'patch' | 'delete';
 
-type PlainQueryParams = Record<string, string | number | boolean>
+type PlainQueryParams = Record<string, string | number | boolean>;
 
-type QueryParams = PlainQueryParams | URLSearchParams
+type QueryParams = PlainQueryParams | URLSearchParams;
 
 interface RequestParameters {
-  path: string
-  method: Method
-  query?: QueryParams
-  body?: Record<string, unknown>
-  auth?: string
+  method: Method;
+  path: string;
+  auth?: string;
+  body?: Record<string, unknown>;
+  query?: QueryParams;
 }
