@@ -1,4 +1,4 @@
-import { isNode } from "browser-or-node"
+import { isNode, isBrowser } from "browser-or-node"
 import jwtdecode, { JwtPayload } from "jwt-decode"
 import { omit, pick, indexOf } from "lodash"
 import {
@@ -152,6 +152,9 @@ export class UIMClient {
     provider: string,
     cb?: (id?: string) => void
   ): Promise<string | undefined> {
+    if (!isBrowser) {
+      throw new Error("authorize must run in browser")
+    }
     const state = createRandomString(16)
     const token = this._auth ?? ""
     const params = { provider, token, state }
