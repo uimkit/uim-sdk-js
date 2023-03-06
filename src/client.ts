@@ -52,14 +52,7 @@ import {
 import nodeFetch from "node-fetch"
 import { SupportedFetch } from "./fetch-types"
 import { SupportedPubSub, PubSubOptions, default as PubSub } from "./pubsub"
-import {
-  ConversationEvent,
-  ConversationHandler,
-  Event,
-  EventHandler,
-  EventType,
-  MessageHandler,
-} from "./events"
+import { Event, EventHandler, EventType } from "./events"
 import {
   Account,
   MessageType,
@@ -886,7 +879,6 @@ export class UIMClient {
     })
   }
 
-
   /**
    * 删除消息
    *
@@ -1265,30 +1257,13 @@ export class UIMClient {
     }
   }
 
-  onNewMessage(handler: MessageHandler): () => void {
-    return this.on(EventType.NEW_MESSAGE, (accountId, e) =>
-      handler(accountId, e as MessageEvent)
-    )
-  }
-
-  onMessageUpdated(handler: MessageHandler): () => void {
-    return this.on(EventType.MESSAGE_UPDATED, (accountId, e) =>
-      handler(accountId, e as MessageEvent)
-    )
-  }
-
-  onNewConversation(handler: ConversationHandler): () => void {
-    return this.on(EventType.NEW_CONVERSATION, (accountId, e) =>
-      handler(accountId, e as ConversationEvent)
-    )
-  }
-
-  onConversationUpdated(handler: ConversationHandler): () => void {
-    return this.on(EventType.CONVERSATION_UPDATED, (accountId, e) =>
-      handler(accountId, e as ConversationEvent)
-    )
-  }
-
+  /**
+   * 监听事件
+   *
+   * @param type 事件类型
+   * @param handler 事件处理函数
+   * @returns  取消监听事件函数
+   */
   public on(type: EventType, handler: EventHandler): () => void {
     this._handlers[type] = [...(this._handlers[type] ?? []), handler]
     return () => {
@@ -1311,7 +1286,7 @@ export class UIMClient {
   private onEvent(account_id: string, e: unknown, _extra?: unknown) {
     const evt = e as Event
     const handlers = this._handlers[evt.type] ?? []
-    handlers.forEach(h => h(account_id, e))
+    handlers.forEach(h => h(account_id, evt))
   }
 
   /**

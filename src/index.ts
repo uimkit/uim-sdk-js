@@ -4,8 +4,9 @@ export default UIMClient
 export { UIMClientOptions } from "./client"
 
 export * from "./api-endpoints"
-export * from "./events"
 export * from "./models"
+export * from "./events"
+
 export { LogLevel, Logger } from "./logging"
 export {
   // Error codes

@@ -182,6 +182,8 @@ export interface Account {
   title?: string
   // 语言
   language?: string
+  // 账号总的未读数量
+  unread?: number
   // 创建时间
   created_at?: Date
   // 最后更新时间
@@ -610,6 +612,8 @@ export type GroupApplicationStatus = FriendApplicationStatus
 export interface GroupApplication {
   // 申请ID
   id: string
+  // 所属账号ID
+  account: string
   // 群组ID
   group_id: string
   // 平台，如：douyin
@@ -648,6 +652,35 @@ export interface GroupApplication {
   source?: string
   // 状态
   status: GroupApplicationStatus
+}
+
+// 入群邀请状态
+export type GroupInvitationStatus = FriendApplicationStatus
+
+// 入群邀请
+export interface GroupInvitation {
+  // 邀请ID
+  id: string
+  // 所属账号ID
+  account: string
+  // 平台，如：douyin
+  provider: string
+  // 群组ID
+  group_id: string
+  // 群组名称
+  group_name?: string
+  // 群组头像
+  group_avatar?: string
+  // 邀请人昵称
+  inviter_name?: string
+  // 邀请人头像URL
+  inviter_avatar?: string
+  // 邀请留言
+  hello_message?: string
+  // 邀请来源
+  source?: string
+  // 状态
+  status: GroupInvitationStatus
 }
 
 export enum MomentType {
@@ -766,15 +799,4 @@ export interface Like {
   name?: string
   // 点赞用户头像
   avatar?: string
-}
-
-// TODO deprecated
-
-export interface ClientEvent<T> {
-  // 与事件关联的请求ID
-  request_id?: string
-  // 事件类型
-  type: string
-  // 事件数据
-  data: T
 }
