@@ -28,7 +28,6 @@ const babelConfig = {
 };
 
 const baseConfig = {
-	input: 'src/index.ts',
 	cache: false,
 	watch: {
 		chokidar: false,
@@ -36,6 +35,7 @@ const baseConfig = {
 };
 const normalBundle = {
 	...baseConfig,
+	input: 'src/index.node.ts',
 	output: [
 		{
 			file: pkg.main,
@@ -50,18 +50,19 @@ const normalBundle = {
 	],
 	external: externalPackages.concat(['https', 'jsonwebtoken', 'crypto']),
 	plugins: [
+		json(),
 		replace({ preventAssignment: true, 'process.env.PKG_VERSION': JSON.stringify(pkg.version) }),
 		external(),
 		// TODO formidable 中的代码 if (global.GENTLY) require = GENTLY.hijack(require); 必须要设置 browser: true
 		nodeResolve({ extensions, browser: true }),
 		babel(babelConfig),
 		commonjs(),
-		json(),
 	],
 };
 
 const browserBundle = {
 	...baseConfig,
+	input: 'src/index.ts',
 	output: [
 		{
 			file: pkg.browser[pkg.main],
@@ -76,6 +77,7 @@ const browserBundle = {
 	],
 	external: externalPackages,
 	plugins: [
+		json(),
 		replace({ preventAssignment: true, 'process.env.PKG_VERSION': JSON.stringify(pkg.version) }),
 		browserIgnore,
 		external(),
@@ -83,11 +85,11 @@ const browserBundle = {
 		nodeResolve({ extensions, browser: true }),
 		babel(babelConfig),
 		commonjs(),
-		json(),
 	],
 };
 const fullBrowserBundle = {
 	...baseConfig,
+	input: 'src/index.ts',
 	output: [
 		{
 			file: pkg.jsdelivr,
@@ -98,6 +100,7 @@ const fullBrowserBundle = {
 		},
 	],
 	plugins: [
+		json(),
 		replace({ preventAssignment: true, 'process.env.PKG_VERSION': JSON.stringify(pkg.version) }),
 		browserIgnore,
 		external(),
@@ -105,7 +108,6 @@ const fullBrowserBundle = {
 		babel(babelConfig),
 		commonjs(),
 		terser(),
-		json(),
 	],
 };
 

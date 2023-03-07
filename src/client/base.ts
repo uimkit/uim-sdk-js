@@ -1,9 +1,7 @@
-import { isNode, isBrowser } from 'browser-or-node';
 import jwtdecode, { JwtPayload } from 'jwt-decode';
 import { omit, pick, indexOf } from 'lodash';
-import { Logger, LogLevel, logLevelSeverity, makeConsoleLogger } from './logging';
-import { buildRequestError, isHTTPResponseError, isUIMClientError, RequestTimeoutError } from './errors';
-import { createQueryParams, createRandomString, popup } from './helpers';
+import { Logger, LogLevel, logLevelSeverity, makeConsoleLogger } from '../logging';
+import { buildRequestError, isHTTPResponseError, isUIMClientError, RequestTimeoutError } from '../errors';
 import {
   ListAccountsParameters,
   ListAccountsResponse,
@@ -38,11 +36,10 @@ import {
   ListMomentCommentsParameters,
   ListCommentsResponse,
   CommentOnMomentParameters,
-} from './api-endpoints';
-import nodeFetch from 'node-fetch';
-import { SupportedFetch } from './fetch-types';
-import { SupportedPubSub, PubSubOptions, default as PubSub } from './pubsub';
-import { Event, EventHandler, EventType } from './events';
+} from '../api-endpoints';
+import { SupportedFetch } from '../fetch-types';
+import { SupportedPubSub, PubSubOptions, default as PubSub } from '../pubsub';
+import { Event, EventHandler, EventType } from '../events';
 import {
   Account,
   MessageType,
@@ -60,50 +57,42 @@ import {
   ImageMomentContent,
   VideoMomentContent,
   Comment,
-} from './models';
-import { Plugin, PluginType, UIMUploadPlugin, UploadOptions } from './plugins';
+} from '../models';
+import { Plugin, PluginType, UploadOptions } from '../plugins';
 import invariant from 'invariant';
+import { UIMClientOptions } from './types';
 
-/**
- * UIMClient 构造选项
+/*
+ * Type aliases to support the generic request interface.
  */
-export interface UIMClientOptions {
-  baseUrl?: string;
-  errorHandler?: (e: unknown) => void;
-  logLevel?: LogLevel;
-  publishKey?: string;
-  secretKey?: string;
-  /** Options for pubsub */
-  subscribeKey?: string;
-  timeoutMs?: number;
-  uimVersion?: string;
+type Method = 'get' | 'post' | 'patch' | 'delete';
+
+type PlainQueryParams = Record<string, string | number | boolean>;
+
+type QueryParams = PlainQueryParams | URLSearchParams;
+
+interface RequestParameters {
+  method: Method;
+  path: string;
+  auth?: string;
+  body?: Record<string, unknown>;
+  query?: QueryParams;
 }
 
-/**
- * 账号授权结果
- */
-interface AuthorizeResult {
-  // 错误信息
-  error?: string;
-  // 账号ID
-  id?: string;
-  // 回传的自定义参数
-  state?: string;
-}
-
-export class UIMClient {
+export class BaseUIMClient {
+  _uuid: string;
   _auth?: string;
   _logLevel: LogLevel;
   _logger: Logger;
   _prefixUrl: string;
   _timeoutMs: number;
-  _fetch: SupportedFetch;
   _pubsub: SupportedPubSub;
   _channels: Array<string>;
   _handlers: Record<string, Array<EventHandler>>;
   _messageEventListener?: (msgEvent: MessageEvent) => void;
   _errorHandler?: (e: unknown) => void;
   _plugins: Partial<Record<PluginType, Plugin>>;
+  _fetch?: SupportedFetch;
 
   public constructor(token: string, options?: UIMClientOptions) {
     this._auth = token;
@@ -111,103 +100,21 @@ export class UIMClient {
     this._logger = makeConsoleLogger('uim-js');
     this._prefixUrl = options?.baseUrl ?? 'https://api.uimkit.chat/client/v1/';
     this._timeoutMs = options?.timeoutMs ?? 60_000;
-    this._fetch = isNode ? nodeFetch : window.fetch.bind(window);
     this._channels = [];
     this._handlers = {};
     this._messageEventListener = undefined;
     this._errorHandler = options?.errorHandler;
     const jwt = jwtdecode<JwtPayload>(token);
+    this._uuid = jwt.sub ?? '';
     const pubsubOptions: PubSubOptions = {
-      uuid: jwt.sub ?? '',
+      uuid: this._uuid,
       subscribeKey: options?.subscribeKey ?? '',
       publishKey: options?.publishKey,
       secretKey: options?.secretKey,
     };
     this._pubsub = new PubSub(pubsubOptions);
     this._pubsub.addListener(this.onEvent.bind(this));
-    // 默认的插件
-    this._plugins = {
-      upload: new UIMUploadPlugin(jwt.sub ?? '', token, this._prefixUrl),
-    };
-  }
-
-  /**
-   * 开始授权账号流程
-   *
-   * @param provider
-   * @param cb
-   * @returns
-   */
-  public async authorize(provider: string, cb?: (id?: string) => void): Promise<string | undefined> {
-    if (!isBrowser) {
-      throw new Error('authorize must run in browser');
-    }
-    const state = createRandomString(16);
-    const token = this._auth ?? '';
-    const params = { provider, token, state };
-    const url = `${this._prefixUrl}authorize?${createQueryParams(params)}`;
-    const win = popup(url, 'uim-authorize-window');
-    if (!win) {
-      throw new Error('open authorize window error');
-    }
-
-    const res = await Promise.race([
-      // 等待授权页面返回
-      this.listenToAuthorizeResult(),
-      // 检测授权页面关闭
-      new Promise<null>((resolve) => {
-        const handle = setInterval(() => {
-          if (win.closed) {
-            clearInterval(handle);
-            // 授权页 postMessage 后会关闭自己，这里延后让 message 先得到处理
-            setTimeout(() => resolve(null), 500);
-          }
-        }, 500);
-      }),
-    ]);
-    if (this._messageEventListener) {
-      window.removeEventListener('message', this._messageEventListener);
-    }
-    this._messageEventListener = undefined;
-
-    if (!res) {
-      // 授权页窗口被用户关闭了
-      cb && cb();
-      return;
-    }
-
-    if (res.error) {
-      throw new Error(res.error);
-    }
-
-    if (res.state !== state) {
-      throw new Error('invalid authorize state');
-    }
-
-    cb && cb(res.id!);
-    return res.id!;
-  }
-
-  /**
-   * 监听账号授权结果
-   *
-   * @returns
-   */
-  private async listenToAuthorizeResult(): Promise<AuthorizeResult> {
-    const { origin } = new URL(this._prefixUrl);
-    return new Promise<AuthorizeResult>((resolve) => {
-      const msgEventListener = (msgEvent: MessageEvent) => {
-        if (msgEvent.origin !== origin || msgEvent.data?.type !== 'authorization_response') {
-          return;
-        }
-        window.removeEventListener('message', msgEventListener);
-        this._messageEventListener = undefined;
-        return resolve(msgEvent.data);
-      };
-
-      this._messageEventListener = msgEventListener;
-      window.addEventListener('message', msgEventListener);
-    });
+    this._plugins = {};
   }
 
   /**
@@ -217,6 +124,7 @@ export class UIMClient {
    * @returns
    */
   private async request<T>(parameters: RequestParameters): Promise<T> {
+    invariant(this._fetch, 'must setup fetch instance');
     const { path, method, query, body, auth } = parameters;
     this.log(LogLevel.INFO, 'request start', { method, path });
 
@@ -1207,21 +1115,4 @@ export class UIMClient {
     headers['authorization'] = `Bearer ${authHeaderValue}`;
     return headers;
   }
-}
-
-/*
- * Type aliases to support the generic request interface.
- */
-type Method = 'get' | 'post' | 'patch' | 'delete';
-
-type PlainQueryParams = Record<string, string | number | boolean>;
-
-type QueryParams = PlainQueryParams | URLSearchParams;
-
-interface RequestParameters {
-  method: Method;
-  path: string;
-  auth?: string;
-  body?: Record<string, unknown>;
-  query?: QueryParams;
 }
