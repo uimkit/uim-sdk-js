@@ -116,12 +116,6 @@ export interface UserProfile {
   username?: string;
 }
 
-// 用户
-export interface User extends UserProfile {
-  // 用户ID
-  id: string;
-}
-
 // 在线状态
 export enum Precense {
   // 在线
@@ -258,8 +252,8 @@ export interface Conversation {
   type: ConversationType;
   // 未读消息数量
   unread: number;
-  // 平台会话ID
-  conversation_id?: string;
+  // 私聊会话的好友资料
+  contact?: Contact;
   // 创建时间
   created_at?: Date;
   // 群聊会话的群组资料
@@ -270,8 +264,6 @@ export interface Conversation {
   metadata?: Record<string, unknown>;
   // 最后更新时间
   updated_at?: Date;
-  // 私聊会话的对方用户
-  user?: User;
 }
 
 // 消息类型
