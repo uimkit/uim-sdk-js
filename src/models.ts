@@ -68,8 +68,10 @@ export enum Gender {
 
 // 用户资料
 export interface UserProfile {
-  // 用户ID
-  id: string;
+  // 平台用户ID，如：抖音ID
+  open_id: string;
+  // 平台，如：douyin
+  provider: string;
   // 地址
   address?: string;
   // 头像URL
@@ -82,8 +84,8 @@ export interface UserProfile {
   company?: string;
   // 国家
   country?: string;
-  // 创建时间
-  created_at?: Date;
+  // 用户自定义ID，如：抖音号
+  custom_id?: string;
   // 部门
   department?: string;
   // 区
@@ -94,28 +96,30 @@ export interface UserProfile {
   gender?: Gender;
   // 语言
   language?: string;
-  // 扩展信息
-  metadata?: Record<string, unknown>;
-  // 手机号
-  mobile?: string;
+  // 真实姓名
+  real_name?: string;
   // 昵称
   nickname?: string;
   // 省份
   province?: string;
-  // 二维码URL
-  qrcode?: string;
-  // 真实姓名
-  real_name?: string;
   // 签名
   signature?: string;
-  // 座机电话
-  tel?: string;
-  // 头衔、职位
-  title?: string;
-  // 最后更新时间
-  updated_at?: Date;
+  // 二维码URL
+  qrcode?: string;
+  // 手机号
+  mobile?: string;
   // 账户名
   username?: string;
+  // 头衔、职位
+  title?: string;
+  // 座机电话
+  tel?: string;
+}
+
+// 用户
+export interface User extends UserProfile {
+  // 用户ID
+  id: string;
 }
 
 // 在线状态
@@ -128,138 +132,48 @@ export enum Precense {
   Disabled = 'disabled',
   // 掉线
   Disconnected = 'disconnected',
+  // 未激活
+  Inactive = 'inactive',
 }
 
 // 账号
-export interface Account {
+export interface Account extends UserProfile {
   // 账号ID
   id: string;
-  // 平台用户ID，如：抖音ID
-  open_id: string;
   // 在线状态
   presence: Precense;
-  // 平台，如：douyin
-  provider: string;
-  // 地址
-  address?: string;
-  // 头像URL
-  avatar?: string;
-  // 生日
-  birthday?: Date;
-  // 城市
-  city?: string;
-  // 公司
-  company?: string;
-  // 国家
-  country?: string;
   // 创建时间
   created_at?: Date;
-  // 用户自定义ID，如：抖音号
-  custom_id?: string;
-  // 部门
-  department?: string;
-  // 区
-  district?: string;
-  // 邮箱
-  email?: string;
-  // 性别
-  gender?: Gender;
-  // 语言
-  language?: string;
   // 扩展信息
   metadata?: Record<string, unknown>;
-  // 手机号
-  mobile?: string;
-  // 昵称
-  nickname?: string;
-  // 省份
-  province?: string;
-  // 二维码URL
-  qrcode?: string;
-  // 真实姓名
-  real_name?: string;
-  // 签名
-  signature?: string;
-  // 座机电话
-  tel?: string;
-  // 头衔、职位
-  title?: string;
   // 账号总的未读数量
   unread?: number;
   // 最后更新时间
   updated_at?: Date;
-  // 账户名
-  username?: string;
 }
 
 // 好友
-export interface Contact {
-  // 归属账号ID
-  account: string;
+export interface Contact extends UserProfile {
   // 好友ID
   id: string;
-  // 平台用户ID，如：抖音ID
-  open_id: string;
-  // 平台，如：douyin
-  provider: string;
-  // 地址
-  address?: string;
+  // 归属账号ID
+  account: string;
   // 备注名
   alias?: string;
-  // 头像URL
-  avatar?: string;
-  // 生日
-  birthday?: Date;
   // 是否加入黑名单
   blocked?: boolean;
-  // 城市
-  city?: string;
-  // 公司
-  company?: string;
-  // 国家
-  country?: string;
   // 创建时间
   created_at?: Date;
-  // 用户自定义ID，如：抖音号
-  custom_id?: string;
-  // 部门
-  department?: string;
-  // 区
-  district?: string;
-  // 邮箱
-  email?: string;
-  // 性别
-  gender?: Gender;
-  // 语言
-  language?: string;
   // 是否星标
   marked?: boolean;
   // 扩展信息
   metadata?: Record<string, unknown>;
-  // 手机号
-  mobile?: string;
-  // 昵称
-  nickname?: string;
-  // 省份
-  province?: string;
-  // 二维码URL
-  qrcode?: string;
-  // 真实姓名
-  real_name?: string;
   // 备注说明
   remark?: string;
-  // 签名
-  signature?: string;
   // 标签
   tags?: Array<string>;
-  // 座机电话
-  tel?: string;
-  // 头衔、职位
-  title?: string;
   // 最后更新时间
   updated_at?: Date;
-  // 账户名
-  username?: string;
 }
 
 // 好友申请状态
@@ -356,8 +270,8 @@ export interface Conversation {
   metadata?: Record<string, unknown>;
   // 最后更新时间
   updated_at?: Date;
-  // 私聊会话的对方用户资料
-  user?: UserProfile;
+  // 私聊会话的对方用户
+  user?: User;
 }
 
 // 消息类型
