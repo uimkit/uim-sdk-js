@@ -148,10 +148,7 @@ const httpResponseErrorCodes: { [C in HTTPResponseErrorCode]: true } = {
 };
 
 export function isHTTPResponseError(error: unknown): error is UnknownHTTPResponseError | APIResponseError {
-  if (!isUIMClientErrorWithCode(error, httpResponseErrorCodes)) {
-    return false;
-  }
-  return true;
+  return isUIMClientErrorWithCode(error, httpResponseErrorCodes);
 }
 
 /**

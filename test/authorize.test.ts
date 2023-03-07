@@ -6,5 +6,4 @@ describe('authorize', () => {
   it('account logout', async () => {
     // TODO
   });
-
 });
