@@ -96,24 +96,24 @@ export interface UserProfile {
   gender?: Gender;
   // 语言
   language?: string;
-  // 真实姓名
-  real_name?: string;
+  // 手机号
+  mobile?: string;
   // 昵称
   nickname?: string;
   // 省份
   province?: string;
-  // 签名
-  signature?: string;
   // 二维码URL
   qrcode?: string;
-  // 手机号
-  mobile?: string;
-  // 账户名
-  username?: string;
-  // 头衔、职位
-  title?: string;
+  // 真实姓名
+  real_name?: string;
+  // 签名
+  signature?: string;
   // 座机电话
   tel?: string;
+  // 头衔、职位
+  title?: string;
+  // 账户名
+  username?: string;
 }
 
 // 用户
@@ -154,10 +154,10 @@ export interface Account extends UserProfile {
 
 // 好友
 export interface Contact extends UserProfile {
-  // 好友ID
-  id: string;
   // 归属账号ID
   account: string;
+  // 好友ID
+  id: string;
   // 备注名
   alias?: string;
   // 是否加入黑名单

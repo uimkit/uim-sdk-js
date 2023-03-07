@@ -151,9 +151,6 @@ export function isHTTPResponseError(error: unknown): error is UnknownHTTPRespons
   if (!isUIMClientErrorWithCode(error, httpResponseErrorCodes)) {
     return false;
   }
-
-  type _assert = Assert<UnknownHTTPResponseError | APIResponseError, typeof error>;
-
   return true;
 }
 
