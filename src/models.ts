@@ -66,8 +66,10 @@ export enum Gender {
   Unknown = 'unknown',
 }
 
-// 用户资料
-export interface UserProfile {
+// 用户s
+export interface User {
+  // 用户ID
+  id: string;
   // 平台用户ID，如：抖音ID
   open_id: string;
   // 平台，如：douyin
@@ -131,7 +133,7 @@ export enum Precense {
 }
 
 // 账号
-export interface Account extends UserProfile {
+export interface Account extends User {
   // 账号ID
   id: string;
   // 在线状态
@@ -147,7 +149,7 @@ export interface Account extends UserProfile {
 }
 
 // 好友
-export interface Contact extends UserProfile {
+export interface Contact extends User {
   // 归属账号ID
   account: string;
   // 好友ID
@@ -252,11 +254,11 @@ export interface Conversation {
   type: ConversationType;
   // 未读消息数量
   unread: number;
-  // 私聊会话的好友资料
+  // 私聊会话时，对方是好友，返回的好友资料
   contact?: Contact;
   // 创建时间
   created_at?: Date;
-  // 群聊会话的群组资料
+  // 群聊会话时，对方是群组，返回的群组资料
   group?: Group;
   // 最后消息
   last_message?: Message;
@@ -264,6 +266,8 @@ export interface Conversation {
   metadata?: Record<string, unknown>;
   // 最后更新时间
   updated_at?: Date;
+  // 私聊会话时，对方是陌生人，返回的用户资料
+  user?: User;
 }
 
 // 消息类型
