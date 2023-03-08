@@ -44,14 +44,13 @@ describe('contacts', () => {
 
   it('mark contact', async () => {
     const contact = await client.markContact('c_7ph1oQe9KPDTaA8Ke4d');
-    expect(contact.marked).toBe(true)
+    expect(contact.marked).toBe(true);
     console.log(JSON.stringify(contact, undefined, 4));
   });
 
   it('unmark contact', async () => {
     const contact = await client.unmarkContact('c_7ph1oQe9KPDTaA8Ke4d');
-    expect(contact.marked).toBe(false)
+    expect(contact.marked).toBe(false);
     console.log(JSON.stringify(contact, undefined, 4));
   });
-
 });
