@@ -599,13 +599,12 @@ export class BaseUIMClient {
   /**
    * 获取和好友的会话详情
    *
-   * @param account_id
    * @param contact_id
    * @returns
    */
-  public getConversationWithContact(account_id: string, contact_id: string): Promise<Conversation> {
+  public getContactConversation(contact_id: string): Promise<Conversation> {
     return this.request<Conversation>({
-      path: `im_accounts/${account_id}/contacts/${contact_id}/conversation`,
+      path: `contacts/${contact_id}/conversations`,
       method: 'get',
     });
   }
@@ -613,13 +612,12 @@ export class BaseUIMClient {
   /**
    * 获取和群组的会话详情
    *
-   * @param account_id
    * @param group_id
    * @returns
    */
-  public getConversationWithGroup(account_id: string, group_id: string): Promise<Conversation> {
+  public getGroupConversation(group_id: string): Promise<Conversation> {
     return this.request<Conversation>({
-      path: `im_accounts/${account_id}/groups/${group_id}/conversation`,
+      path: `groups/${group_id}/conversations`,
       method: 'get',
     });
   }
