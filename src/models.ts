@@ -154,6 +154,8 @@ export interface Contact extends User {
   account: string;
   // 好友ID
   id: string;
+  // 好友的用户ID，多个账号添加同一个用户为好友，每组好友关系有不同的好友ID，但是好友的用户ID相同
+  user_id: string;
   // 备注名
   alias?: string;
   // 是否加入黑名单
