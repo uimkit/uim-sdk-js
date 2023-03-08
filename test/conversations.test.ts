@@ -56,4 +56,15 @@ describe('conversations', () => {
     expect(conversation.account).toBe('gmtIYyV1ovBPegHPVNOKO');
     console.log(JSON.stringify(conversation, undefined, 4));
   });
+
+  it('set conversation read', async () => {
+    const conversation = await client.setConversationRead('2BzIjJZ0uT_IjnxmT7koD');
+    expect(conversation.unread).toBe(0);
+    console.log(JSON.stringify(conversation, undefined, 4));
+  });
+
+  // it('delete conversation', async () => {
+  //   await client.deleteConversation('2BzIjJZ0uT_IjnxmT7koD');
+  // });
+
 });
