@@ -312,8 +312,8 @@ export class BaseUIMClient {
    *
    * @param id
    */
-  public async markContact(id: string) {
-    await this.request({ path: `contacts/${id}/mark`, method: 'post' });
+  public async markContact(id: string): Promise<Contact> {
+    return await this.request<Contact>({ path: `contacts/${id}/mark`, method: 'post' });
   }
 
   /**
@@ -321,8 +321,8 @@ export class BaseUIMClient {
    *
    * @param id
    */
-  public async unmarkContact(id: string) {
-    await this.request({ path: `contacts/${id}/unmark`, method: 'post' });
+  public async unmarkContact(id: string): Promise<Contact> {
+    return await this.request<Contact>({ path: `contacts/${id}/unmark`, method: 'post' });
   }
 
   /**

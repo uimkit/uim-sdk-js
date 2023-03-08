@@ -63,8 +63,7 @@ describe('conversations', () => {
     console.log(JSON.stringify(conversation, undefined, 4));
   });
 
-  // it('delete conversation', async () => {
-  //   await client.deleteConversation('2BzIjJZ0uT_IjnxmT7koD');
-  // });
-
+  it('delete conversation', async () => {
+    await client.deleteConversation('2BzIjJZ0uT_IjnxmT7koD');
+  });
 });
