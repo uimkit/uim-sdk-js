@@ -1,4 +1,3 @@
-import { APIErrorCode, APIResponseError } from '../src/errors';
 import { Gender } from '../src/models';
 import { buildClient } from './client';
 
