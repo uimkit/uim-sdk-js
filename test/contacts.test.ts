@@ -37,4 +37,9 @@ describe('contacts', () => {
     expect(contact.account).toBe('gmtIYyV1ovBPegHPVNOKO');
     console.log(JSON.stringify(contact, undefined, 4));
   });
+
+  it('delete contact', async () => {
+    await client.deleteContact('c_7ph1oQe9KPDTaA8Ke4d');
+  });
+
 });
