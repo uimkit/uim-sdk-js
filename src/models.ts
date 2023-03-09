@@ -344,8 +344,6 @@ export interface Message {
   from: string;
   // 消息ID
   id: string;
-  // 平台消息ID
-  message_id: string;
   // 平台
   provider: string;
   // 发送时间
