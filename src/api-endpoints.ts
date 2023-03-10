@@ -19,7 +19,7 @@ import {
 } from './models';
 
 // 查询账号列表请求
-export type ListAccountsParameters = PageListParameters<{
+export type GetAccountListParameters = PageListParameters<{
   // 查询指定服务商的账号
   provider?: string;
   // 获得账号后是否订阅账号事件
@@ -27,28 +27,28 @@ export type ListAccountsParameters = PageListParameters<{
 }>;
 
 // 查询账号列表结果
-export type ListAccountsResponse = PageList<Account>;
+export type GetAccountListResponse = PageList<Account>;
 
 // 查询好友列表请求
-export type ListContactsParameters = CursorListParameters<{
+export type GetContactListParameters = CursorListParameters<{
   // 查询指定账号的好友列表
   account_id: string;
 }>;
 
 // 查询好友列表结果
-export type ListContactsResponse = CursorList<Contact>;
+export type GetContactListResponse = CursorList<Contact>;
 
 // 查询好友申请列表请求
-export type ListFriendApplicationsParameters = PageListParameters<{
+export type GetFriendApplicationListParameters = PageListParameters<{
   // 查询指定账号的好友申请列表
   account_id: string;
 }>;
 
 // 查询好友申请列表结果
-export type ListFriendApplicationsResponse = PageList<FriendApplication>;
+export type GetFriendApplicationListResponse = PageList<FriendApplication>;
 
 // 查询群组列表
-export type ListGroupsParameters = PageListParameters<{
+export type GetGroupListParameters = PageListParameters<{
   // 查询指定账号的群组列表
   account_id: string;
   // 根据标记状态过滤群组
@@ -88,15 +88,15 @@ export type TransferGroupParameters = {
 };
 
 // 查询群组列表结果
-export type ListGroupsResponse = PageList<Group>;
+export type GetGroupListResponse = PageList<Group>;
 
 // 查询会话列表请求
-export type ListConversationsParameters = CursorListParameters<{
+export type GetConversationListParameters = CursorListParameters<{
   account_id: string;
 }>;
 
 // 查询会话列表结果
-export type ListConversationsResponse = CursorList<Conversation>;
+export type GetConversationListResponse = CursorList<Conversation>;
 
 // 添加好友请求
 export type AddContactParameters = {
@@ -117,12 +117,12 @@ export type AddContactResponse = {
 };
 
 // 查询群成员列表请求
-export type ListGroupMembersParameters = PageListParameters<{
+export type GetGroupMemberListParameters = PageListParameters<{
   group_id: string;
 }>;
 
 // 查询群成员列表结果
-export type ListGroupMembersResponse = PageList<GroupMember>;
+export type GetGroupMemberListResponse = PageList<GroupMember>;
 
 // 邀请好友加入群组
 export type InviteGroupMembersParameters = {
@@ -162,41 +162,41 @@ export type SetGroupMemberRoleParameters = {
 };
 
 // 查询入群申请列表请求
-export type ListGroupApplicationsParameters = PageListParameters<{
+export type GetGroupApplicationListParameters = PageListParameters<{
   group_id: string;
 }>;
 
 // 查询入群申请列表结果
-export type ListGruopApplicationsResponse = PageList<GroupApplication>;
+export type GetGruopApplicationListResponse = PageList<GroupApplication>;
 
 // 查询消息列表请求
-export type ListMessagesParameters = CursorListParameters<{
+export type GetMessageListParameters = CursorListParameters<{
   conversation_id: string;
 }>;
 
 // 查询消息列表结果
-export type ListMessagesResponse = CursorList<Message>;
+export type GetMessageListResponse = CursorList<Message>;
 
 // 查询账号的动态列表请求
-export type ListAccountMomentsParameters = CursorListParameters<{
+export type GetAccountMomentListParameters = CursorListParameters<{
   account_id: string;
 }>;
 
 // 查询好友的动态列表请求
-export type ListContactMomentsParameters = CursorListParameters<{
+export type GetContactMomentListParameters = CursorListParameters<{
   contact_id: string;
 }>;
 
 // 查询动态列表结果
-export type ListMomentsResponse = CursorList<Moment>;
+export type GetMomentListResponse = CursorList<Moment>;
 
 // 查询动态的评论列表
-export type ListMomentCommentsParameters = CursorListParameters<{
+export type GetMomentCommentListParameters = CursorListParameters<{
   moment_id: string;
 }>;
 
 // 查询评论列表结果
-export type ListCommentsResponse = CursorList<Comment>;
+export type GetCommentListResponse = CursorList<Comment>;
 
 // 对动态发表评论
 export type CommentOnMomentParameters = {

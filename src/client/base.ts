@@ -3,38 +3,38 @@ import { omit, pick, indexOf } from 'lodash';
 import { Logger, LogLevel, logLevelSeverity, makeConsoleLogger } from '../logging';
 import { buildRequestError, isHTTPResponseError, isUIMClientError, RequestTimeoutError } from '../errors';
 import {
-  ListAccountsParameters,
-  ListAccountsResponse,
-  ListContactsParameters,
-  ListContactsResponse,
-  ListGroupsParameters,
-  ListGroupsResponse,
-  ListConversationsParameters,
-  ListConversationsResponse,
-  ListGroupMembersParameters,
-  ListGroupMembersResponse,
-  ListMomentsResponse,
-  ListMessagesParameters,
-  ListMessagesResponse,
+  GetAccountListParameters,
+  GetAccountListResponse,
+  GetContactListParameters,
+  GetContactListResponse,
+  GetGroupListParameters,
+  GetGroupListResponse,
+  GetConversationListParameters,
+  GetConversationListResponse,
+  GetGroupMemberListParameters,
+  GetGroupMemberListResponse,
+  GetMomentListResponse,
+  GetMessageListParameters,
+  GetMessageListResponse,
   AddContactParameters,
   AddContactResponse,
   SendMessageParameters,
-  ListAccountMomentsParameters,
-  ListContactMomentsParameters,
+  GetAccountMomentListParameters,
+  GetContactMomentListParameters,
   CreateGroupParameters,
   TransferGroupParameters,
-  ListFriendApplicationsParameters,
-  ListFriendApplicationsResponse,
+  GetFriendApplicationListParameters,
+  GetFriendApplicationListResponse,
   InviteGroupMembersParameters,
   InviteGroupMembersResponse,
   SetGroupMemberRoleParameters,
-  ListGroupApplicationsParameters,
-  ListGruopApplicationsResponse,
+  GetGroupApplicationListParameters,
+  GetGruopApplicationListResponse,
   CreateMessageParameters,
   PublishMomentParameters,
   CreateMomentParameters,
-  ListMomentCommentsParameters,
-  ListCommentsResponse,
+  GetMomentCommentListParameters,
+  GetCommentListResponse,
   CommentOnMomentParameters,
 } from '../api-endpoints';
 import { SupportedFetch } from '../fetch-types';
@@ -220,8 +220,8 @@ export class BaseUIMClient {
    * @param args
    * @returns
    */
-  public async listAccounts(parameters: ListAccountsParameters): Promise<ListAccountsResponse> {
-    const resp = await this.request<ListAccountsResponse>({
+  public async getAccountList(parameters: GetAccountListParameters): Promise<GetAccountListResponse> {
+    const resp = await this.request<GetAccountListResponse>({
       method: 'get',
       path: 'im_accounts',
       query: pick(parameters, ['offset', 'limit', 'provider']) as PlainQueryParams,
@@ -277,8 +277,8 @@ export class BaseUIMClient {
    * @param parameters
    * @returns
    */
-  public listContacts(parameters: ListContactsParameters): Promise<ListContactsResponse> {
-    return this.request<ListContactsResponse>({
+  public getContactList(parameters: GetContactListParameters): Promise<GetContactListResponse> {
+    return this.request<GetContactListResponse>({
       path: `im_accounts/${parameters.account_id}/contacts`,
       method: 'get',
       query: pick(parameters, ['cursor', 'direction', 'limit']) as PlainQueryParams,
@@ -345,8 +345,10 @@ export class BaseUIMClient {
    * @param parameters
    * @returns
    */
-  public listFriendApplications(parameters: ListFriendApplicationsParameters): Promise<ListFriendApplicationsResponse> {
-    return this.request<ListFriendApplicationsResponse>({
+  public getFriendApplicationList(
+    parameters: GetFriendApplicationListParameters,
+  ): Promise<GetFriendApplicationListResponse> {
+    return this.request<GetFriendApplicationListResponse>({
       path: `im_accounts/${parameters.account_id}/friend_applications`,
       method: 'get',
       query: pick(parameters, ['offset', 'limit']) as PlainQueryParams,
@@ -371,8 +373,8 @@ export class BaseUIMClient {
    * @param parameters
    * @returns
    */
-  public listGroups(parameters: ListGroupsParameters): Promise<ListGroupsResponse> {
-    return this.request<ListGroupsResponse>({
+  public getGroupList(parameters: GetGroupListParameters): Promise<GetGroupListResponse> {
+    return this.request<GetGroupListResponse>({
       path: `im_accounts/${parameters.account_id}/groups`,
       method: 'get',
       query: pick(parameters, ['offset', 'limit']) as PlainQueryParams,
@@ -480,8 +482,8 @@ export class BaseUIMClient {
    * @param parameters
    * @returns
    */
-  public listGroupMembers(parameters: ListGroupMembersParameters): Promise<ListGroupMembersResponse> {
-    return this.request<ListGroupMembersResponse>({
+  public getGroupMemberList(parameters: GetGroupMemberListParameters): Promise<GetGroupMemberListResponse> {
+    return this.request<GetGroupMemberListResponse>({
       path: `groups/${parameters.group_id}/members`,
       method: 'get',
       query: pick(parameters, ['offset', 'limit']) as PlainQueryParams,
@@ -547,8 +549,10 @@ export class BaseUIMClient {
    * @param parameters
    * @returns
    */
-  public listGroupApplications(parameters: ListGroupApplicationsParameters): Promise<ListGruopApplicationsResponse> {
-    return this.request<ListGruopApplicationsResponse>({
+  public getGroupApplicationList(
+    parameters: GetGroupApplicationListParameters,
+  ): Promise<GetGruopApplicationListResponse> {
+    return this.request<GetGruopApplicationListResponse>({
       path: `groups/${parameters.group_id}/group_applications`,
       method: 'get',
       query: pick(parameters, ['offset', 'limit']) as PlainQueryParams,
@@ -575,8 +579,8 @@ export class BaseUIMClient {
    * @param parameters
    * @returns
    */
-  public listConversations(parameters: ListConversationsParameters): Promise<ListConversationsResponse> {
-    return this.request<ListConversationsResponse>({
+  public getConversationList(parameters: GetConversationListParameters): Promise<GetConversationListResponse> {
+    return this.request<GetConversationListResponse>({
       path: `im_accounts/${parameters.account_id}/conversations`,
       method: 'get',
       query: pick(parameters, ['cursor', 'direction', 'limit']) as PlainQueryParams,
@@ -654,8 +658,8 @@ export class BaseUIMClient {
    * @param args
    * @returns
    */
-  public listMessages(parameters: ListMessagesParameters): Promise<ListMessagesResponse> {
-    return this.request<ListMessagesResponse>({
+  public getMessageList(parameters: GetMessageListParameters): Promise<GetMessageListResponse> {
+    return this.request<GetMessageListResponse>({
       path: `conversations/${parameters.conversation_id}/messages`,
       method: 'get',
       query: pick(parameters, ['cursor', 'direction', 'limit']) as PlainQueryParams,
@@ -843,8 +847,8 @@ export class BaseUIMClient {
    * @param parameters
    * @returns
    */
-  public listAccountMoments(parameters: ListAccountMomentsParameters): Promise<ListMomentsResponse> {
-    return this.request<ListMomentsResponse>({
+  public getAccountMomentList(parameters: GetAccountMomentListParameters): Promise<GetMomentListResponse> {
+    return this.request<GetMomentListResponse>({
       path: `im_accounts/${parameters.account_id}/moments`,
       method: 'get',
       query: pick(parameters, ['cursor', 'direction', 'limit']) as PlainQueryParams,
@@ -857,8 +861,8 @@ export class BaseUIMClient {
    * @param parameters
    * @returns
    */
-  public listContactMoments(parameters: ListContactMomentsParameters): Promise<ListMomentsResponse> {
-    return this.request<ListMomentsResponse>({
+  public getContactMomentList(parameters: GetContactMomentListParameters): Promise<GetMomentListResponse> {
+    return this.request<GetMomentListResponse>({
       path: `contacts/${parameters.contact_id}/moments`,
       method: 'get',
       query: pick(parameters, ['cursor', 'direction', 'limit']) as PlainQueryParams,
@@ -871,8 +875,8 @@ export class BaseUIMClient {
    * @param parameters
    * @returns
    */
-  public listMomentComments(parameters: ListMomentCommentsParameters): Promise<ListCommentsResponse> {
-    return this.request<ListCommentsResponse>({
+  public getMomentCommentList(parameters: GetMomentCommentListParameters): Promise<GetCommentListResponse> {
+    return this.request<GetCommentListResponse>({
       path: `moments/${parameters.moment_id}/comments`,
       method: 'get',
       query: pick(parameters, ['cursor', 'direction', 'limit']) as PlainQueryParams,
