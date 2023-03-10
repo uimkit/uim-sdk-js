@@ -221,7 +221,7 @@ export type SendMessageParameters = Partial<Message> & {
 // 消息发送目标
 export type MessageTargetParameters =
   // 直接发送给对方
-  | Pick<Message, 'from' | 'to' | 'conversation_type'>
+  | Pick<Message, 'from' | 'to'>
   // 发送到会话
   | Pick<Message, 'conversation_id'>;
 

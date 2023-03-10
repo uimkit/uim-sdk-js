@@ -747,7 +747,6 @@ export class BaseUIMClient {
     const message = pick(parameters, [
       'from',
       'to',
-      'conversation_type',
       'conversation_id',
       'text',
       'mentioned_users',
@@ -766,7 +765,6 @@ export class BaseUIMClient {
     const message = pick(parameters, [
       'from',
       'to',
-      'conversation_type',
       'conversation_id',
       'image',
     ]) as Partial<Message>;
@@ -795,7 +793,6 @@ export class BaseUIMClient {
     const message = pick(parameters, [
       'from',
       'to',
-      'conversation_type',
       'conversation_id',
       'audio',
     ]) as Partial<Message>;
@@ -823,7 +820,6 @@ export class BaseUIMClient {
     const message = pick(parameters, [
       'from',
       'to',
-      'conversation_type',
       'conversation_id',
       'video',
     ]) as Partial<Message>;

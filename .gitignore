@@ -72,3 +72,6 @@ test/typescript/data.*
 
 # test resources
 test/resources
+
+# temporaray file
+.tmp

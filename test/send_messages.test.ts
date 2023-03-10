@@ -14,6 +14,16 @@ describe('send_messages', () => {
     console.log(JSON.stringify(message, undefined, 4));
   });
 
+  it('send text message to contact', async () => {
+    const sendReq = client.createTextMessage({
+      from: 'JTtg4oIp8R-rdWAIvmA2x',
+      to: 'NZU_jTLhwj6pm0jpeiQeK',
+      text: '应该可以了'
+    })
+    const message = await client.sendMessage(sendReq);
+    console.log(JSON.stringify(message, undefined, 4));
+  })
+
   it('send image message to conversation', async () => {
     const sendReq = client.createImageMessage({
       conversation_id: '2BzIjJZ0uT_IjnxmT7koD',
