@@ -18,11 +18,11 @@ describe('send_messages', () => {
     const sendReq = client.createTextMessage({
       from: 'JTtg4oIp8R-rdWAIvmA2x',
       to: 'NZU_jTLhwj6pm0jpeiQeK',
-      text: '应该可以了'
-    })
+      text: '应该可以了',
+    });
     const message = await client.sendMessage(sendReq);
     console.log(JSON.stringify(message, undefined, 4));
-  })
+  });
 
   it('send image message to conversation', async () => {
     const sendReq = client.createImageMessage({
