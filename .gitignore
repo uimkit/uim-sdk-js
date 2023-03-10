@@ -69,3 +69,6 @@ typings/
 .envrc
 
 test/typescript/data.*
+
+# test resources
+test/resources

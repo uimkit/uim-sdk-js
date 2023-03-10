@@ -814,7 +814,7 @@ export class BaseUIMClient {
    * @param parameters
    * @returns
    */
-  public createVieoMessage(parameters: CreateMessageParameters): SendMessageParameters {
+  public createVideoMessage(parameters: CreateMessageParameters): SendMessageParameters {
     invariant(parameters.video || parameters.file, 'must have video payload or file');
     const message = pick(parameters, [
       'from',
