@@ -56,6 +56,8 @@ export class BaseUploadPlugin implements UploadPlugin {
   _tokenBasePath: string;
   _fetch?: SupportedFetch;
   _client?: StorageApi;
+  _clientToken?: string;
+  _clientTokenExpiry?: string;
 
   constructor(uuid: string, token: string, tokenBasePath: string) {
     this._uuid = uuid;
@@ -174,11 +176,8 @@ export class BaseUploadPlugin implements UploadPlugin {
   }
 
   async getClient(): Promise<StorageApi> {
-    const tokenKey = TOKEN_KEY + this._uuid;
-    const tokenExpiryKey = TOKEN_EXPIRY_KEY + this._uuid;
-
-    let token = localStorage.getItem(tokenKey);
-    const expiryStr = localStorage.getItem(tokenExpiryKey);
+    let token = this._clientToken;
+    const expiryStr = this._clientTokenExpiry;
     let expiry = expiryStr ? new Date(expiryStr) : new Date();
     const needRefresh = !token || expiry <= new Date();
 
@@ -190,15 +189,15 @@ export class BaseUploadPlugin implements UploadPlugin {
       }>(this._tokenBasePath + 'xapis_token', this._token);
       token = result.access_token;
       expiry = new Date(result.expiry);
-      localStorage.setItem(tokenKey, token);
-      localStorage.setItem(tokenExpiryKey, expiry.toISOString());
+      this._clientToken = token;
+      this._clientTokenExpiry = expiry.toISOString();
       this._client = undefined;
     }
 
     if (!this._client) {
       this._client = new StorageApi(
         new Configuration({
-          accessToken: token!,
+          accessToken: `Bearer ${token}`,
           fetchApi: this._fetch as FetchAPI,
         }),
       );

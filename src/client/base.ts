@@ -770,25 +770,13 @@ export class BaseUIMClient {
       return { type: MessageType.Image, flow: MessageFlow.Out, ...message };
     } else {
       const { file, upload_progress } = parameters;
-      if (file instanceof HTMLInputElement) {
-        const f = file.files?.item(0);
-        invariant(f, 'must have image payload or file');
-        return {
-          type: MessageType.Image,
-          flow: MessageFlow.Out,
-          ...message,
-          file: f,
-          upload_progress,
-        };
-      } else {
-        return {
-          type: MessageType.Image,
-          flow: MessageFlow.Out,
-          ...message,
-          file,
-          upload_progress,
-        };
-      }
+      return {
+        type: MessageType.Image,
+        flow: MessageFlow.Out,
+        ...message,
+        file,
+        upload_progress,
+      };
     }
   }
 
@@ -811,25 +799,13 @@ export class BaseUIMClient {
       return { type: MessageType.Audio, flow: MessageFlow.Out, ...message };
     } else {
       const { file, upload_progress } = parameters;
-      if (file instanceof HTMLInputElement) {
-        const f = file.files?.item(0);
-        invariant(f, 'must have audio payload or file');
-        return {
-          type: MessageType.Audio,
-          flow: MessageFlow.Out,
-          ...message,
-          file: f,
-          upload_progress,
-        };
-      } else {
-        return {
-          type: MessageType.Audio,
-          flow: MessageFlow.Out,
-          ...message,
-          file,
-          upload_progress,
-        };
-      }
+      return {
+        type: MessageType.Audio,
+        flow: MessageFlow.Out,
+        ...message,
+        file,
+        upload_progress,
+      };
     }
   }
 
@@ -851,25 +827,13 @@ export class BaseUIMClient {
       return { type: MessageType.Video, flow: MessageFlow.Out, ...message };
     } else {
       const { file, upload_progress } = parameters;
-      if (file instanceof HTMLInputElement) {
-        const f = file.files?.item(0);
-        invariant(f, 'must have video payload or file');
-        return {
-          type: MessageType.Video,
-          flow: MessageFlow.Out,
-          ...message,
-          file: f,
-          upload_progress,
-        };
-      } else {
-        return {
-          type: MessageType.Video,
-          flow: MessageFlow.Out,
-          ...message,
-          file,
-          upload_progress,
-        };
-      }
+      return {
+        type: MessageType.Video,
+        flow: MessageFlow.Out,
+        ...message,
+        file,
+        upload_progress,
+      };
     }
   }
 

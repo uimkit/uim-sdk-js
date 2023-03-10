@@ -24,7 +24,7 @@ export class UIMUploadPlugin extends BaseUploadPlugin {
         });
       },
     });
-    cos.sliceUploadFile({
+    await cos.sliceUploadFile({
       Bucket: tmpCredentials.bucket,
       Region: tmpCredentials.region,
       Key: path,
