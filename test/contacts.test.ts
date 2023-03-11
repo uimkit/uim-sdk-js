@@ -31,6 +31,14 @@ describe('contacts', () => {
     expect(resp3.data[9].id).toBe(resp2.data[4].id);
   });
 
+  it("list account's contacts by nickname", async () => {
+    const resp = await client.getContactList({ account_id: 'gmtIYyV1ovBPegHPVNOKO', nickname: "增长" });
+    expect(resp.extra.start_cursor).not.toBe('');
+    expect(resp.extra.end_cursor).not.toBe('');
+    expect(resp.extra.has_next).toBe(true);
+    console.log(JSON.stringify(resp, undefined, 4));
+  })
+
   it('get contact', async () => {
     const contact = await client.getContact('c_7ph1oQe9KPDTaA8Ke4d');
     expect(contact.id).toBe('c_7ph1oQe9KPDTaA8Ke4d');
