@@ -11,13 +11,11 @@ import {
   Message,
 } from './models';
 
-export interface ClientEvent<T> {
+export interface UIMEvent<T> {
   // 事件数据
   data: T;
   // 事件类型
   type: string;
-  // 与事件关联的请求ID
-  request_id?: string;
 }
 
 export enum EventType {
@@ -68,49 +66,49 @@ export enum EventType {
 }
 
 // 账号更新
-export type AccountUpdatedEvent = ClientEvent<Account>;
+export type AccountUpdatedEvent = UIMEvent<Account>;
 // 账号在线状态变化
-export type AccountPresenceChangedEvent = ClientEvent<Pick<Account, 'id' | 'presence'>>;
+export type AccountPresenceChangedEvent = UIMEvent<Pick<Account, 'id' | 'presence'>>;
 // 账号总未读数量变化
-export type AccountUnreadCountEvent = ClientEvent<Pick<Account, 'id' | 'unread'>>;
+export type AccountUnreadCountEvent = UIMEvent<Pick<Account, 'id' | 'unread'>>;
 // 新好友
-export type NewContactEvent = ClientEvent<Contact>;
+export type NewContactEvent = UIMEvent<Contact>;
 // 好友更新
-export type ContactUpdatedEvent = ClientEvent<Contact>;
+export type ContactUpdatedEvent = UIMEvent<Contact>;
 // 收到好友申请
-export type NewFriendApplicationEvent = ClientEvent<FriendApplication>;
+export type NewFriendApplicationEvent = UIMEvent<FriendApplication>;
 // 新会话
-export type NewConversationEvent = ClientEvent<Conversation>;
+export type NewConversationEvent = UIMEvent<Conversation>;
 // 会话更新
-export type ConversationUpdatedEvent = ClientEvent<Conversation>;
+export type ConversationUpdatedEvent = UIMEvent<Conversation>;
 // 会话未读数量变化
-export type ConversationUnreadCountEvent = ClientEvent<Pick<Conversation, 'id' | 'unread'>>;
+export type ConversationUnreadCountEvent = UIMEvent<Pick<Conversation, 'id' | 'unread'>>;
 // 收到新消息
-export type NewMessageEvent = ClientEvent<Message>;
+export type NewMessageEvent = UIMEvent<Message>;
 // 消息更新
-export type MessageUpdatedEvent = ClientEvent<Message>;
+export type MessageUpdatedEvent = UIMEvent<Message>;
 // 消息被撤回
-export type MessageRevokedEvent = ClientEvent<Message>;
+export type MessageRevokedEvent = UIMEvent<Message>;
 // 新群组
-export type NewGroupEvent = ClientEvent<Group>;
+export type NewGroupEvent = UIMEvent<Group>;
 // 群组更新
-export type GroupUpdatedEvent = ClientEvent<Group>;
+export type GroupUpdatedEvent = UIMEvent<Group>;
 // 群组被解散
-export type GroupDismissedEvent = ClientEvent<Pick<Group, 'id'>>;
+export type GroupDismissedEvent = UIMEvent<Pick<Group, 'id'>>;
 // 离开群组
-export type GroupQuitedEvent = ClientEvent<Pick<Group, 'id'>>;
+export type GroupQuitedEvent = UIMEvent<Pick<Group, 'id'>>;
 // 收到入群申请
-export type NewGroupApplicationEvent = ClientEvent<GroupApplication>;
+export type NewGroupApplicationEvent = UIMEvent<GroupApplication>;
 // 收到入群邀请
-export type NewGroupInvitationEvent = ClientEvent<GroupInvitation>;
+export type NewGroupInvitationEvent = UIMEvent<GroupInvitation>;
 // 新群成员
-export type NewGroupMemberEvent = ClientEvent<GroupMember>;
+export type NewGroupMemberEvent = UIMEvent<GroupMember>;
 // 群成员更新
-export type GroupMemberUpdatedEvent = ClientEvent<GroupMember>;
+export type GroupMemberUpdatedEvent = UIMEvent<GroupMember>;
 // 群成员被踢出群
-export type GroupMemberKickedEvent = ClientEvent<Pick<GroupMember, 'id' | 'group_id' | 'nickname' | 'avatar'>>;
+export type GroupMemberKickedEvent = UIMEvent<Pick<GroupMember, 'id' | 'group_id' | 'nickname' | 'avatar'>>;
 // 群成员主动退群
-export type GroupMemberQuitedEvent = ClientEvent<Pick<GroupMember, 'id' | 'group_id' | 'nickname' | 'avatar'>>;
+export type GroupMemberQuitedEvent = UIMEvent<Pick<GroupMember, 'id' | 'group_id' | 'nickname' | 'avatar'>>;
 
 export type Event =
   | AccountUpdatedEvent
