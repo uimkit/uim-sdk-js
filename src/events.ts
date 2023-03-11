@@ -1,4 +1,4 @@
-// cspell:disable-file
+// cspell_disable-file
 import {
   Account,
   Contact,
@@ -20,49 +20,49 @@ export interface UIMEvent<T> {
 
 export enum EventType {
   // 账号在线状态变化
-  ACCOUNT_PRESENCE_CHANGED = 'uim.account:presence_changed',
+  ACCOUNT_PRESENCE_CHANGED = 'account_presence_changed',
   // 账号总未读数量变化
-  ACCOUNT_UNREAD_COUNT = 'uim.account:unread_count',
+  ACCOUNT_UNREAD_COUNT = 'account_unread_count',
   // 账号更新
-  ACCOUNT_UPDATED = 'uim.account:updated',
+  ACCOUNT_UPDATED = 'account_updated',
   // 好友更新
-  CONTACT_UPDATED = 'uim.contact:updated',
-  // 会话未读数量变化
-  CONVERSATION_UNREAD_COUNT = 'uim.conversation:unread_count',
-  // 会话更新
-  CONVERSATION_UPDATED = 'uim.conversation:updated',
-  // 群组被解散
-  GROUP_DISMISSED = 'uim.group:dismissed',
-  // 群成员被踢出群
-  GROUP_MEMBER_KICKED = 'uim.group_member:kick',
-  // 群成员主动退群
-  GROUP_MEMBER_QUITED = 'uim.group_member:quited',
-  // 群成员信息变更
-  GROUP_MEMBER_UPDATED = 'uim.group_member:updated',
-  // 离开群组
-  GROUP_QUITED = 'uim.group:quited',
-  // 群组更新
-  GROUP_UPDATED = 'uim.group:updated',
-  // 消息被撤回
-  MESSAGE_REVOKED = 'uim.message:revoked',
-  // 消息更新
-  MESSAGE_UPDATED = 'uim.message:updated',
-  // 新好友
-  NEW_CONTACT = 'uim.contact:new',
+  CONTACT_UPDATED = 'contact_updated',
   // 新会话
-  NEW_CONVERSATION = 'uim.conversation:new',
-  // 收到好友申请
-  NEW_FRIEND_APPLICATION = 'uim.friend_application:new',
-  // 新群组
-  NEW_GROUP = 'uim.group:new',
-  // 收到入群申请
-  NEW_GROUP_APPLICATION = 'uim.group_application:new',
-  // 收到入群邀请
-  NEW_GROUP_INVITATION = 'uim.group_invitation:new',
-  // 新的群成员
-  NEW_GROUP_MEMBER = 'uim.group_member:new',
+  CONVERSATION_CREATED = 'conversation_created',
+  // 会话未读数量变化
+  CONVERSATION_UNREAD_COUNT = 'conversation_unread_count',
+  // 会话更新
+  CONVERSATION_UPDATED = 'conversation_updated',
+  // 群组被解散
+  GROUP_DISMISSED = 'group_dismissed',
+  // 群成员被踢出群
+  GROUP_MEMBER_KICKED = 'group_member_kick',
+  // 群成员主动退群
+  GROUP_MEMBER_QUITED = 'group_member_quited',
+  // 群成员信息变更
+  GROUP_MEMBER_UPDATED = 'group_member_updated',
+  // 离开群组
+  GROUP_QUITED = 'group_quited',
+  // 群组更新
+  GROUP_UPDATED = 'group_updated',
   // 收到新消息
-  NEW_MESSAGE = 'uim.message:new',
+  MESSAGE_RECEIVED = 'message_received',
+  // 消息被撤回
+  MESSAGE_REVOKED = 'message_revoked',
+  // 消息更新
+  MESSAGE_UPDATED = 'message_updated',
+  // 新好友
+  NEW_CONTACT = 'contact_new',
+  // 收到好友申请
+  NEW_FRIEND_APPLICATION = 'friend_application_new',
+  // 新群组
+  NEW_GROUP = 'group_new',
+  // 收到入群申请
+  NEW_GROUP_APPLICATION = 'group_application_new',
+  // 收到入群邀请
+  NEW_GROUP_INVITATION = 'group_invitation_new',
+  // 新的群成员
+  NEW_GROUP_MEMBER = 'group_member_new',
 }
 
 // 账号更新
@@ -78,13 +78,13 @@ export type ContactUpdatedEvent = UIMEvent<Contact>;
 // 收到好友申请
 export type NewFriendApplicationEvent = UIMEvent<FriendApplication>;
 // 新会话
-export type NewConversationEvent = UIMEvent<Conversation>;
+export type ConversationCreatedEvent = UIMEvent<Conversation>;
 // 会话更新
 export type ConversationUpdatedEvent = UIMEvent<Conversation>;
 // 会话未读数量变化
 export type ConversationUnreadCountEvent = UIMEvent<Pick<Conversation, 'id' | 'unread'>>;
 // 收到新消息
-export type NewMessageEvent = UIMEvent<Message>;
+export type MessageReceivedEvent = UIMEvent<Message>;
 // 消息更新
 export type MessageUpdatedEvent = UIMEvent<Message>;
 // 消息被撤回
@@ -117,10 +117,10 @@ export type Event =
   | NewContactEvent
   | ContactUpdatedEvent
   | NewFriendApplicationEvent
-  | NewConversationEvent
+  | ConversationCreatedEvent
   | ConversationUpdatedEvent
   | ConversationUnreadCountEvent
-  | NewMessageEvent
+  | MessageReceivedEvent
   | MessageUpdatedEvent
   | MessageRevokedEvent
   | NewGroupEvent
