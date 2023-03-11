@@ -33,6 +33,8 @@ export type GetAccountListResponse = PageList<Account>;
 export type GetContactListParameters = CursorListParameters<{
   // 查询指定账号的好友列表
   account_id: string;
+  // 根据昵称搜索
+  nickname: string;
 }>;
 
 // 查询好友列表结果

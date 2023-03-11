@@ -281,7 +281,7 @@ export class BaseUIMClient {
     return this.request<GetContactListResponse>({
       path: `im_accounts/${parameters.account_id}/contacts`,
       method: 'get',
-      query: pick(parameters, ['cursor', 'direction', 'limit']) as PlainQueryParams,
+      query: omit(parameters, ['account_id']) as PlainQueryParams,
     });
   }
 
