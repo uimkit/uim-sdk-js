@@ -1,5 +1,6 @@
 import jwtdecode, { JwtPayload } from 'jwt-decode';
 import { omit, pick, indexOf } from 'lodash';
+import { nanoid } from 'nanoid';
 import { Logger, LogLevel, logLevelSeverity, makeConsoleLogger } from '../logging';
 import { buildRequestError, isHTTPResponseError, isUIMClientError, RequestTimeoutError } from '../errors';
 import {
@@ -745,6 +746,7 @@ export class BaseUIMClient {
   public createTextMessage(parameters: CreateMessageParameters): SendMessageParameters {
     invariant(parameters.text, 'must have text payload');
     const message = pick(parameters, ['from', 'to', 'conversation_id', 'text', 'mentioned_users']) as Partial<Message>;
+    message.id = nanoid()
     return { type: MessageType.Text, flow: MessageFlow.Out, ...message };
   }
 
@@ -757,6 +759,7 @@ export class BaseUIMClient {
   public createImageMessage(parameters: CreateMessageParameters): SendMessageParameters {
     invariant(parameters.image || parameters.file, 'must have image payload or file');
     const message = pick(parameters, ['from', 'to', 'conversation_id', 'image']) as Partial<Message>;
+    message.id = nanoid()
     if (message.image) {
       return { type: MessageType.Image, flow: MessageFlow.Out, ...message };
     } else {
@@ -780,6 +783,7 @@ export class BaseUIMClient {
   public createAudioMessage(parameters: CreateMessageParameters): SendMessageParameters {
     invariant(parameters.audio || parameters.file, 'must have audio payload or file');
     const message = pick(parameters, ['from', 'to', 'conversation_id', 'audio']) as Partial<Message>;
+    message.id = nanoid()
     if (message.audio) {
       return { type: MessageType.Audio, flow: MessageFlow.Out, ...message };
     } else {
@@ -802,6 +806,7 @@ export class BaseUIMClient {
   public createVideoMessage(parameters: CreateMessageParameters): SendMessageParameters {
     invariant(parameters.video || parameters.file, 'must have video payload or file');
     const message = pick(parameters, ['from', 'to', 'conversation_id', 'video']) as Partial<Message>;
+    message.id = nanoid()
     if (message.video) {
       return { type: MessageType.Video, flow: MessageFlow.Out, ...message };
     } else {
