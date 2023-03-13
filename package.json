@@ -61,7 +61,7 @@
     "invariant": "^2.2.4",
     "jwt-decode": "^3.1.2",
     "lodash": "^4.17.21",
-    "nanoid": "^4.0.1",
+    "nanoid": "^3.3.4",
     "node-fetch": "^2.6.1",
     "uuid": "^9.0.0",
     "webpubsub-js": "^1.0.2"
