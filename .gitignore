@@ -75,3 +75,4 @@ test/resources
 
 # temporaray file
 .tmp
+tmp.js
