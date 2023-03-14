@@ -642,6 +642,32 @@ export class BaseUIMClient {
   }
 
   /**
+   * 设置会话置顶
+   * 
+   * @param id 
+   */
+  public pinConversation(id: string): Promise<Conversation> {
+    return this.request<Conversation>({
+      path: `conversations/${id}/pin`,
+      method: 'post',
+      body: {},
+    });
+  }
+
+  /**
+   * 取消会话置顶
+   * 
+   * @param id 
+   */
+  public unpinConversation(id: string): Promise<Conversation> {
+    return this.request<Conversation>({
+      path: `conversations/${id}/unpin`,
+      method: 'post',
+      body: {},
+    });
+  }
+
+  /**
    * 删除会话
    *
    * @param id

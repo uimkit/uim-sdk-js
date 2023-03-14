@@ -66,4 +66,17 @@ describe('conversations', () => {
   it('delete conversation', async () => {
     await client.deleteConversation('2BzIjJZ0uT_IjnxmT7koD');
   });
+
+  it('pin conversation', async () => {
+    const conversation = await client.pinConversation('kixVL6qOfz9xLcPe_xzpA');
+    expect(conversation.pinned).toBe(true);
+    console.log(JSON.stringify(conversation, undefined, 4));
+  });
+
+  it('unpin conversation', async () => {
+    const conversation = await client.unpinConversation('kixVL6qOfz9xLcPe_xzpA');
+    expect(conversation.pinned).toBe(false);
+    console.log(JSON.stringify(conversation, undefined, 4));
+  });
+
 });
