@@ -706,7 +706,7 @@ export class BaseUIMClient {
       invariant(plugin, 'must have upload plugin');
 
       const options: UploadOptions = {
-        onProgress: parameters.upload_progress,
+        onProgress: parameters.on_progress,
         message: parameters as Message,
       };
       const payload = await plugin.upload(parameters.file, options);
@@ -733,7 +733,7 @@ export class BaseUIMClient {
     return this.request<Message>({
       path: 'send_message',
       method: 'post',
-      body: omit(parameters, ['file', 'upload_progress']),
+      body: omit(parameters, ['file', 'on_progress']),
     });
   }
 
@@ -787,15 +787,17 @@ export class BaseUIMClient {
     const message = pick(parameters, ['from', 'to', 'conversation_id', 'image']) as Partial<Message>;
     message.id = nanoid()
     if (message.image) {
+      // 直接传入已经构造好的 image 参数
       return { type: MessageType.Image, flow: MessageFlow.Out, ...message };
     } else {
-      const { file, upload_progress } = parameters;
+      // 需要上传文件
+      const { file, on_progress } = parameters;
       return {
         type: MessageType.Image,
         flow: MessageFlow.Out,
         ...message,
         file,
-        upload_progress,
+        on_progress,
       };
     }
   }
@@ -813,13 +815,13 @@ export class BaseUIMClient {
     if (message.audio) {
       return { type: MessageType.Audio, flow: MessageFlow.Out, ...message };
     } else {
-      const { file, upload_progress } = parameters;
+      const { file, on_progress } = parameters;
       return {
         type: MessageType.Audio,
         flow: MessageFlow.Out,
         ...message,
         file,
-        upload_progress,
+        on_progress,
       };
     }
   }
@@ -836,13 +838,13 @@ export class BaseUIMClient {
     if (message.video) {
       return { type: MessageType.Video, flow: MessageFlow.Out, ...message };
     } else {
-      const { file, upload_progress } = parameters;
+      const { file, on_progress } = parameters;
       return {
         type: MessageType.Video,
         flow: MessageFlow.Out,
         ...message,
         file,
-        upload_progress,
+        on_progress,
       };
     }
   }
@@ -904,7 +906,7 @@ export class BaseUIMClient {
       const contents = await Promise.all(
         parameters.files.map((f, idx) => {
           const options: UploadOptions = {
-            onProgress: (percent) => parameters.upload_progress && parameters.upload_progress(idx, percent),
+            onProgress: (percent) => parameters.on_progress && parameters.on_progress(idx, percent),
             moment: parameters as Moment,
           };
           return plugin.upload(f, options);
@@ -929,7 +931,7 @@ export class BaseUIMClient {
     return this.request<Moment>({
       path: 'publish_moment',
       method: 'post',
-      body: omit(parameters, ['files', 'upload_progress']),
+      body: omit(parameters, ['files', 'on_progress']),
     });
   }
 
@@ -983,7 +985,7 @@ export class BaseUIMClient {
     if (moment.images && moment.images.length > 0) {
       return { type: MomentType.Image, ...moment };
     } else {
-      const { files, upload_progress } = parameters;
+      const { files, on_progress } = parameters;
       if (files instanceof HTMLInputElement) {
         const f: Array<File> = [];
         const len = files.files?.length ?? 0;
@@ -992,9 +994,9 @@ export class BaseUIMClient {
           if (file) f.push(file);
         }
         invariant(f && f.length > 0, 'must have images or files');
-        return { type: MomentType.Image, ...moment, files: f, upload_progress };
+        return { type: MomentType.Image, ...moment, files: f, on_progress };
       } else {
-        return { type: MomentType.Image, ...moment, files, upload_progress };
+        return { type: MomentType.Image, ...moment, files, on_progress };
       }
     }
   }
@@ -1011,7 +1013,7 @@ export class BaseUIMClient {
     if (moment.video) {
       return { type: MomentType.Video, ...moment };
     } else {
-      const { files, upload_progress } = parameters;
+      const { files, on_progress } = parameters;
       if (files instanceof HTMLInputElement) {
         const f = files.files?.item(0);
         invariant(f, 'must have video or files');
@@ -1019,10 +1021,10 @@ export class BaseUIMClient {
           type: MomentType.Video,
           ...moment,
           files: [f],
-          upload_progress,
+          on_progress,
         };
       } else {
-        return { type: MomentType.Video, ...moment, files, upload_progress };
+        return { type: MomentType.Video, ...moment, files, on_progress };
       }
     }
   }

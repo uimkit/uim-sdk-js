@@ -217,7 +217,7 @@ export type SendMessageParameters = Partial<Message> & {
   // 待上传的文件
   file?: File | string;
   // 文件上传进度回调
-  upload_progress?: (percent: number) => void;
+  on_progress?: (percent: number) => void;
 };
 
 // 消息发送目标
@@ -233,7 +233,7 @@ export type CreateMessageParameters = MessageTargetParameters &
     // 待上传的文件
     file?: File | string;
     // 文件上传进度回调
-    upload_progress?: (percent: number) => void;
+    on_progress?: (percent: number) => void;
   };
 
 // 发布动态参数
@@ -246,7 +246,7 @@ export type PublishMomentParameters = Partial<Moment> & {
    * @param {number} percent 上传进度，范围 0~100
    * @returns
    */
-  upload_progress?: (idx: number, percent: number) => void;
+  on_progress?: (idx: number, percent: number) => void;
 };
 
 // 创建动态参数
@@ -259,5 +259,5 @@ export type CreateMomentParameters = Pick<Moment, 'user_id' | 'text' | 'images' 
    * @param {number} percent 上传进度，范围 0~100
    * @returns
    */
-  upload_progress?: (idx: number, percent: number) => void;
+  on_progress?: (idx: number, percent: number) => void;
 };
