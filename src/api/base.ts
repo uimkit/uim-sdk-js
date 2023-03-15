@@ -102,10 +102,10 @@ export type GetConversationListResponse = CursorList<Conversation>;
 
 export type PinConversationParameters = {
   // 会话ID
-  conversation_id: string
+  conversation_id: string;
   // 是否置顶
-  pinned: boolean
-}
+  pinned: boolean;
+};
 
 // 添加好友请求
 export type AddContactParameters = {

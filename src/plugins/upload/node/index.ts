@@ -4,7 +4,6 @@ import COS from 'cos-nodejs-sdk-v5';
 import { Configuration, StorageApi, FetchAPI } from '@xopenapi/xapis-js';
 
 export class UIMUploadPlugin extends BaseUploadPlugin {
-
   _client?: StorageApi;
   _clientToken?: string;
   _clientTokenExpiry?: string;
@@ -72,5 +71,4 @@ export class UIMUploadPlugin extends BaseUploadPlugin {
     }
     return this._client!;
   }
-
 }

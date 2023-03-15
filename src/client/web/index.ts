@@ -200,7 +200,7 @@ export class UIMClient extends BaseUIMClient {
     }
 
     // 需要上传文件，拿到文件句柄
-    const file = (parameters.file instanceof HTMLInputElement) ? parameters.file?.files?.item(0) : parameters.file
+    const file = parameters.file instanceof HTMLInputElement ? parameters.file?.files?.item(0) : parameters.file;
     invariant(file, 'must select files');
     const { on_progress } = parameters;
 
@@ -212,7 +212,7 @@ export class UIMClient extends BaseUIMClient {
       throw new Error('图片大小超过限制');
     }
     // 图片格式
-    const format = last(file.name.split('.'))
+    const format = last(file.name.split('.'));
     // 图片信息，包含原图、中图、小图
     message.image = { size, format, infos: [] };
     for (let i = 0; i < 3; i++) {
@@ -247,19 +247,19 @@ export class UIMClient extends BaseUIMClient {
     }
 
     // 需要上传文件，拿到文件句柄
-    const file = (parameters.file instanceof HTMLInputElement) ? parameters.file?.files?.item(0) : parameters.file
+    const file = parameters.file instanceof HTMLInputElement ? parameters.file?.files?.item(0) : parameters.file;
     invariant(file, 'must select files');
     const { on_progress } = parameters;
 
     // 构造音频信息，方便占位显示
     const url = URL.createObjectURL(file);
-    const size = file.size
+    const size = file.size;
     if (size > 20971520) {
       throw new Error('音频大小超过限制');
     }
-    const duration = 0 // TODO 要实时录制可以获取时长
-    const format = last(file.name.split('.'))
-    message.audio = { url, duration, size, format }
+    const duration = 0; // TODO 要实时录制可以获取时长
+    const format = last(file.name.split('.'));
+    message.audio = { url, duration, size, format };
 
     return {
       type: MessageType.Audio,
@@ -288,19 +288,19 @@ export class UIMClient extends BaseUIMClient {
     }
 
     // 需要上传文件，拿到文件句柄
-    const file = (parameters.file instanceof HTMLInputElement) ? parameters.file?.files?.item(0) : parameters.file
+    const file = parameters.file instanceof HTMLInputElement ? parameters.file?.files?.item(0) : parameters.file;
     invariant(file, 'must select files');
     const { on_progress } = parameters;
 
     // 构造视频信息，方便占位显示
     const url = URL.createObjectURL(file);
-    const size = file.size
+    const size = file.size;
     if (size > 104857600) {
       throw new Error('视频大小超过限制');
     }
-    const duration = 0
-    const format = last(file.name.split('.'))
-    message.video = { url, duration, size, format }
+    const duration = 0;
+    const format = last(file.name.split('.'));
+    message.video = { url, duration, size, format };
 
     return {
       type: MessageType.Video,
@@ -388,13 +388,14 @@ export class UIMClient extends BaseUIMClient {
     }
 
     // 需要上传文件，拿到文件句柄
-    const files = (parameters.files instanceof HTMLInputElement) ? convertFileListToArray(parameters.files?.files) : parameters.files
+    const files =
+      parameters.files instanceof HTMLInputElement ? convertFileListToArray(parameters.files?.files) : parameters.files;
     invariant(files && files.length > 0, 'must select files');
     const { on_progress } = parameters;
 
     // 构造图片信息，方便占位显示
-    moment.images = []
-    files.forEach(file => {
+    moment.images = [];
+    files.forEach((file) => {
       const url = URL.createObjectURL(file);
       // 检查图片大小
       const size = file.size;
@@ -402,14 +403,14 @@ export class UIMClient extends BaseUIMClient {
         throw new Error('图片大小超过限制');
       }
       // 图片格式
-      const format = last(file.name.split('.'))
+      const format = last(file.name.split('.'));
       // 图片信息，包含原图、中图、小图
       const image: ImageMomentContent = { size, format, infos: [] };
       for (let i = 0; i < 3; i++) {
         image.infos.push({ url, width: 0, height: 0 });
       }
-      moment.images?.push(image)
-    })
+      moment.images?.push(image);
+    });
 
     return { type: MomentType.Image, ...moment, files, on_progress };
   }
@@ -433,31 +434,32 @@ export class UIMClient extends BaseUIMClient {
     }
 
     // 需要上传文件，拿到文件句柄
-    const file = (parameters.files instanceof HTMLInputElement) ? parameters.files?.files?.item(0) : parameters.files?.at(0)
+    const file =
+      parameters.files instanceof HTMLInputElement ? parameters.files?.files?.item(0) : parameters.files?.at(0);
     invariant(file, 'must select files');
     const { on_progress } = parameters;
 
     // 构造视频信息，方便占位显示
     const url = URL.createObjectURL(file);
-    const size = file.size
+    const size = file.size;
     if (size > 104857600) {
       throw new Error('视频大小超过限制');
     }
-    const duration = 0
-    const format = last(file.name.split('.'))
-    moment.video = { url, duration, size, format }
+    const duration = 0;
+    const format = last(file.name.split('.'));
+    moment.video = { url, duration, size, format };
 
     return { type: MomentType.Video, ...moment, files: [file], on_progress };
   }
 }
 
 const convertFileListToArray = (files?: FileList | null): Array<File> => {
-  if (!files) return []
+  if (!files) return [];
   const f: Array<File> = [];
   const len = files.length;
   for (let i = 0; i < len; i++) {
     const file = files.item(i);
     if (file) f.push(file);
   }
-  return f
-}
+  return f;
+};

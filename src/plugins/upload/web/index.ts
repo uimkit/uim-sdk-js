@@ -6,7 +6,6 @@ const TOKEN_KEY = 'uim-js:upload:token:';
 const TOKEN_EXPIRY_KEY = 'uim-js:upload:token_expiry:';
 
 export class UIMUploadPlugin extends BaseUploadPlugin {
-
   _client?: StorageApi;
 
   constructor(uuid: string, token: string, tokenBasePath: string) {
@@ -43,8 +42,8 @@ export class UIMUploadPlugin extends BaseUploadPlugin {
   }
 
   async getClient(): Promise<StorageApi> {
-    const tokenKey = TOKEN_KEY + this._uuid
-    const tokenExpiryKey = TOKEN_EXPIRY_KEY + this._uuid
+    const tokenKey = TOKEN_KEY + this._uuid;
+    const tokenExpiryKey = TOKEN_EXPIRY_KEY + this._uuid;
     let token = localStorage.getItem(tokenKey);
     const expiryStr = localStorage.getItem(tokenExpiryKey);
     let expiry = expiryStr ? new Date(expiryStr) : new Date();
@@ -58,8 +57,8 @@ export class UIMUploadPlugin extends BaseUploadPlugin {
       }>(this._tokenBasePath + 'xapis_token', this._token);
       token = result.access_token;
       expiry = new Date(result.expiry);
-      localStorage.setItem(tokenKey, token)
-      localStorage.setItem(tokenExpiryKey, expiry.toISOString())
+      localStorage.setItem(tokenKey, token);
+      localStorage.setItem(tokenExpiryKey, expiry.toISOString());
       this._client = undefined;
     }
 

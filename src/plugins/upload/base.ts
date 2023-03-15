@@ -16,12 +16,10 @@ import {
 } from '../../models';
 import { UploadOptions, UploadPlugin } from './types';
 
-
 /**
  * 默认的上传插件，支持web
  */
 export class BaseUploadPlugin implements UploadPlugin {
-
   _uuid: string;
   _token: string;
   _tokenBasePath: string;
@@ -40,13 +38,13 @@ export class BaseUploadPlugin implements UploadPlugin {
     if (message) {
       switch (message.type) {
         case MessageType.Image: {
-          return await this.uploadImage(file, options)
+          return await this.uploadImage(file, options);
         }
         case MessageType.Video: {
-          return await this.uploadVideo(file, options)
+          return await this.uploadVideo(file, options);
         }
         case MessageType.Audio: {
-          return await this.uploadAudio(file, options)
+          return await this.uploadAudio(file, options);
         }
         default: {
           throw new Error('unsupported message type');
@@ -57,10 +55,10 @@ export class BaseUploadPlugin implements UploadPlugin {
     if (moment) {
       switch (moment.type) {
         case MomentType.Image: {
-          return await this.uploadImage(file, options)
+          return await this.uploadImage(file, options);
         }
         case MomentType.Video: {
-          return await this.uploadVideo(file, options)
+          return await this.uploadVideo(file, options);
         }
         default: {
           throw new Error('unsupported moment type');
@@ -78,16 +76,14 @@ export class BaseUploadPlugin implements UploadPlugin {
 
     const url = await this.uploadFile(file, path, options.onProgress);
     const { width, height, size, format } = await this.getImageInfo(url);
-    const large = this.getImageThumbnail(url, width, height, 720)
-    const thumnail = this.getImageThumbnail(url, width, height, 198)
+    const large = this.getImageThumbnail(url, width, height, 720);
+    const thumnail = this.getImageThumbnail(url, width, height, 198);
 
     return {
-      format, size,
-      infos: [
-        { url, width, height },
-        large, thumnail
-      ]
-    }
+      format,
+      size,
+      infos: [{ url, width, height }, large, thumnail],
+    };
   }
 
   async uploadVideo(file: any, options: UploadOptions): Promise<VideoMessagePayload | VideoMomentContent> {
@@ -110,27 +106,26 @@ export class BaseUploadPlugin implements UploadPlugin {
   }
 
   getImageThumbnail(url: string, width: number, height: number, thumbSize: number): ThumbnailInfo {
-    const min = width <= height ? width : height
+    const min = width <= height ? width : height;
     if (min <= thumbSize) {
       // 最小边小于缩略图尺寸，直接使用原图
-      return { url, width, height }
+      return { url, width, height };
     } else if (height <= width) {
       // 最小边是高，按高等比缩放
       return {
         url: this.getThumbnailUrl(url, thumbSize),
-        width: Math.ceil(width * thumbSize / height),
-        height: thumbSize
-      }
+        width: Math.ceil((width * thumbSize) / height),
+        height: thumbSize,
+      };
     } else {
       // 最小边是宽，按宽缩放
       return {
         url: this.getThumbnailUrl(url, thumbSize),
         width: thumbSize,
-        height: Math.ceil(height * thumbSize / width)
-      }
+        height: Math.ceil((height * thumbSize) / width),
+      };
     }
   }
-
 
   async getVideoInfo(path: string): Promise<VideoInfo> {
     const client = await this.getClient();
@@ -211,9 +206,9 @@ export class BaseUploadPlugin implements UploadPlugin {
 }
 
 interface ThumbnailInfo {
-  url: string
-  width: number
-  height: number
+  height: number;
+  url: string;
+  width: number;
 }
 
 interface QCloudImageInfo {

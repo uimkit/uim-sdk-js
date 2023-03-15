@@ -122,7 +122,7 @@ export class UIMClient extends BaseUIMClient {
       throw new Error('图片大小超过限制');
     }
     // 图片格式
-    const format = last(url.split('.'))
+    const format = last(url.split('.'));
     // 图片信息，包含原图、中图、小图
     message.image = { size, format, infos: [] };
     for (let i = 0; i < 3; i++) {
@@ -159,14 +159,14 @@ export class UIMClient extends BaseUIMClient {
     // 需要上传文件，拿到文件句柄
     const { file, on_progress } = parameters;
     invariant(file, 'must select files');
-    const url = file
+    const url = file;
     const { size } = statSync(url);
     if (size > 20971520) {
       throw new Error('音频大小超过限制');
     }
-    const duration = 0
-    const format = last(file.split('.'))
-    message.audio = { url, duration, size, format }
+    const duration = 0;
+    const format = last(file.split('.'));
+    message.audio = { url, duration, size, format };
 
     return {
       type: MessageType.Audio,
@@ -174,7 +174,7 @@ export class UIMClient extends BaseUIMClient {
       ...message,
       file,
       on_progress,
-    }
+    };
   }
 
   /**
@@ -202,9 +202,9 @@ export class UIMClient extends BaseUIMClient {
     if (size > 104857600) {
       throw new Error('视频大小超过限制');
     }
-    const duration = 0
-    const format = last(file.split('.'))
-    message.video = { url, duration, size, format }
+    const duration = 0;
+    const format = last(file.split('.'));
+    message.video = { url, duration, size, format };
 
     return {
       type: MessageType.Video,
@@ -296,23 +296,23 @@ export class UIMClient extends BaseUIMClient {
     invariant(files && files.length > 0, 'must select files');
 
     // 构造图片信息，方便占位显示
-    moment.images = []
-    files.forEach(file => {
-      const url = file
+    moment.images = [];
+    files.forEach((file) => {
+      const url = file;
       // 检查图片大小
       const { size } = statSync(file);
       if (size > 20971520) {
         throw new Error('图片大小超过限制');
       }
       // 图片格式
-      const format = last(file.split('.'))
+      const format = last(file.split('.'));
       // 图片信息，包含原图、中图、小图
       const image: ImageMomentContent = { size, format, infos: [] };
       for (let i = 0; i < 3; i++) {
         image.infos.push({ url, width: 0, height: 0 });
       }
-      moment.images?.push(image)
-    })
+      moment.images?.push(image);
+    });
 
     return { type: MomentType.Image, ...moment, files, on_progress };
   }
@@ -336,7 +336,7 @@ export class UIMClient extends BaseUIMClient {
     }
 
     // 需要上传文件，拿到文件句柄
-    const file = parameters.files?.at(0)
+    const file = parameters.files?.at(0);
     invariant(file, 'must select files');
     const { on_progress } = parameters;
 
@@ -346,9 +346,9 @@ export class UIMClient extends BaseUIMClient {
     if (size > 104857600) {
       throw new Error('视频大小超过限制');
     }
-    const duration = 0
-    const format = last(url.split('.'))
-    moment.video = { url, duration, size, format }
+    const duration = 0;
+    const format = last(url.split('.'));
+    moment.video = { url, duration, size, format };
 
     return { type: MomentType.Video, ...moment, files: [file], on_progress };
   }

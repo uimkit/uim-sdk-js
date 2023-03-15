@@ -622,9 +622,9 @@ export class BaseUIMClient {
 
   /**
    * 会话置顶
-   * 
-   * @param parameters 
-   * @returns 
+   *
+   * @param parameters
+   * @returns
    */
   public pinConversation(parameters: PinConversationParameters): Promise<Conversation> {
     return this.request<Conversation>({
