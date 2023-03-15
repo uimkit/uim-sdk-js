@@ -33,6 +33,7 @@ import {
   GetMomentCommentListParameters,
   GetCommentListResponse,
   CommentOnMomentParameters,
+  PinConversationParameters,
 } from '../api';
 import { SupportedFetch } from '../fetch-types';
 import { SupportedPubSub, PubSubOptions, default as PubSub } from '../pubsub';
@@ -620,28 +621,16 @@ export class BaseUIMClient {
   }
 
   /**
-   * 设置会话置顶
-   *
-   * @param id
+   * 会话置顶
+   * 
+   * @param parameters 
+   * @returns 
    */
-  public pinConversation(id: string): Promise<Conversation> {
+  public pinConversation(parameters: PinConversationParameters): Promise<Conversation> {
     return this.request<Conversation>({
-      path: `conversations/${id}/pin`,
+      path: `conversations/${parameters.conversation_id}/pin`,
       method: 'post',
-      body: {},
-    });
-  }
-
-  /**
-   * 取消会话置顶
-   *
-   * @param id
-   */
-  public unpinConversation(id: string): Promise<Conversation> {
-    return this.request<Conversation>({
-      path: `conversations/${id}/unpin`,
-      method: 'post',
-      body: {},
+      body: omit(parameters, ['conversation_id']),
     });
   }
 
