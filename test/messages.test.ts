@@ -4,7 +4,7 @@ describe('messages', () => {
   const client = buildClient();
 
   it('list conversation messages', async () => {
-    const resp = await client.getMessageList({ conversation_id: '2BzIjJZ0uT_IjnxmT7koD', limit: 5 });
+    const resp = await client.getMessageList({ conversation_id: 'kixVL6qOfz9xLcPe_xzpA', limit: 5 });
     expect(resp.data.length).toBeGreaterThan(0);
     console.log(JSON.stringify(resp, undefined, 4));
   });
