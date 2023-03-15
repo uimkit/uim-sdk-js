@@ -1,7 +1,7 @@
-import { v4 as uuidv4 } from 'uuid';
+import { nanoid } from 'nanoid';
 import { last } from 'lodash';
 import invariant from 'invariant';
-import { Configuration, StorageApi, Provider, FetchAPI } from '@xopenapi/xapis-js';
+import { StorageApi, Provider } from '@xopenapi/xapis-js';
 import { SupportedFetch } from '../../fetch-types';
 import {
   ImageMessagePayload,
@@ -16,48 +16,16 @@ import {
 } from '../../models';
 import { UploadOptions, UploadPlugin } from './types';
 
-const TOKEN_KEY = 'uim-js:upload:token:';
-const TOKEN_EXPIRY_KEY = 'uim-js:upload:token_expiry:';
-
-interface ImageInfo {
-  format: string;
-  height: number;
-  size: number;
-  width: number;
-}
-
-interface AudioInfo {
-  duration: number;
-  format: string;
-  size: number;
-}
-
-interface VideoInfo {
-  duration: number;
-  format: string;
-  height: number;
-  size: number;
-  width: number;
-}
-
-interface QCloudImageInfo {
-  height: string;
-  size: string;
-  width: string;
-  format?: string;
-}
 
 /**
  * 默认的上传插件，支持web
  */
 export class BaseUploadPlugin implements UploadPlugin {
+
   _uuid: string;
   _token: string;
   _tokenBasePath: string;
   _fetch?: SupportedFetch;
-  _client?: StorageApi;
-  _clientToken?: string;
-  _clientTokenExpiry?: string;
 
   constructor(uuid: string, token: string, tokenBasePath: string) {
     this._uuid = uuid;
@@ -65,33 +33,20 @@ export class BaseUploadPlugin implements UploadPlugin {
     this._tokenBasePath = tokenBasePath;
   }
 
-  async upload(file: File | string, options: UploadOptions): Promise<MessagePayload | MomentContent> {
+  async upload(file: any, options: UploadOptions): Promise<MessagePayload | MomentContent> {
     const { message, moment } = options;
     invariant(message || moment, 'must have message or moment');
 
-    // 随机生成上传后的文件名
-    const filename = typeof file === 'string' ? file : file.name;
-    const ext = last(filename.split('.'));
-    const path = `${uuidv4()}.${ext}`;
-
-    const url = await this.uploadFile(file, path, options.onProgress);
-
     if (message) {
-      // 上传消息的文件
       switch (message.type) {
         case MessageType.Image: {
-          const imageInfo = await this.getImageInfo(url);
-          const thumbnail = await this.getImageThumbnail(url, 400, 400);
-          return { url, ...imageInfo, thumbnail } as ImageMessagePayload;
-        }
-        case MessageType.Audio: {
-          const audioInfo = await this.getAudioInfo(path);
-          return { url, ...audioInfo } as AudioMessagePayload;
+          return await this.uploadImage(file, options)
         }
         case MessageType.Video: {
-          const videoInfo = await this.getVideoInfo(path);
-          const snapshot = await this.getVideoSnapshot(path);
-          return { url, ...videoInfo, snapshot } as VideoMessagePayload;
+          return await this.uploadVideo(file, options)
+        }
+        case MessageType.Audio: {
+          return await this.uploadAudio(file, options)
         }
         default: {
           throw new Error('unsupported message type');
@@ -102,14 +57,10 @@ export class BaseUploadPlugin implements UploadPlugin {
     if (moment) {
       switch (moment.type) {
         case MomentType.Image: {
-          const imageInfo = await this.getImageInfo(url);
-          const thumbnail = await this.getImageThumbnail(url, 400, 400);
-          return { url, ...imageInfo, thumbnail } as ImageMomentContent;
+          return await this.uploadImage(file, options)
         }
         case MomentType.Video: {
-          const videoInfo = await this.getVideoInfo(path);
-          const snapshot = await this.getVideoSnapshot(path);
-          return { url, ...videoInfo, snapshot } as VideoMomentContent;
+          return await this.uploadVideo(file, options)
         }
         default: {
           throw new Error('unsupported moment type');
@@ -117,8 +68,69 @@ export class BaseUploadPlugin implements UploadPlugin {
       }
     }
 
-    throw new Error('unsupported message type');
+    throw new Error('must have message or moment');
   }
+
+  async uploadImage(file: any, options: UploadOptions): Promise<ImageMessagePayload | ImageMomentContent> {
+    const filename = typeof file === 'string' ? file : file.name;
+    const ext = last(filename.split('.'));
+    const path = `${nanoid()}.${ext}`;
+
+    const url = await this.uploadFile(file, path, options.onProgress);
+    const { width, height, size, format } = await this.getImageInfo(url);
+    const large = this.getImageThumbnail(url, width, height, 720)
+    const thumnail = this.getImageThumbnail(url, width, height, 198)
+
+    return {
+      format, size,
+      infos: [
+        { url, width, height },
+        large, thumnail
+      ]
+    }
+  }
+
+  async uploadVideo(file: any, options: UploadOptions): Promise<VideoMessagePayload | VideoMomentContent> {
+    const filename = typeof file === 'string' ? file : file.name;
+    const ext = last(filename.split('.'));
+    const path = `${nanoid()}.${ext}`;
+    const url = await this.uploadFile(file, path, options.onProgress);
+    const videoInfo = await this.getVideoInfo(path);
+    const snapshot = await this.getVideoSnapshot(path);
+    return { url, ...videoInfo, snapshot };
+  }
+
+  async uploadAudio(file: any, options: UploadOptions): Promise<AudioMessagePayload> {
+    const filename = typeof file === 'string' ? file : file.name;
+    const ext = last(filename.split('.'));
+    const path = `${nanoid()}.${ext}`;
+    const url = await this.uploadFile(file, path, options.onProgress);
+    const audioInfo = await this.getAudioInfo(path);
+    return { url, ...audioInfo };
+  }
+
+  getImageThumbnail(url: string, width: number, height: number, thumbSize: number): ThumbnailInfo {
+    const min = width <= height ? width : height
+    if (min <= thumbSize) {
+      // 最小边小于缩略图尺寸，直接使用原图
+      return { url, width, height }
+    } else if (height <= width) {
+      // 最小边是高，按高等比缩放
+      return {
+        url: this.getThumbnailUrl(url, thumbSize),
+        width: Math.ceil(width * thumbSize / height),
+        height: thumbSize
+      }
+    } else {
+      // 最小边是宽，按宽缩放
+      return {
+        url: this.getThumbnailUrl(url, thumbSize),
+        width: thumbSize,
+        height: Math.ceil(height * thumbSize / width)
+      }
+    }
+  }
+
 
   async getVideoInfo(path: string): Promise<VideoInfo> {
     const client = await this.getClient();
@@ -167,42 +179,16 @@ export class BaseUploadPlugin implements UploadPlugin {
     };
   }
 
-  async getImageThumbnail(url: string, maxWidth: number, maxHeight: number): Promise<string> {
-    return `${url}?imageMogr2/thumbnail/${maxWidth}x${maxHeight}>`;
+  getThumbnailUrl(url: string, size: number): string {
+    return `${url}?imageView2/3/w/${size}/h/${size}`;
   }
 
-  async uploadFile(file: File | string, path: string, onProgress?: (percent: number) => void): Promise<string> {
+  async uploadFile(file: any, path: string, onProgress?: (percent: number) => void): Promise<string> {
     throw new Error('not implemented');
   }
 
   async getClient(): Promise<StorageApi> {
-    let token = this._clientToken;
-    const expiryStr = this._clientTokenExpiry;
-    let expiry = expiryStr ? new Date(expiryStr) : new Date();
-    const needRefresh = !token || expiry <= new Date();
-
-    if (needRefresh) {
-      // 需要刷新 accessToken
-      const result = await this.httpGet<{
-        access_token: string;
-        expiry: string;
-      }>(this._tokenBasePath + 'xapis_token', this._token);
-      token = result.access_token;
-      expiry = new Date(result.expiry);
-      this._clientToken = token;
-      this._clientTokenExpiry = expiry.toISOString();
-      this._client = undefined;
-    }
-
-    if (!this._client) {
-      this._client = new StorageApi(
-        new Configuration({
-          accessToken: `Bearer ${token}`,
-          fetchApi: this._fetch as FetchAPI,
-        }),
-      );
-    }
-    return this._client!;
+    throw new Error('not implemented');
   }
 
   async httpGet<T>(url: string, token?: string): Promise<T> {
@@ -222,4 +208,38 @@ export class BaseUploadPlugin implements UploadPlugin {
       throw new Error(respText);
     }
   }
+}
+
+interface ThumbnailInfo {
+  url: string
+  width: number
+  height: number
+}
+
+interface QCloudImageInfo {
+  height: string;
+  size: string;
+  width: string;
+  format?: string;
+}
+
+interface ImageInfo {
+  format: string;
+  height: number;
+  size: number;
+  width: number;
+}
+
+interface AudioInfo {
+  duration: number;
+  format: string;
+  size: number;
+}
+
+interface VideoInfo {
+  duration: number;
+  format: string;
+  height: number;
+  size: number;
+  width: number;
 }

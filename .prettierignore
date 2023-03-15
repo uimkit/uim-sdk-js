@@ -5,3 +5,4 @@
 /coverage
 CHANGELOG.md
 test/typescript/data.ts
+tmp.js

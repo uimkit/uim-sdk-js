@@ -382,20 +382,21 @@ export interface Message {
 
 // 图片消息内容
 export interface ImageMessagePayload {
-  // 图片地址
-  url: string;
+  // 图片信息，索引0是原图，1是中图，2是小图
+  infos: Array<{
+    // 图片地址
+    url: string;
+    // 高度（像素）
+    height?: number;
+    // 宽度（像素）
+    width?: number;
+  }>;
   // 格式
   format?: string;
-  // 高度（像素）
-  height?: number;
   // 文件md5校验
   md5?: string;
-  // 大小（字节）
+  // 原图大小（字节）
   size?: number;
-  // 缩略图地址
-  thumbnail?: string;
-  // 宽度（像素）
-  width?: number;
 }
 
 // 语音消息内容
@@ -636,20 +637,21 @@ export interface Moment {
 
 // 图片动态内容
 export interface ImageMomentContent {
-  // 图片地址
-  url: string;
+  // 图片信息，索引0是原图，1是中图，2是小图
+  infos: Array<{
+    // 图片地址
+    url: string;
+    // 高度（像素）
+    height?: number;
+    // 宽度（像素）
+    width?: number;
+  }>;
   // 格式
   format?: string;
-  // 高度（像素）
-  height?: number;
   // 文件md5校验
   md5?: string;
-  // 大小（字节）
+  // 原图大小（字节）
   size?: number;
-  // 缩略图地址
-  thumbnail?: string;
-  // 宽度（像素）
-  width?: number;
 }
 
 // 视频动态内容

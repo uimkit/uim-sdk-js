@@ -78,5 +78,4 @@ describe('conversations', () => {
     expect(conversation.pinned).toBe(false);
     console.log(JSON.stringify(conversation, undefined, 4));
   });
-
 });

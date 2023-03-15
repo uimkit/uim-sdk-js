@@ -1,6 +1,6 @@
 import jwtdecode, { JwtPayload } from 'jwt-decode';
+import invariant from 'invariant';
 import { omit, pick, indexOf } from 'lodash';
-import { nanoid } from 'nanoid';
 import { Logger, LogLevel, logLevelSeverity, makeConsoleLogger } from '../logging';
 import { buildRequestError, isHTTPResponseError, isUIMClientError, RequestTimeoutError } from '../errors';
 import {
@@ -19,7 +19,6 @@ import {
   GetMessageListResponse,
   AddContactParameters,
   AddContactResponse,
-  SendMessageParameters,
   GetAccountMomentListParameters,
   GetContactMomentListParameters,
   CreateGroupParameters,
@@ -31,36 +30,15 @@ import {
   SetGroupMemberRoleParameters,
   GetGroupApplicationListParameters,
   GetGruopApplicationListResponse,
-  CreateMessageParameters,
-  PublishMomentParameters,
-  CreateMomentParameters,
   GetMomentCommentListParameters,
   GetCommentListResponse,
   CommentOnMomentParameters,
-} from '../api-endpoints';
+} from '../api';
 import { SupportedFetch } from '../fetch-types';
 import { SupportedPubSub, PubSubOptions, default as PubSub } from '../pubsub';
 import { Event, EventHandler, EventType } from '../events';
-import {
-  Account,
-  MessageType,
-  Contact,
-  Group,
-  GroupMember,
-  Conversation,
-  Message,
-  MessageFlow,
-  ImageMessagePayload,
-  AudioMessagePayload,
-  VideoMessagePayload,
-  Moment,
-  MomentType,
-  ImageMomentContent,
-  VideoMomentContent,
-  Comment,
-} from '../models';
-import { Plugin, PluginType, UploadOptions } from '../plugins';
-import invariant from 'invariant';
+import { Account, Contact, Group, GroupMember, Conversation, Message, Comment } from '../models';
+import { Plugin, PluginType } from '../plugins';
 import { UIMClientOptions } from './types';
 
 /*
@@ -124,7 +102,7 @@ export class BaseUIMClient {
    * @param parameters
    * @returns
    */
-  private async request<T>(parameters: RequestParameters): Promise<T> {
+  public async request<T>(parameters: RequestParameters): Promise<T> {
     invariant(this._fetch, 'must setup fetch instance');
     const { path, method, query, body, auth } = parameters;
     this.log(LogLevel.INFO, 'request start', { method, path });
@@ -211,7 +189,7 @@ export class BaseUIMClient {
    * @param type
    * @returns
    */
-  private getPlugin(type: PluginType): Plugin | undefined {
+  public getPlugin(type: PluginType): Plugin | undefined {
     return this._plugins[type];
   }
 
@@ -643,8 +621,8 @@ export class BaseUIMClient {
 
   /**
    * 设置会话置顶
-   * 
-   * @param id 
+   *
+   * @param id
    */
   public pinConversation(id: string): Promise<Conversation> {
     return this.request<Conversation>({
@@ -656,8 +634,8 @@ export class BaseUIMClient {
 
   /**
    * 取消会话置顶
-   * 
-   * @param id 
+   *
+   * @param id
    */
   public unpinConversation(id: string): Promise<Conversation> {
     return this.request<Conversation>({
@@ -694,50 +672,6 @@ export class BaseUIMClient {
   }
 
   /**
-   * 发送消息
-   *
-   * @param parameters
-   * @returns
-   */
-  public async sendMessage(parameters: SendMessageParameters): Promise<Message> {
-    // 先上传文件
-    if (parameters.file) {
-      const plugin = this.getPlugin('upload');
-      invariant(plugin, 'must have upload plugin');
-
-      const options: UploadOptions = {
-        onProgress: parameters.on_progress,
-        message: parameters as Message,
-      };
-      const payload = await plugin.upload(parameters.file, options);
-
-      switch (parameters.type) {
-        case MessageType.Image: {
-          parameters.image = payload as ImageMessagePayload;
-          break;
-        }
-        case MessageType.Audio: {
-          parameters.audio = payload as AudioMessagePayload;
-          break;
-        }
-        case MessageType.Video: {
-          parameters.video = payload as VideoMessagePayload;
-          break;
-        }
-        default: {
-          throw new Error('unsupported message type');
-        }
-      }
-    }
-
-    return this.request<Message>({
-      path: 'send_message',
-      method: 'post',
-      body: omit(parameters, ['file', 'on_progress']),
-    });
-  }
-
-  /**
    * 重发消息
    *
    * @param message_id
@@ -761,92 +695,6 @@ export class BaseUIMClient {
       path: `messages/${id}`,
       method: 'delete',
     });
-  }
-
-  /**
-   * 创建文本消息
-   *
-   * @param parameters
-   * @returns
-   */
-  public createTextMessage(parameters: CreateMessageParameters): SendMessageParameters {
-    invariant(parameters.text, 'must have text payload');
-    const message = pick(parameters, ['from', 'to', 'conversation_id', 'text', 'mentioned_users']) as Partial<Message>;
-    message.id = nanoid()
-    return { type: MessageType.Text, flow: MessageFlow.Out, ...message };
-  }
-
-  /**
-   * 创建图片消息
-   *
-   * @param parameters
-   * @returns
-   */
-  public createImageMessage(parameters: CreateMessageParameters): SendMessageParameters {
-    invariant(parameters.image || parameters.file, 'must have image payload or file');
-    const message = pick(parameters, ['from', 'to', 'conversation_id', 'image']) as Partial<Message>;
-    message.id = nanoid()
-    if (message.image) {
-      // 直接传入已经构造好的 image 参数
-      return { type: MessageType.Image, flow: MessageFlow.Out, ...message };
-    } else {
-      // 需要上传文件
-      const { file, on_progress } = parameters;
-      return {
-        type: MessageType.Image,
-        flow: MessageFlow.Out,
-        ...message,
-        file,
-        on_progress,
-      };
-    }
-  }
-
-  /**
-   * 创建音频消息
-   *
-   * @param parameters
-   * @returns
-   */
-  public createAudioMessage(parameters: CreateMessageParameters): SendMessageParameters {
-    invariant(parameters.audio || parameters.file, 'must have audio payload or file');
-    const message = pick(parameters, ['from', 'to', 'conversation_id', 'audio']) as Partial<Message>;
-    message.id = nanoid()
-    if (message.audio) {
-      return { type: MessageType.Audio, flow: MessageFlow.Out, ...message };
-    } else {
-      const { file, on_progress } = parameters;
-      return {
-        type: MessageType.Audio,
-        flow: MessageFlow.Out,
-        ...message,
-        file,
-        on_progress,
-      };
-    }
-  }
-
-  /**
-   * 创建视频消息
-   * @param parameters
-   * @returns
-   */
-  public createVideoMessage(parameters: CreateMessageParameters): SendMessageParameters {
-    invariant(parameters.video || parameters.file, 'must have video payload or file');
-    const message = pick(parameters, ['from', 'to', 'conversation_id', 'video']) as Partial<Message>;
-    message.id = nanoid()
-    if (message.video) {
-      return { type: MessageType.Video, flow: MessageFlow.Out, ...message };
-    } else {
-      const { file, on_progress } = parameters;
-      return {
-        type: MessageType.Video,
-        flow: MessageFlow.Out,
-        ...message,
-        file,
-        on_progress,
-      };
-    }
   }
 
   /**
@@ -892,50 +740,6 @@ export class BaseUIMClient {
   }
 
   /**
-   * 发布动态
-   *
-   * @param parameters
-   * @returns
-   */
-  public async publishMoment(parameters: PublishMomentParameters): Promise<Moment> {
-    // 先上传文件
-    if (parameters.files && parameters.files.length > 0) {
-      const plugin = this.getPlugin('upload');
-      invariant(plugin, 'must have upload plugin');
-
-      const contents = await Promise.all(
-        parameters.files.map((f, idx) => {
-          const options: UploadOptions = {
-            onProgress: (percent) => parameters.on_progress && parameters.on_progress(idx, percent),
-            moment: parameters as Moment,
-          };
-          return plugin.upload(f, options);
-        }),
-      );
-
-      switch (parameters.type) {
-        case MomentType.Image: {
-          parameters.images = contents as Array<ImageMomentContent>;
-          break;
-        }
-        case MomentType.Video: {
-          parameters.video = contents[0] as VideoMomentContent;
-          break;
-        }
-        default: {
-          throw new Error('unsupported message type');
-        }
-      }
-    }
-
-    return this.request<Moment>({
-      path: 'publish_moment',
-      method: 'post',
-      body: omit(parameters, ['files', 'on_progress']),
-    });
-  }
-
-  /**
    * 对动态发表评论
    *
    * @param parameters
@@ -959,74 +763,6 @@ export class BaseUIMClient {
       path: `moments/${id}`,
       method: 'delete',
     });
-  }
-
-  /**
-   * 创建文本动态
-   *
-   * @param parameters
-   * @returns
-   */
-  public createTextMoment(parameters: CreateMomentParameters): PublishMomentParameters {
-    invariant(parameters.text, 'must have text');
-    const moment = pick(parameters, ['user_id', 'text']) as Partial<Moment>;
-    return { type: MomentType.Text, ...moment };
-  }
-
-  /**
-   * 创建图片动态
-   *
-   * @param parameters
-   * @returns
-   */
-  public createImagesMoment(parameters: CreateMomentParameters): PublishMomentParameters {
-    invariant(parameters.images || parameters.files, 'must have images or files');
-    const moment = pick(parameters, ['user_id', 'images']) as Partial<Moment>;
-    if (moment.images && moment.images.length > 0) {
-      return { type: MomentType.Image, ...moment };
-    } else {
-      const { files, on_progress } = parameters;
-      if (files instanceof HTMLInputElement) {
-        const f: Array<File> = [];
-        const len = files.files?.length ?? 0;
-        for (let i = 0; i < len; i++) {
-          const file = files.files?.item(i);
-          if (file) f.push(file);
-        }
-        invariant(f && f.length > 0, 'must have images or files');
-        return { type: MomentType.Image, ...moment, files: f, on_progress };
-      } else {
-        return { type: MomentType.Image, ...moment, files, on_progress };
-      }
-    }
-  }
-
-  /**
-   * 创建视频动态
-   *
-   * @param parameters
-   * @returns
-   */
-  public createVideoMoment(parameters: CreateMomentParameters): PublishMomentParameters {
-    invariant(parameters.video || parameters.files, 'must have video or files');
-    const moment = pick(parameters, ['user_id', 'video']) as Partial<Moment>;
-    if (moment.video) {
-      return { type: MomentType.Video, ...moment };
-    } else {
-      const { files, on_progress } = parameters;
-      if (files instanceof HTMLInputElement) {
-        const f = files.files?.item(0);
-        invariant(f, 'must have video or files');
-        return {
-          type: MomentType.Video,
-          ...moment,
-          files: [f],
-          on_progress,
-        };
-      } else {
-        return { type: MomentType.Video, ...moment, files, on_progress };
-      }
-    }
   }
 
   /**

@@ -18,8 +18,9 @@ export interface UploadOptions {
 export interface UploadPlugin {
   /**
    * 上传文件
-   * @param {File|string} file 上传的文件句柄或路径
-   * @param {UploadOptions} options 上传参数
+   *
+   * @param file
+   * @param options
    */
-  upload(file: File | string, options: UploadOptions): Promise<MessagePayload | MomentContent>;
+  upload(file: any, options: UploadOptions): Promise<MessagePayload | MomentContent>;
 }

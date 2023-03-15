@@ -1,5 +1,6 @@
 export * from './client';
-export * from './api-endpoints';
+export * from './api';
+export * from './api/web';
 export * from './events';
 export * from './models';
 export * from './logging';
