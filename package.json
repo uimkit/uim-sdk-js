@@ -58,6 +58,7 @@
     "browser-or-node": "^2.0.0",
     "cos-js-sdk-v5": "^1.4.15",
     "cos-nodejs-sdk-v5": "^2.11.19",
+    "eventemitter3": "^5.0.0",
     "invariant": "^2.2.4",
     "jwt-decode": "^3.1.2",
     "lodash": "^4.17.21",

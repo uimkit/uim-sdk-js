@@ -10,11 +10,11 @@ describe('send_messages', () => {
       conversation_id: 'kixVL6qOfz9xLcPe_xzpA',
       text: '我在的',
     });
-    const messageId = sendReq.id
-    console.log('message id: %s', messageId)
+    const messageId = sendReq.id;
+    console.log('message id: %s', messageId);
     const message = await client.sendMessage(sendReq);
     console.log(JSON.stringify(message, undefined, 4));
-    expect(message.id).toBe(messageId)
+    expect(message.id).toBe(messageId);
   });
 
   it('send text message to contact', async () => {
@@ -32,15 +32,18 @@ describe('send_messages', () => {
       conversation_id: 'kixVL6qOfz9xLcPe_xzpA',
       file: relative(process.cwd(), 'test/resources/test_image.jpeg'),
     });
-    console.log(JSON.stringify(sendReq, undefined, 4))
+    console.log(JSON.stringify(sendReq, undefined, 4));
     const message = await client.sendMessage(sendReq);
     console.log(JSON.stringify(message, undefined, 4));
   });
 
   it('send video message to conversation', async () => {
     const sendReq = client.createVideoMessage({
-      conversation_id: '2BzIjJZ0uT_IjnxmT7koD',
+      conversation_id: 'kixVL6qOfz9xLcPe_xzpA',
       file: relative(process.cwd(), 'test/resources/test_video.mp4'),
+      on_progress: (percent) => {
+        console.log('upload progress: ' + percent)
+      }
     });
     const message = await client.sendMessage(sendReq);
     console.log(JSON.stringify(message, undefined, 4));

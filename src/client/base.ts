@@ -1,4 +1,5 @@
 import jwtdecode, { JwtPayload } from 'jwt-decode';
+import EventEmitter from 'eventemitter3';
 import invariant from 'invariant';
 import { omit, pick, indexOf } from 'lodash';
 import { Logger, LogLevel, logLevelSeverity, makeConsoleLogger } from '../logging';
@@ -37,7 +38,7 @@ import {
 } from '../api';
 import { SupportedFetch } from '../fetch-types';
 import { SupportedPubSub, PubSubOptions, default as PubSub } from '../pubsub';
-import { Event, EventHandler, EventType } from '../events';
+import { EventHandler, UIMEventType, UIMEvent } from '../events';
 import { Account, Contact, Group, GroupMember, Conversation, Message, Comment } from '../models';
 import { Plugin, PluginType } from '../plugins';
 import { UIMClientOptions } from './types';
@@ -68,10 +69,9 @@ export class BaseUIMClient {
   _timeoutMs: number;
   _pubsub: SupportedPubSub;
   _channels: Array<string>;
-  _handlers: Record<string, Array<EventHandler>>;
-  _messageEventListener?: (msgEvent: MessageEvent) => void;
   _errorHandler?: (e: unknown) => void;
   _plugins: Partial<Record<PluginType, Plugin>>;
+  _eventEmitter: EventEmitter;
   _fetch?: SupportedFetch;
 
   public constructor(token: string, options?: UIMClientOptions) {
@@ -81,8 +81,6 @@ export class BaseUIMClient {
     this._prefixUrl = options?.baseUrl ?? 'https://api.uimkit.chat/client/v1/';
     this._timeoutMs = options?.timeoutMs ?? 60_000;
     this._channels = [];
-    this._handlers = {};
-    this._messageEventListener = undefined;
     this._errorHandler = options?.errorHandler;
     const jwt = jwtdecode<JwtPayload>(token);
     this._uuid = jwt.sub ?? '';
@@ -94,6 +92,7 @@ export class BaseUIMClient {
     };
     this._pubsub = new PubSub(pubsubOptions);
     this._pubsub.addListener(this.onEvent.bind(this));
+    this._eventEmitter = new EventEmitter()
     this._plugins = {};
   }
 
@@ -756,34 +755,35 @@ export class BaseUIMClient {
 
   /**
    * 监听事件
-   *
-   * @param type 事件类型
-   * @param handler 事件处理函数
-   * @returns  取消监听事件函数
+   * 
+   * @param type 
+   * @param handler 
+   * @returns 
    */
-  public on(type: EventType, handler: EventHandler): () => void {
-    this._handlers[type] = [...(this._handlers[type] ?? []), handler];
-    return () => {
-      const handlers = this._handlers[type] ?? [];
-      const idx = handlers.findIndex((it) => it === handler);
-      if (idx >= 0) {
-        handlers.splice(idx, 1);
-      }
-      this._handlers[type] = [...handlers];
-    };
+  public on(type: UIMEventType, handler: EventHandler) {
+    this._eventEmitter.on(type, handler)
   }
 
   /**
-   * 监听账号事件
+   * 取消监听事件
+   * 
+   * @param type 
+   * @param handler 
+   */
+  public off(type: UIMEventType, handler: EventHandler) {
+    this._eventEmitter.off(type, handler)
+  }
+
+  /**
+   * 监听账号的 pubnub 推送
    *
-   * @param account_id
+   * @param _channel
    * @param e
    * @param _extra
    */
-  private onEvent(account_id: string, e: unknown, _extra?: unknown) {
-    const evt = e as Event;
-    const handlers = this._handlers[evt.type] ?? [];
-    handlers.forEach((h) => h(account_id, evt));
+  private onEvent(_channel: string, e: unknown, _extra?: unknown) {
+    const evt = e as UIMEvent;
+    this._eventEmitter.emit(evt.type, evt)
   }
 
   /**

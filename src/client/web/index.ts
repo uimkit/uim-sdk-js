@@ -38,6 +38,9 @@ interface AuthorizeResult {
 }
 
 export class UIMClient extends BaseUIMClient {
+
+  _messageEventListener?: (msgEvent: MessageEvent) => void;
+
   public constructor(token: string, options?: UIMClientOptions) {
     super(token, options);
     this._fetch = window.fetch.bind(window);
