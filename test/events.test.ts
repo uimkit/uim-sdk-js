@@ -6,11 +6,10 @@ describe('events', () => {
 
   it('listen events', async () => {
     const onMessageReceived = (evt: MessageReceivedEvent) => {
-      console.log('received message event: ', evt)
-    }
-    client.on(UIMEventType.MESSAGE_RECEIVED, onMessageReceived)
-    await client.getAccountList({ subscribe: true })
-    client.off(UIMEventType.MESSAGE_RECEIVED, onMessageReceived)
+      console.log('received message event: ', evt);
+    };
+    client.on(UIMEventType.MESSAGE_RECEIVED, onMessageReceived);
+    await client.getAccountList({ subscribe: true });
+    client.off(UIMEventType.MESSAGE_RECEIVED, onMessageReceived);
   });
-
 });

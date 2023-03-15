@@ -1,12 +1,5 @@
 // cspell_disable-file
-import {
-  Account,
-  Contact,
-  Conversation,
-  FriendApplication,
-  Group,
-  Message,
-} from './models';
+import { Account, Contact, Conversation, FriendApplication, Group, Message } from './models';
 
 export interface Event<T> {
   // 事件数据
@@ -16,24 +9,24 @@ export interface Event<T> {
 }
 
 export enum UIMEventType {
-  // 收到新消息
-  MESSAGE_RECEIVED = 'message_received',
-  // 消息被撤回
-  MESSAGE_REVOKED = 'message_revoked',
-  // 收到会话
-  CONVERSATION_RECEIVED = 'conversation_received',
-  // 加入了新群组
-  GROUP_JOINED = 'group_joined',
-  // 账号资料更新
-  ACCOUNT_UPDATED = 'account_updated',
   // 账号在线状态变化
   ACCOUNT_PRESENCE_UPDATED = 'account_presence_updated',
   // 账号总未读数量变化
   ACCOUNT_UNREAD_COUNT_UPDATED = 'account_unread_count_updated',
+  // 账号资料更新
+  ACCOUNT_UPDATED = 'account_updated',
   // 添加了新好友
   CONTACT_ADDED = 'contact_added',
+  // 收到会话
+  CONVERSATION_RECEIVED = 'conversation_received',
   // 收到好友申请
   FRIEND_APPLICATION_RECEIVED = 'friend_application_received',
+  // 加入了新群组
+  GROUP_JOINED = 'group_joined',
+  // 收到新消息
+  MESSAGE_RECEIVED = 'message_received',
+  // 消息被撤回
+  MESSAGE_REVOKED = 'message_revoked'
 }
 
 // 收到新消息
@@ -64,6 +57,6 @@ export type UIMEvent =
   | AccountPresenceUpdatedEvent
   | AccountUnreadCountUpdatedEvent
   | ContactAddedEvent
-  | FriendApplicationReceivedEvent
+  | FriendApplicationReceivedEvent;
 
 export type EventHandler = (evt: any) => void;

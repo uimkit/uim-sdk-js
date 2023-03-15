@@ -38,7 +38,6 @@ interface AuthorizeResult {
 }
 
 export class UIMClient extends BaseUIMClient {
-
   _messageEventListener?: (msgEvent: MessageEvent) => void;
 
   public constructor(token: string, options?: UIMClientOptions) {

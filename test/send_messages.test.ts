@@ -42,8 +42,8 @@ describe('send_messages', () => {
       conversation_id: 'kixVL6qOfz9xLcPe_xzpA',
       file: relative(process.cwd(), 'test/resources/test_video.mp4'),
       on_progress: (percent) => {
-        console.log('upload progress: ' + percent)
-      }
+        console.log('upload progress: ' + percent);
+      },
     });
     const message = await client.sendMessage(sendReq);
     console.log(JSON.stringify(message, undefined, 4));

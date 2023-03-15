@@ -92,7 +92,7 @@ export class BaseUIMClient {
     };
     this._pubsub = new PubSub(pubsubOptions);
     this._pubsub.addListener(this.onEvent.bind(this));
-    this._eventEmitter = new EventEmitter()
+    this._eventEmitter = new EventEmitter();
     this._plugins = {};
   }
 
@@ -755,23 +755,23 @@ export class BaseUIMClient {
 
   /**
    * 监听事件
-   * 
-   * @param type 
-   * @param handler 
-   * @returns 
+   *
+   * @param type
+   * @param handler
+   * @returns
    */
   public on(type: UIMEventType, handler: EventHandler) {
-    this._eventEmitter.on(type, handler)
+    this._eventEmitter.on(type, handler);
   }
 
   /**
    * 取消监听事件
-   * 
-   * @param type 
-   * @param handler 
+   *
+   * @param type
+   * @param handler
    */
   public off(type: UIMEventType, handler: EventHandler) {
-    this._eventEmitter.off(type, handler)
+    this._eventEmitter.off(type, handler);
   }
 
   /**
@@ -783,7 +783,7 @@ export class BaseUIMClient {
    */
   private onEvent(_channel: string, e: unknown, _extra?: unknown) {
     const evt = e as UIMEvent;
-    this._eventEmitter.emit(evt.type, evt)
+    this._eventEmitter.emit(evt.type, evt);
   }
 
   /**
