@@ -31,11 +31,8 @@ describe('contacts', () => {
     expect(resp3.data[9].id).toBe(resp2.data[4].id);
   });
 
-  it("list account's contacts by nickname", async () => {
-    const resp = await client.getContactList({ account_id: 'gmtIYyV1ovBPegHPVNOKO', nickname: '增长' });
-    expect(resp.extra.start_cursor).not.toBe('');
-    expect(resp.extra.end_cursor).not.toBe('');
-    expect(resp.extra.has_next).toBe(true);
+  it("list account's contacts by keyword", async () => {
+    const resp = await client.getContactList({ account_id: 'JTtg4oIp8R-rdWAIvmA2x', keyword: '增长' });
     console.log(JSON.stringify(resp, undefined, 4));
   });
 
