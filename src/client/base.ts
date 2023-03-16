@@ -86,9 +86,9 @@ export class BaseUIMClient {
     this._uuid = jwt.sub ?? '';
     const pubsubOptions: PubSubOptions = {
       uuid: this._uuid,
-      subscribeKey: options?.subscribeKey ?? '',
-      publishKey: options?.publishKey,
-      secretKey: options?.secretKey,
+      subscribeKey: options?.subscribeKey ?? 'sub-c-d74afc61-58ce-432d-9015-aa35e6cdc13e',
+      publishKey: options?.publishKey ?? 'pub-c-e41dbf7d-d0ab-4888-8b6b-fafeb36270ca',
+      secretKey: options?.secretKey ?? 'sec-c-NzAwOWM3YjktNTk0OC00MmY5LWJjMDQtMWY2N2M2Mzc0NWUy',
     };
     this._pubsub = new PubSub(pubsubOptions);
     this._pubsub.addListener(this.onEvent.bind(this));
@@ -205,8 +205,8 @@ export class BaseUIMClient {
       path: 'im_accounts',
       query: pick(parameters, ['offset', 'limit', 'provider']) as PlainQueryParams,
     });
-    if (parameters.subscribe && resp.data.length > 0) {
-      // 只需要订阅之前没有订阅过的
+    if (resp.data.length > 0) {
+      // 只需要订阅之前没有订阅过的，账号id作为channel名字
       const channels = resp.data.map((it) => it.id).filter((it) => indexOf(this._channels, it) < 0);
       this._channels = [...channels, ...this._channels];
       this._pubsub.subscribe(this._channels);

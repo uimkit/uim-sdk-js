@@ -12,5 +12,4 @@ export interface UIMClientOptions {
   /** Options for pubsub */
   subscribeKey?: string;
   timeoutMs?: number;
-  uimVersion?: string;
 }
