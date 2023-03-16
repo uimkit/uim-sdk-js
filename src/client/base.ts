@@ -86,9 +86,10 @@ export class BaseUIMClient {
     this._uuid = jwt.sub ?? '';
     const pubsubOptions: PubSubOptions = {
       uuid: this._uuid,
-      subscribeKey: options?.subscribeKey ?? 'sub-c-d74afc61-58ce-432d-9015-aa35e6cdc13e',
-      publishKey: options?.publishKey ?? 'pub-c-e41dbf7d-d0ab-4888-8b6b-fafeb36270ca',
-      secretKey: options?.secretKey ?? 'sec-c-NzAwOWM3YjktNTk0OC00MmY5LWJjMDQtMWY2N2M2Mzc0NWUy',
+      subscribeKey: options?.subscribeKey ?? 'sub-c-ba96530f-177f-4fdb-8ab0-2e0108e0ea36',
+      publishKey: options?.publishKey ?? 'pub-c-223bc64a-51a1-4588-952f-fc36b5444a28',
+      secretKey: options?.secretKey ?? 'sec-c-MDAwNjM0MWItOWM3ZC00ZTExLWJjNWMtZjJkMzA3MmZmNDll',
+      logVerbosity: this._logLevel === LogLevel.DEBUG,
     };
     this._pubsub = new PubSub(pubsubOptions);
     this._pubsub.addListener(this.onEvent.bind(this));

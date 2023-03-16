@@ -18,7 +18,7 @@ export enum UIMEventType {
   // 添加了新好友
   CONTACT_ADDED = 'contact_added',
   // 收到会话
-  CONVERSATION_RECEIVED = 'conversation_received',
+  CONVERSATION_UPDATED = 'conversation_updated',
   // 收到好友申请
   FRIEND_APPLICATION_RECEIVED = 'friend_application_received',
   // 加入了新群组
@@ -26,7 +26,7 @@ export enum UIMEventType {
   // 收到新消息
   MESSAGE_RECEIVED = 'message_received',
   // 消息被撤回
-  MESSAGE_REVOKED = 'message_revoked'
+  MESSAGE_REVOKED = 'message_revoked',
 }
 
 // 收到新消息
@@ -34,7 +34,7 @@ export type MessageReceivedEvent = Event<Message>;
 // 消息被撤回
 export type MessageRevokedEvent = Event<Message>;
 // 收到会话
-export type ConversationReceivedEvent = Event<Conversation>;
+export type ConversationUpdatedEvent = Event<Conversation>;
 // 加入了新群组
 export type GroupJoinedEvent = Event<Group>;
 // 账号资料更新
@@ -51,7 +51,7 @@ export type FriendApplicationReceivedEvent = Event<FriendApplication>;
 export type UIMEvent =
   | MessageReceivedEvent
   | MessageRevokedEvent
-  | ConversationReceivedEvent
+  | ConversationUpdatedEvent
   | GroupJoinedEvent
   | AccountUpdatedEvent
   | AccountPresenceUpdatedEvent
