@@ -9,7 +9,6 @@ export interface UIMClientOptions {
   logLevel?: LogLevel;
   publishKey?: string;
   secretKey?: string;
-  /** Options for pubsub */
   subscribeKey?: string;
   timeoutMs?: number;
 }
