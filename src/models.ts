@@ -311,11 +311,11 @@ export enum MessageType {
 // 消息发送状态
 export enum MessageStatus {
   // 发送失败
-  Failed = 'failed',
+  Fail = 'fail',
   // 发送中
   Sending = 'sending',
   // 发送成功
-  Succeeded = 'succeeded',
+  Success = 'success',
   // 未发送
   Unsent = 'unsent',
 }
