@@ -440,6 +440,8 @@ export type MessagePayload = string | ImageMessagePayload | AudioMessagePayload 
 export interface Group {
   // 所属账号ID
   account: string;
+  // 所属账号在群组内的群成员信息
+  account_member_info: GroupMember;
   // 平台群组ID
   group_id: string;
   // 群组ID
