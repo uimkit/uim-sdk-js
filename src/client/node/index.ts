@@ -2,7 +2,7 @@ import nodeFetch from 'node-fetch';
 import invariant from 'invariant';
 import { last, omit, pick } from 'lodash';
 import { nanoid } from 'nanoid';
-import { BaseUIMClient } from '../base';
+import { BaseUIMClient, setCreatedMessageData } from '../base';
 import { UIMClientOptions } from '../types';
 import {
   MessageType,
@@ -89,9 +89,8 @@ export class UIMClient extends BaseUIMClient {
   public createTextMessage(parameters: CreateMessageParameters): SendMessageParameters {
     invariant(parameters.text, 'must have text payload');
     const message = pick(parameters, ['from', 'to', 'conversation_id', 'text', 'mentioned_users']) as Partial<Message>;
-    // 由前端生成id
-    message.id = nanoid();
-    return { type: MessageType.Text, flow: MessageFlow.Out, ...message };
+    setCreatedMessageData(message);
+    return { type: MessageType.Text, ...message };
   }
 
   /**
@@ -103,13 +102,11 @@ export class UIMClient extends BaseUIMClient {
   public createImageMessage(parameters: CreateMessageParameters): SendMessageParameters {
     invariant(parameters.image || parameters.file, 'must have image payload or file');
     const message = pick(parameters, ['from', 'to', 'conversation_id', 'image']) as Partial<Message>;
-
-    // 由前端生成id
-    message.id = nanoid();
+    setCreatedMessageData(message);
 
     // 直接传入已经构造好的 image 参数
     if (message.image) {
-      return { type: MessageType.Image, flow: MessageFlow.Out, ...message };
+      return { type: MessageType.Image, ...message };
     }
 
     // 需要上传文件
@@ -128,14 +125,7 @@ export class UIMClient extends BaseUIMClient {
     for (let i = 0; i < 3; i++) {
       message.image.infos.push({ url, width: 0, height: 0 });
     }
-
-    return {
-      type: MessageType.Image,
-      flow: MessageFlow.Out,
-      ...message,
-      file,
-      on_progress,
-    };
+    return { type: MessageType.Image, ...message, file, on_progress };
   }
 
   /**
@@ -147,13 +137,11 @@ export class UIMClient extends BaseUIMClient {
   public createAudioMessage(parameters: CreateMessageParameters): SendMessageParameters {
     invariant(parameters.audio || parameters.file, 'must have audio payload or file');
     const message = pick(parameters, ['from', 'to', 'conversation_id', 'audio']) as Partial<Message>;
-
-    // 由前端生成id
-    message.id = nanoid();
+    setCreatedMessageData(message);
 
     // 直接传入已经构造好的 audio 参数
     if (message.audio) {
-      return { type: MessageType.Audio, flow: MessageFlow.Out, ...message };
+      return { type: MessageType.Audio, ...message };
     }
 
     // 需要上传文件，拿到文件句柄
@@ -167,14 +155,7 @@ export class UIMClient extends BaseUIMClient {
     const duration = 0;
     const format = last(file.split('.'));
     message.audio = { url, duration, size, format };
-
-    return {
-      type: MessageType.Audio,
-      flow: MessageFlow.Out,
-      ...message,
-      file,
-      on_progress,
-    };
+    return { type: MessageType.Audio, ...message, file, on_progress };
   }
 
   /**
@@ -185,13 +166,11 @@ export class UIMClient extends BaseUIMClient {
   public createVideoMessage(parameters: CreateMessageParameters): SendMessageParameters {
     invariant(parameters.video || parameters.file, 'must have video payload or file');
     const message = pick(parameters, ['from', 'to', 'conversation_id', 'video']) as Partial<Message>;
-
-    // 由前端生成id
-    message.id = nanoid();
+    setCreatedMessageData(message);
 
     // 直接传入已经构造好的 video 参数
     if (message.video) {
-      return { type: MessageType.Video, flow: MessageFlow.Out, ...message };
+      return { type: MessageType.Video, ...message };
     }
 
     // 需要上传文件，拿到文件句柄
@@ -205,14 +184,7 @@ export class UIMClient extends BaseUIMClient {
     const duration = 0;
     const format = last(file.split('.'));
     message.video = { url, duration, size, format };
-
-    return {
-      type: MessageType.Video,
-      flow: MessageFlow.Out,
-      ...message,
-      file,
-      on_progress,
-    };
+    return { type: MessageType.Video, ...message, file, on_progress };
   }
 
   /**

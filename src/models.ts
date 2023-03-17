@@ -79,7 +79,7 @@ export interface User {
   // 头像URL
   avatar?: string;
   // 生日
-  birthday?: Date;
+  birthday?: number;
   // 城市
   city?: string;
   // 公司
@@ -139,13 +139,13 @@ export interface Account extends User {
   // 在线状态
   presence: Precense;
   // 创建时间
-  created_at?: Date;
+  created_at?: number;
   // 扩展信息
   metadata?: Record<string, unknown>;
   // 账号总的未读数量
   unread?: number;
   // 最后更新时间
-  updated_at?: Date;
+  updated_at?: number;
 }
 
 // 好友
@@ -161,7 +161,7 @@ export interface Contact extends User {
   // 是否加入黑名单
   blocked?: boolean;
   // 创建时间
-  created_at?: Date;
+  created_at?: number;
   // 是否星标
   marked?: boolean;
   // 扩展信息
@@ -171,7 +171,7 @@ export interface Contact extends User {
   // 标签
   tags?: Array<string>;
   // 最后更新时间
-  updated_at?: Date;
+  updated_at?: number;
 }
 
 // 好友申请状态
@@ -245,7 +245,7 @@ export interface Conversation {
   // 所属账号ID
   account: string;
   // 最后活跃时间
-  active_at: Date;
+  active_at: number;
   // 会话ID
   id: string;
   // 是否置顶
@@ -259,7 +259,7 @@ export interface Conversation {
   // 私聊会话时，对方是好友，返回的好友资料
   contact?: Contact;
   // 创建时间
-  created_at?: Date;
+  created_at?: number;
   // 群聊会话时，对方是群组，返回的群组资料
   group?: Group;
   // 最后消息
@@ -267,7 +267,7 @@ export interface Conversation {
   // 扩展信息
   metadata?: Record<string, unknown>;
   // 最后更新时间
-  updated_at?: Date;
+  updated_at?: number;
   // 私聊会话时，对方是陌生人，返回的用户资料
   user?: User;
 }
@@ -347,7 +347,7 @@ export interface Message {
   // 平台
   provider: string;
   // 发送时间
-  sent_at: Date;
+  sent_at: number;
   // 消息编号，在会话内递增
   seq: number;
   // 状态
@@ -361,7 +361,7 @@ export interface Message {
   // 发送人头像
   avatar?: string;
   // 创建时间
-  created_at?: Date;
+  created_at?: number;
   // 图片消息内容
   image?: ImageMessagePayload;
   // 群文本消息@用户ID列表，如果是 @all 则是 MESSAGE_MENTIONED_ALL
@@ -375,7 +375,7 @@ export interface Message {
   // 文本消息内容
   text?: string;
   // 最后更新时间
-  updated_at?: Date;
+  updated_at?: number;
   // 视频消息内容
   video?: VideoMessagePayload;
 }
@@ -453,7 +453,7 @@ export interface Group {
   // 群组头像
   avatar?: string;
   // 创建时间
-  created_at?: Date;
+  created_at?: number;
   // 简介
   description?: string;
   // 群成员数量
@@ -469,7 +469,7 @@ export interface Group {
   // 备注说明
   remark?: string;
   // 最后更新时间
-  updated_at?: Date;
+  updated_at?: number;
 }
 
 // 群成员角色
@@ -499,17 +499,17 @@ export interface GroupMember {
   // 头像
   avatar?: string;
   // 创建时间
-  created_at?: Date;
+  created_at?: number;
   // 性别
   gender?: Gender;
   // 入群时间
-  joined_at?: Date;
+  joined_at?: number;
   // 扩展信息
   metadata?: Record<string, unknown>;
   // 昵称
   nickname?: string;
   // 最后更新时间
-  updated_at?: Date;
+  updated_at?: number;
 }
 
 // 入群申请状态
@@ -608,7 +608,7 @@ export interface Moment {
   // 平台
   provider: string;
   // 发布时间
-  published_at: Date;
+  published_at: number;
   // 动态类型
   type: MomentType;
   // 发布用户ID
@@ -618,7 +618,7 @@ export interface Moment {
   // 评论列表
   comments?: CursorList<Comment>;
   // 创建时间
-  created_at?: Date;
+  created_at?: number;
   // 图片
   images?: Array<ImageMomentContent>;
   // 点赞数
@@ -630,7 +630,7 @@ export interface Moment {
   // 文案
   text?: string;
   // 最后更新时间
-  updated_at?: Date;
+  updated_at?: number;
   // 视频
   video?: VideoMomentContent;
 }
@@ -686,7 +686,7 @@ export interface Comment {
   // 发表评论用户头像
   avatar?: string;
   // 评论时间
-  commented_at?: Date;
+  commented_at?: number;
   // 发表评论用户名称
   name?: string;
   // 回复列表

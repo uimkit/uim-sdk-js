@@ -39,9 +39,20 @@ import {
 import { SupportedFetch } from '../fetch-types';
 import { SupportedPubSub, PubSubOptions, default as PubSub } from '../pubsub';
 import { EventHandler, UIMEventType, UIMEvent } from '../events';
-import { Account, Contact, Group, GroupMember, Conversation, Message, Comment } from '../models';
+import {
+  Account,
+  Contact,
+  Group,
+  GroupMember,
+  Conversation,
+  Message,
+  MessageFlow,
+  Comment,
+  MessageStatus,
+} from '../models';
 import { Plugin, PluginType } from '../plugins';
 import { UIMClientOptions } from './types';
+import { nanoid } from 'nanoid';
 
 /*
  * Type aliases to support the generic request interface.
@@ -815,4 +826,18 @@ export class BaseUIMClient {
     headers['authorization'] = `Bearer ${authHeaderValue}`;
     return headers;
   }
+}
+
+/**
+ * 为前端创建的消息填充必要的字段
+ *
+ * @param message
+ */
+export function setCreatedMessageData(message: Partial<Message>) {
+  message.id = nanoid();
+  message.flow = MessageFlow.Out;
+  message.sent_at = new Date().getTime();
+  message.status = MessageStatus.Unsent;
+  message.created_at = new Date().getTime();
+  message.revoked = false;
 }
