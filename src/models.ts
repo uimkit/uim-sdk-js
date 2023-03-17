@@ -442,8 +442,6 @@ export interface Group {
   account: string;
   // 所属账号在群组内的群成员信息
   account_member_info: GroupMember;
-  // 平台群组ID
-  group_id: string;
   // 群组ID
   id: string;
   // 平台
