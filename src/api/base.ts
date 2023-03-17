@@ -48,11 +48,11 @@ export type GetFriendApplicationListParameters = PageListParameters<{
 export type GetFriendApplicationListResponse = PageList<FriendApplication>;
 
 // 查询群组列表
-export type GetGroupListParameters = PageListParameters<{
+export type GetGroupListParameters = CursorListParameters<{
   // 查询指定账号的群组列表
   account_id: string;
-  // 根据标记状态过滤群组
-  marked?: boolean;
+  // 搜索群组名称、备注名
+  keywrod?: string;
 }>;
 
 // 创建群组请求
@@ -88,7 +88,7 @@ export type TransferGroupParameters = {
 };
 
 // 查询群组列表结果
-export type GetGroupListResponse = PageList<Group>;
+export type GetGroupListResponse = CursorList<Group>;
 
 // 查询会话列表请求
 export type GetConversationListParameters = CursorListParameters<{
@@ -124,12 +124,15 @@ export type AddContactResponse = {
 };
 
 // 查询群成员列表请求
-export type GetGroupMemberListParameters = PageListParameters<{
+export type GetGroupMemberListParameters = CursorListParameters<{
+  // 群组ID
   group_id: string;
+  // 搜索群成员昵称
+  keyword?: string
 }>;
 
 // 查询群成员列表结果
-export type GetGroupMemberListResponse = PageList<GroupMember>;
+export type GetGroupMemberListResponse = CursorList<GroupMember>;
 
 // 邀请好友加入群组
 export type InviteGroupMembersParameters = {
