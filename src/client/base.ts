@@ -34,7 +34,6 @@ import {
   GetMomentCommentListParameters,
   GetCommentListResponse,
   CommentOnMomentParameters,
-  PinConversationParameters,
 } from '../api';
 import { SupportedFetch } from '../fetch-types';
 import { SupportedPubSub, PubSubOptions, default as PubSub } from '../pubsub';
@@ -206,6 +205,19 @@ export class BaseUIMClient {
   }
 
   /**
+   * 账号退出登录
+   *
+   * @param {string} id 账号ID
+   */
+  public async logout(id: string) {
+    await this.request({ path: `im_accounts/${id}/logout`, method: 'post' });
+    // 取消订阅账号
+    if (indexOf(this._channels, id) >= 0) {
+      this._pubsub.unsubscribe([id]);
+    }
+  }
+
+  /**
    * 查询账号列表
    *
    * @param args
@@ -247,19 +259,6 @@ export class BaseUIMClient {
       }
     }
     return account;
-  }
-
-  /**
-   * 账号退出登录
-   *
-   * @param {string} id 账号ID
-   */
-  public async logout(id: string) {
-    await this.request({ path: `im_accounts/${id}/logout`, method: 'post' });
-    // 取消订阅账号
-    if (indexOf(this._channels, id) >= 0) {
-      this._pubsub.unsubscribe([id]);
-    }
   }
 
   /**
@@ -305,8 +304,8 @@ export class BaseUIMClient {
    * @param marked 是否星标
    * @returns
    */
-  public async markContact(id: string, marked: boolean): Promise<Contact> {
-    return await this.request<Contact>({
+  public markContact(id: string, marked: boolean): Promise<Contact> {
+    return this.request<Contact>({
       path: `contacts/${id}/mark`,
       method: 'post',
       body: { marked },
@@ -383,6 +382,21 @@ export class BaseUIMClient {
   }
 
   /**
+   * 星标/取消星标群组
+   *
+   * @param id 群组ID
+   * @param marked 是否星标
+   * @returns
+   */
+  public markGroup(id: string, marked: boolean): Promise<Group> {
+    return this.request<Group>({
+      path: `groups/${id}/mark`,
+      method: 'post',
+      body: { marked },
+    });
+  }
+
+  /**
    * 创建群组
    *
    * @param parameters
@@ -435,32 +449,6 @@ export class BaseUIMClient {
       path: `groups/${parameters.group_id}/transfer`,
       method: 'post',
       body: omit(parameters, ['group_id']),
-    });
-  }
-
-  /**
-   * 收藏标记群组
-   *
-   * @param account_id
-   * @param group_id
-   */
-  public async markGroup(account_id: string, group_id: string) {
-    await this.request({
-      path: `im_accounts/${account_id}/groups/${group_id}/mark`,
-      method: 'post',
-    });
-  }
-
-  /**
-   * 取消收藏标记群组
-   *
-   * @param account_id
-   * @param group_id
-   */
-  public async unmarkGroup(account_id: string, group_id: string) {
-    await this.request({
-      path: `im_accounts/${account_id}/groups/${group_id}/unmark`,
-      method: 'post',
     });
   }
 
