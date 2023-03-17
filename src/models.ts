@@ -456,10 +456,14 @@ export interface Group {
   created_at?: number;
   // 简介
   description?: string;
+  // 是否星标
+  marked?: boolean;
   // 群成员数量
   member_count?: number;
   // 扩展信息
   metadata?: Record<string, unknown>;
+  // 是否全体禁言，禁言后无法接收消息
+  mute?: boolean;
   // 群组名称
   name?: string;
   // 群主用户ID

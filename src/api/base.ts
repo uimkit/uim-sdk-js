@@ -128,7 +128,7 @@ export type GetGroupMemberListParameters = CursorListParameters<{
   // 群组ID
   group_id: string;
   // 搜索群成员昵称
-  keyword?: string
+  keyword?: string;
 }>;
 
 // 查询群成员列表结果
