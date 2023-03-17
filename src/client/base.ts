@@ -300,10 +300,10 @@ export class BaseUIMClient {
 
   /**
    * 设置/取消星标好友
-   * 
+   *
    * @param id 好友ID
    * @param marked 是否星标
-   * @returns 
+   * @returns
    */
   public async markContact(id: string, marked: boolean): Promise<Contact> {
     if (marked) {
@@ -629,16 +629,17 @@ export class BaseUIMClient {
   }
 
   /**
-   * 会话置顶
-   *
-   * @param parameters
-   * @returns
+   * 置顶/取消置顶会话
+   * 
+   * @param id 会话ID 
+   * @param pinned 是否置顶
+   * @returns 
    */
-  public pinConversation(parameters: PinConversationParameters): Promise<Conversation> {
+  public pinConversation(id: string, pinned: boolean): Promise<Conversation> {
     return this.request<Conversation>({
-      path: `conversations/${parameters.conversation_id}/pin`,
+      path: `conversations/${id}/pin`,
       method: 'post',
-      body: omit(parameters, ['conversation_id']),
+      body: { pinned },
     });
   }
 

@@ -68,14 +68,12 @@ describe('conversations', () => {
   });
 
   it('pin conversation', async () => {
-    const conversation = await client.pinConversation({ conversation_id: 'kixVL6qOfz9xLcPe_xzpA', pinned: true });
-    expect(conversation.pinned).toBe(true);
-    console.log(JSON.stringify(conversation, undefined, 4));
-  });
+    const conversation1 = await client.pinConversation('kixVL6qOfz9xLcPe_xzpA', true);
+    expect(conversation1.pinned).toBe(true);
+    console.log(JSON.stringify(conversation1, undefined, 4));
 
-  it('unpin conversation', async () => {
-    const conversation = await client.pinConversation({ conversation_id: 'kixVL6qOfz9xLcPe_xzpA', pinned: false });
-    expect(conversation.pinned).toBe(false);
-    console.log(JSON.stringify(conversation, undefined, 4));
+    const conversation2 = await client.pinConversation('kixVL6qOfz9xLcPe_xzpA', false);
+    expect(conversation2.pinned).toBe(false);
+    console.log(JSON.stringify(conversation2, undefined, 4));
   });
 });
