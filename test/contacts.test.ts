@@ -48,11 +48,11 @@ describe('contacts', () => {
   });
 
   it('mark contact', async () => {
-    const contact1 = await client.markContact('c_7ph1oQe9KPDTaA8Ke4d', true);
+    const contact1 = await client.markContact('_5kwD2S4tJ-sXq5aCRD91', true);
     expect(contact1.marked).toBe(true);
     console.log(JSON.stringify(contact1, undefined, 4));
 
-    const contact2 = await client.markContact('c_7ph1oQe9KPDTaA8Ke4d', false);
+    const contact2 = await client.markContact('_5kwD2S4tJ-sXq5aCRD91', false);
     expect(contact2.marked).toBe(false);
     console.log(JSON.stringify(contact2, undefined, 4));
   });

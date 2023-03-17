@@ -306,11 +306,11 @@ export class BaseUIMClient {
    * @returns
    */
   public async markContact(id: string, marked: boolean): Promise<Contact> {
-    if (marked) {
-      return await this.request<Contact>({ path: `contacts/${id}/mark`, method: 'post' });
-    } else {
-      return await this.request<Contact>({ path: `contacts/${id}/unmark`, method: 'post' });
-    }
+    return await this.request<Contact>({
+      path: `contacts/${id}/mark`,
+      method: 'post',
+      body: { marked },
+    });
   }
 
   /**
@@ -630,10 +630,10 @@ export class BaseUIMClient {
 
   /**
    * 置顶/取消置顶会话
-   * 
-   * @param id 会话ID 
+   *
+   * @param id 会话ID
    * @param pinned 是否置顶
-   * @returns 
+   * @returns
    */
   public pinConversation(id: string, pinned: boolean): Promise<Conversation> {
     return this.request<Conversation>({
