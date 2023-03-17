@@ -59,16 +59,4 @@ describe('contacts', () => {
     expect(member.group_id).toBe('8Dnz5p1BR5Vq8qobX5jds');
     console.log(JSON.stringify(member, undefined, 4));
   });
-
-  it('mark contact', async () => {
-    const contact = await client.markContact('c_7ph1oQe9KPDTaA8Ke4d');
-    expect(contact.marked).toBe(true);
-    console.log(JSON.stringify(contact, undefined, 4));
-  });
-
-  it('unmark contact', async () => {
-    const contact = await client.unmarkContact('c_7ph1oQe9KPDTaA8Ke4d');
-    expect(contact.marked).toBe(false);
-    console.log(JSON.stringify(contact, undefined, 4));
-  });
 });

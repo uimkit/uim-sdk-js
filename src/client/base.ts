@@ -299,21 +299,18 @@ export class BaseUIMClient {
   }
 
   /**
-   * 星标好友
-   *
-   * @param id
+   * 设置/取消星标好友
+   * 
+   * @param id 好友ID
+   * @param marked 是否星标
+   * @returns 
    */
-  public async markContact(id: string): Promise<Contact> {
-    return await this.request<Contact>({ path: `contacts/${id}/mark`, method: 'post' });
-  }
-
-  /**
-   * 取消星标好友
-   *
-   * @param id
-   */
-  public async unmarkContact(id: string): Promise<Contact> {
-    return await this.request<Contact>({ path: `contacts/${id}/unmark`, method: 'post' });
+  public async markContact(id: string, marked: boolean): Promise<Contact> {
+    if (marked) {
+      return await this.request<Contact>({ path: `contacts/${id}/mark`, method: 'post' });
+    } else {
+      return await this.request<Contact>({ path: `contacts/${id}/unmark`, method: 'post' });
+    }
   }
 
   /**

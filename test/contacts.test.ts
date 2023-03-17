@@ -48,14 +48,12 @@ describe('contacts', () => {
   });
 
   it('mark contact', async () => {
-    const contact = await client.markContact('c_7ph1oQe9KPDTaA8Ke4d');
-    expect(contact.marked).toBe(true);
-    console.log(JSON.stringify(contact, undefined, 4));
-  });
+    const contact1 = await client.markContact('c_7ph1oQe9KPDTaA8Ke4d', true);
+    expect(contact1.marked).toBe(true);
+    console.log(JSON.stringify(contact1, undefined, 4));
 
-  it('unmark contact', async () => {
-    const contact = await client.unmarkContact('c_7ph1oQe9KPDTaA8Ke4d');
-    expect(contact.marked).toBe(false);
-    console.log(JSON.stringify(contact, undefined, 4));
+    const contact2 = await client.markContact('c_7ph1oQe9KPDTaA8Ke4d', false);
+    expect(contact2.marked).toBe(false);
+    console.log(JSON.stringify(contact2, undefined, 4));
   });
 });
