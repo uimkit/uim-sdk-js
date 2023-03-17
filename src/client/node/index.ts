@@ -7,7 +7,6 @@ import { UIMClientOptions } from '../types';
 import {
   MessageType,
   Message,
-  MessageFlow,
   ImageMessagePayload,
   AudioMessagePayload,
   VideoMessagePayload,
