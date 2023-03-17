@@ -52,7 +52,7 @@ export type GetGroupListParameters = CursorListParameters<{
   // 查询指定账号的群组列表
   account_id: string;
   // 搜索群组名称、备注名
-  keywrod?: string;
+  keyword?: string;
 }>;
 
 // 创建群组请求

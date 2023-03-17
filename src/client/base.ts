@@ -1,7 +1,7 @@
 import jwtdecode, { JwtPayload } from 'jwt-decode';
 import EventEmitter from 'eventemitter3';
 import invariant from 'invariant';
-import { omit, pick, indexOf } from 'lodash';
+import { omit, indexOf } from 'lodash';
 import { Logger, LogLevel, logLevelSeverity, makeConsoleLogger } from '../logging';
 import { buildRequestError, isHTTPResponseError, isUIMClientError, RequestTimeoutError } from '../errors';
 import {
@@ -215,7 +215,7 @@ export class BaseUIMClient {
     const resp = await this.request<GetAccountListResponse>({
       method: 'get',
       path: 'im_accounts',
-      query: pick(parameters, ['offset', 'limit', 'provider']) as PlainQueryParams,
+      query: parameters as PlainQueryParams,
     });
     if (resp.data.length > 0) {
       // 只需要订阅之前没有订阅过的，账号id作为channel名字
@@ -342,7 +342,7 @@ export class BaseUIMClient {
     return this.request<GetFriendApplicationListResponse>({
       path: `im_accounts/${parameters.account_id}/friend_applications`,
       method: 'get',
-      query: pick(parameters, ['offset', 'limit']) as PlainQueryParams,
+      query: omit(parameters, ['account_id']) as PlainQueryParams,
     });
   }
 
@@ -368,7 +368,7 @@ export class BaseUIMClient {
     return this.request<GetGroupListResponse>({
       path: `im_accounts/${parameters.account_id}/groups`,
       method: 'get',
-      query: pick(parameters, ['offset', 'limit']) as PlainQueryParams,
+      query: omit(parameters, ['account_id']) as PlainQueryParams,
     });
   }
 
@@ -477,7 +477,7 @@ export class BaseUIMClient {
     return this.request<GetGroupMemberListResponse>({
       path: `groups/${parameters.group_id}/members`,
       method: 'get',
-      query: pick(parameters, ['offset', 'limit']) as PlainQueryParams,
+      query: omit(parameters, ['group_id']) as PlainQueryParams,
     });
   }
 
@@ -530,7 +530,7 @@ export class BaseUIMClient {
     await this.request({
       path: `im_accounts/${parameters.account_id}/groups/${parameters.group_id}/members/${parameters.member_id}/set_role`,
       method: 'post',
-      body: pick(parameters, ['role']),
+      body: { role: parameters.role },
     });
   }
 
@@ -546,7 +546,7 @@ export class BaseUIMClient {
     return this.request<GetGruopApplicationListResponse>({
       path: `groups/${parameters.group_id}/group_applications`,
       method: 'get',
-      query: pick(parameters, ['offset', 'limit']) as PlainQueryParams,
+      query: omit(parameters, ['group_id']) as PlainQueryParams,
     });
   }
 
@@ -574,7 +574,7 @@ export class BaseUIMClient {
     return this.request<GetConversationListResponse>({
       path: `im_accounts/${parameters.account_id}/conversations`,
       method: 'get',
-      query: pick(parameters, ['cursor', 'direction', 'limit']) as PlainQueryParams,
+      query: omit(parameters, ['account_id']) as PlainQueryParams,
     });
   }
 
@@ -667,7 +667,7 @@ export class BaseUIMClient {
     return this.request<GetMessageListResponse>({
       path: `conversations/${parameters.conversation_id}/messages`,
       method: 'get',
-      query: pick(parameters, ['cursor', 'direction', 'limit']) as PlainQueryParams,
+      query: omit(parameters, ['conversation_id']) as PlainQueryParams,
     });
   }
 
@@ -707,7 +707,7 @@ export class BaseUIMClient {
     return this.request<GetMomentListResponse>({
       path: `im_accounts/${parameters.account_id}/moments`,
       method: 'get',
-      query: pick(parameters, ['cursor', 'direction', 'limit']) as PlainQueryParams,
+      query: omit(parameters, ['account_id']) as PlainQueryParams,
     });
   }
 
@@ -721,7 +721,7 @@ export class BaseUIMClient {
     return this.request<GetMomentListResponse>({
       path: `contacts/${parameters.contact_id}/moments`,
       method: 'get',
-      query: pick(parameters, ['cursor', 'direction', 'limit']) as PlainQueryParams,
+      query: omit(parameters, ['contact_id']) as PlainQueryParams,
     });
   }
 
@@ -735,7 +735,7 @@ export class BaseUIMClient {
     return this.request<GetCommentListResponse>({
       path: `moments/${parameters.moment_id}/comments`,
       method: 'get',
-      query: pick(parameters, ['cursor', 'direction', 'limit']) as PlainQueryParams,
+      query: omit(parameters, ['moment_id']) as PlainQueryParams,
     });
   }
 
