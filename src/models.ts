@@ -492,12 +492,10 @@ export interface GroupMember {
   group_id: string;
   // 群成员ID
   id: string;
-  // 平台群成员ID
-  member_id: string;
-  // 平台
-  provider: string;
   // 角色
   role: GroupMemberRole;
+  // 群成员的用户ID
+  user_id: string;
   // 群内昵称
   alias?: string;
   // 头像
@@ -508,8 +506,6 @@ export interface GroupMember {
   gender?: Gender;
   // 入群时间
   joined_at?: number;
-  // 扩展信息
-  metadata?: Record<string, unknown>;
   // 昵称
   nickname?: string;
   // 最后更新时间
