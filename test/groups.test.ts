@@ -1,6 +1,6 @@
 import { buildClient } from './client';
 
-describe('contacts', () => {
+describe('groups', () => {
   const client = buildClient();
 
   it("list account's groups", async () => {
@@ -71,6 +71,16 @@ describe('contacts', () => {
 
     const group2 = await client.markGroup('_B1SCP9M6FHFJJAhs5073', false);
     expect(group2.marked).toBe(false);
+    console.log(JSON.stringify(group2, undefined, 4));
+  });
+
+  it('set group mute', async () => {
+    const group1 = await client.setGroupMute('_B1SCP9M6FHFJJAhs5073', true);
+    expect(group1.mute).toBe(true);
+    console.log(JSON.stringify(group1, undefined, 4));
+
+    const group2 = await client.setGroupMute('_B1SCP9M6FHFJJAhs5073', false);
+    expect(group2.mute).toBe(false);
     console.log(JSON.stringify(group2, undefined, 4));
   });
 });

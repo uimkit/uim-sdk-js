@@ -397,6 +397,21 @@ export class BaseUIMClient {
   }
 
   /**
+   * 设置/取消群组禁言
+   *
+   * @param id 群组ID
+   * @param mute 是否禁言
+   * @returns
+   */
+  public setGroupMute(id: string, mute: boolean): Promise<Group> {
+    return this.request<Group>({
+      path: `groups/${id}/mute`,
+      method: 'post',
+      body: { mute },
+    });
+  }
+
+  /**
    * 创建群组
    *
    * @param parameters
