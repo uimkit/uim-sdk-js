@@ -601,8 +601,6 @@ export enum MomentType {
 export interface Moment {
   // 动态ID
   id: string;
-  // 平台动态ID
-  moment_id: string;
   // 平台
   provider: string;
   // 发布时间
@@ -611,6 +609,8 @@ export interface Moment {
   type: MomentType;
   // 发布用户ID
   user_id: string;
+  // 发布人头像
+  avatar?: string;
   // 评论数
   comment_count?: number;
   // 评论列表
@@ -625,6 +625,8 @@ export interface Moment {
   likes?: CursorList<Like>;
   // 扩展信息
   metadata?: Record<string, unknown>;
+  // 发布人昵称
+  nickname?: string;
   // 文案
   text?: string;
   // 最后更新时间
@@ -686,10 +688,8 @@ export interface Comment {
   // 评论时间
   commented_at?: number;
   // 发表评论用户名称
-  name?: string;
-  // 回复列表
-  replies?: CursorList<Comment>;
-  // 回复的评论
+  nickname?: string;
+  // 回复的评论，多级回复，这里只向上追溯一级
   reply_to?: Comment;
   // 评论文案
   text?: string;
@@ -697,12 +697,10 @@ export interface Comment {
 
 // 点赞
 export interface Like {
-  // 点赞ID
-  id: string;
   // 点赞用户ID
   user_id: string;
   // 点赞用户头像
   avatar?: string;
   // 点赞用户名称
-  name?: string;
+  nickname?: string;
 }
