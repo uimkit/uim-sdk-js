@@ -20,8 +20,8 @@ import {
   GetMessageListResponse,
   AddContactParameters,
   AddContactResponse,
-  GetAccountMomentListParameters,
-  GetContactMomentListParameters,
+  GetAccountMomentListInboxParameters,
+  GetUserMomentListParameters,
   CreateGroupParameters,
   TransferGroupParameters,
   GetFriendApplicationListParameters,
@@ -699,12 +699,12 @@ export class BaseUIMClient {
   }
 
   /**
-   * 查询账号的动态列表
+   * 查看账号收到的动态列表
    *
    * @param parameters
    * @returns
    */
-  public getAccountMomentList(parameters: GetAccountMomentListParameters): Promise<GetMomentListResponse> {
+  public getAccountMomentListInbox(parameters: GetAccountMomentListInboxParameters): Promise<GetMomentListResponse> {
     return this.request<GetMomentListResponse>({
       path: `im_accounts/${parameters.account_id}/moments`,
       method: 'get',
@@ -713,16 +713,20 @@ export class BaseUIMClient {
   }
 
   /**
-   * 查询好友的动态列表
+   * 查询用户发布的动态列表
+   *
+   * account_id 用于指定使用哪个账号来负责查询
+   * user_id 用于指定发布用户
+   * 如果查看账号自己发布的动态，那么 account_id 和 user_id 传同一个值即可
    *
    * @param parameters
    * @returns
    */
-  public getContactMomentList(parameters: GetContactMomentListParameters): Promise<GetMomentListResponse> {
+  public getUserMomentList(parameters: GetUserMomentListParameters): Promise<GetMomentListResponse> {
     return this.request<GetMomentListResponse>({
-      path: `contacts/${parameters.contact_id}/moments`,
+      path: `im_accounts/${parameters.account_id}/moments`,
       method: 'get',
-      query: omit(parameters, ['contact_id']) as PlainQueryParams,
+      query: omit(parameters, ['account_id']) as PlainQueryParams,
     });
   }
 

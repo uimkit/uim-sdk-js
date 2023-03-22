@@ -181,13 +181,16 @@ export type GetMessageListParameters = CursorListParameters<{
 export type GetMessageListResponse = CursorList<Message>;
 
 // 查询账号的动态列表请求
-export type GetAccountMomentListParameters = CursorListParameters<{
+export type GetAccountMomentListInboxParameters = CursorListParameters<{
   account_id: string;
 }>;
 
-// 查询好友的动态列表请求
-export type GetContactMomentListParameters = CursorListParameters<{
-  contact_id: string;
+// 查询用户发布的动态列表请求
+export type GetUserMomentListParameters = CursorListParameters<{
+  // 指定用来查询动态的账号ID
+  account_id: string;
+  // 发布动态的用户ID
+  user_id: string;
 }>;
 
 // 查询动态列表结果
