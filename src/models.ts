@@ -591,10 +591,12 @@ export interface GroupInvitation {
 export enum MomentType {
   // 图片动态
   Image = 'image',
+  // 链接
+  Link = 'link',
   // 文字动态
   Text = 'text',
   // 视频动态
-  Video = 'video',
+  Video = 'video'
 }
 
 // 用户动态
@@ -623,6 +625,8 @@ export interface Moment {
   like_count?: number;
   // 点赞列表
   likes?: CursorList<Like>;
+  // 链接
+  link?: LinkMomentContent;
   // 扩展信息
   metadata?: Record<string, unknown>;
   // 发布人昵称
@@ -674,8 +678,22 @@ export interface VideoMomentContent {
   width?: number;
 }
 
+// 链接动态内容
+export interface LinkMomentContent {
+  // 链接地址
+  url: string;
+  // 描述
+  description?: string;
+  // 图片
+  image?: string;
+  // 缩略图片
+  thumbnail?: string;
+  // 标题
+  title?: string;
+}
+
 // 动态内容类型
-export type MomentContent = ImageMomentContent | VideoMomentContent;
+export type MomentContent = ImageMomentContent | VideoMomentContent | LinkMomentContent;
 
 // 评论
 export interface Comment {
