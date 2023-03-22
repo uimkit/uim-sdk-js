@@ -596,7 +596,7 @@ export enum MomentType {
   // 文字动态
   Text = 'text',
   // 视频动态
-  Video = 'video'
+  Video = 'video',
 }
 
 // 用户动态
