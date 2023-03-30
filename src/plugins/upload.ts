@@ -15,7 +15,7 @@ import {
   Message,
   Moment
 } from '../models';
-import { fileExt } from 'helpers';
+import { fileExt } from '../helpers';
 
 const TOKEN_KEY = 'uim-js:upload:token:';
 const TOKEN_EXPIRY_KEY = 'uim-js:upload:token_expiry:';
