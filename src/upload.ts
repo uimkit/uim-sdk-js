@@ -1,7 +1,6 @@
 import axios from 'axios';
 import { nanoid } from 'nanoid';
 import COS from 'cos-js-sdk-v5';
-import { Configuration, StorageApi, Provider } from '@xopenapi/xapis-js';
 import {
   ImageMessagePayload,
   AudioMessagePayload,
@@ -19,6 +18,7 @@ import { fileExt } from './helpers';
 
 const TOKEN_KEY = 'uim-js:upload:token:';
 const TOKEN_EXPIRY_KEY = 'uim-js:upload:token_expiry:';
+const STORAGE_BASE_URL = 'https://api.growingbox.cn/storage/v1'
 
 /**
  * 上传文件参数
@@ -54,7 +54,6 @@ export class UIMUploadPlugin implements UploadPlugin {
   private uuid: string
   private baseUrl: string
   private token: string
-  private client?: StorageApi;
 
   constructor(uuid: string, baseUrl: string, token: string) {
     this.uuid = uuid;
@@ -161,40 +160,51 @@ export class UIMUploadPlugin implements UploadPlugin {
   }
 
   async getVideoInfo(path: string): Promise<VideoInfo> {
-    const client = await this.getClient();
-    const result = await client.getVideoInfo({
-      path,
-      provider: Provider.Qcloud,
-    });
-    return {
-      width: result.width,
-      height: result.height,
-      size: result.size,
-      duration: result.duration,
-      format: fileExt(path),
-    };
+    const token = await this.getStorageApiToken()
+    const { data } = await axios.get<VideoInfo>(STORAGE_BASE_URL + "/video_info", {
+      params: {
+        path,
+        provider: "qcloud",
+      },
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    })
+    if (!data.format) {
+      data.format = fileExt(path)
+    }
+    return data;
   }
 
   async getVideoSnapshot(path: string): Promise<string> {
-    const client = await this.getClient();
-    const result = await client.getVideoSnapshot({
-      path,
-      provider: Provider.Qcloud,
-    });
-    return result.url;
+    const token = await this.getStorageApiToken()
+    const { data } = await axios.get<{ url: string }>(STORAGE_BASE_URL + "/video_snapshot", {
+      params: {
+        path,
+        provider: "qcloud",
+      },
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    })
+    return data.url;
   }
 
   async getAudioInfo(path: string): Promise<AudioInfo> {
-    const client = await this.getClient();
-    const result = await client.getAudioInfo({
-      path,
-      provider: Provider.Qcloud,
-    });
-    return {
-      size: result.size,
-      duration: result.duration,
-      format: fileExt(path),
-    };
+    const token = await this.getStorageApiToken()
+    const { data } = await axios.get<AudioInfo>(STORAGE_BASE_URL + "/audio_info", {
+      params: {
+        path,
+        provider: "qcloud",
+      },
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    })
+    if (!data.format) {
+      data.format = fileExt(path)
+    }
+    return data
   }
 
   async getImageInfo(url: string): Promise<ImageInfo> {
@@ -212,10 +222,16 @@ export class UIMUploadPlugin implements UploadPlugin {
   }
 
   async uploadFile(file: File, path: string, onProgress?: (percent: number) => void): Promise<string> {
-    const client = await this.getClient();
-    const tmpCredentials = await client.getStorageTemporaryCredentials({ path });
-    const credentials = tmpCredentials.credentials as any;
-
+    const token = await this.getStorageApiToken()
+    const { data } = await axios.get<TemporaryCredentials>(STORAGE_BASE_URL + "/temporary_credentials", {
+      params: {
+        path
+      },
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    })
+    const credentials = data.credentials as any;
     const cos = new COS({
       getAuthorization(_options, callback) {
         callback({
@@ -228,19 +244,19 @@ export class UIMUploadPlugin implements UploadPlugin {
       },
     });
     await cos.sliceUploadFile({
-      Bucket: tmpCredentials.bucket,
-      Region: tmpCredentials.region,
+      Bucket: data.bucket,
+      Region: data.region,
       Key: path,
-      Body: file as File,
+      Body: file,
       onProgress: (params) => {
         onProgress && onProgress(params.percent);
       },
     });
-    return tmpCredentials.url!;
+    return data.url;
   }
 
 
-  async getClient(): Promise<StorageApi> {
+  async getStorageApiToken(): Promise<string | null> {
     const tokenKey = TOKEN_KEY + this.uuid;
     const tokenExpiryKey = TOKEN_EXPIRY_KEY + this.uuid;
     let token = localStorage.getItem(tokenKey);
@@ -262,16 +278,18 @@ export class UIMUploadPlugin implements UploadPlugin {
       expiry = new Date(data.expiry);
       localStorage.setItem(tokenKey, token);
       localStorage.setItem(tokenExpiryKey, expiry.toISOString());
-      this.client = undefined;
     }
-
-    if (!this.client) {
-      this.client = new StorageApi(
-        new Configuration({ accessToken: `Bearer ${token}` }),
-      );
-    }
-    return this.client!;
+    return token
   }
+}
+
+interface TemporaryCredentials {
+  provider: string;
+  bucket: string
+  region: string
+  cdn?: string
+  url: string
+  credentials?: any
 }
 
 interface ThumbnailInfo {
