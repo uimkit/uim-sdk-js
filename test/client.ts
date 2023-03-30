@@ -6,7 +6,7 @@ const buildClient = (): UIMClient => {
     subscribeKey: process.env.UIM_SUBSCRIBE_KEY,
     logLevel: LogLevel.WARN,
   });
-  return client
+  return client;
 };
 
 export { buildClient };

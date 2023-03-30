@@ -1,6 +1,6 @@
 import { buildClient } from './client';
-import { readFileSync } from 'fs'
-import { relative, basename } from 'path'
+import { readFileSync } from 'fs';
+import { relative, basename } from 'path';
 
 describe('send_messages', () => {
   jest.setTimeout(300000);
@@ -29,7 +29,7 @@ describe('send_messages', () => {
   });
 
   it('send image message to conversation', async () => {
-    const file = loadFile("test/resources/test_image.jpeg")
+    const file = loadFile('test/resources/test_image.jpeg');
     const sendReq = client.createImageMessage({
       conversation_id: 'kixVL6qOfz9xLcPe_xzpA',
       file,
@@ -39,7 +39,7 @@ describe('send_messages', () => {
   });
 
   it('send video message to conversation', async () => {
-    const file = loadFile("test/resources/test_video.mp4")
+    const file = loadFile('test/resources/test_video.mp4');
     const sendReq = client.createVideoMessage({
       conversation_id: 'kixVL6qOfz9xLcPe_xzpA',
       file,
@@ -52,10 +52,10 @@ describe('send_messages', () => {
   });
 
   it('send audio message to conversation', async () => {
-    const file = loadFile("test/resources/test_audio.m4a")
+    const file = loadFile('test/resources/test_audio.m4a');
     const sendReq = client.createAudioMessage({
       conversation_id: 'kixVL6qOfz9xLcPe_xzpA',
-      file
+      file,
     });
     const message = await client.sendMessage(sendReq);
     console.log(JSON.stringify(message, undefined, 4));
@@ -63,11 +63,11 @@ describe('send_messages', () => {
 });
 
 const loadFile = (path: string): File => {
-  const buf = readFileSync(relative(process.cwd(), path))
-  const ab = new ArrayBuffer(buf.length)
+  const buf = readFileSync(relative(process.cwd(), path));
+  const ab = new ArrayBuffer(buf.length);
   const ua = new Uint8Array(ab);
   for (let i = 0; i < buf.length; ++i) {
     ua[i] = buf[i];
   }
   return new File([ab], basename(path));
-}
+};

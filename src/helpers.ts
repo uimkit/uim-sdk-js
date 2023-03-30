@@ -17,9 +17,9 @@ export function pick<O extends object, K extends AllKeys<O>>(base: O, keys: read
 }
 
 export function omit<O extends object, K extends AllKeys<O>>(base: O, keys: readonly K[]): Omit<O, K> {
-  const _ = { ...base }
-  keys.forEach((key) => delete _[key])
-  return _
+  const _ = { ...base };
+  keys.forEach((key) => delete _[key]);
+  return _;
 }
 
 export function isObject(o: unknown): o is Record<PropertyKey, unknown> {
@@ -34,7 +34,7 @@ export function createQueryParams(params: Record<string, string | number>): stri
 }
 
 export function fileExt(filename: string): string {
-  return filename.substring(filename.lastIndexOf('.') + 1, filename.length) || filename
+  return filename.substring(filename.lastIndexOf('.') + 1, filename.length) || filename;
 }
 
 /**
