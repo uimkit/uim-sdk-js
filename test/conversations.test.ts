@@ -1,10 +1,11 @@
 import { buildClient } from './client';
 
 describe('conversations', () => {
+  jest.setTimeout(60000);
   const client = buildClient();
 
   it("list account's conversations", async () => {
-    const resp1 = await client.getConversationList({ account_id: 'gmtIYyV1ovBPegHPVNOKO', limit: 5 });
+    const resp1 = await client.getConversationList({ account_id: 'JTtg4oIp8R-rdWAIvmA2x', limit: 5 });
     expect(resp1.data.length).toBe(5);
     expect(resp1.extra.start_cursor).not.toBe('');
     expect(resp1.extra.end_cursor).not.toBe('');
@@ -13,7 +14,7 @@ describe('conversations', () => {
     console.log(JSON.stringify(resp1, undefined, 4));
 
     const resp2 = await client.getConversationList({
-      account_id: 'gmtIYyV1ovBPegHPVNOKO',
+      account_id: 'JTtg4oIp8R-rdWAIvmA2x',
       limit: 5,
       cursor: resp1.extra.end_cursor,
     });
@@ -24,7 +25,7 @@ describe('conversations', () => {
     expect(resp2.extra.has_previous).toBe(true);
     console.log(JSON.stringify(resp2, undefined, 4));
 
-    const resp3 = await client.getConversationList({ account_id: 'gmtIYyV1ovBPegHPVNOKO', limit: 10 });
+    const resp3 = await client.getConversationList({ account_id: 'JTtg4oIp8R-rdWAIvmA2x', limit: 10 });
     expect(resp3.data[0].id).toBe(resp1.data[0].id);
     expect(resp3.data[4].id).toBe(resp1.data[4].id);
     expect(resp3.data[5].id).toBe(resp2.data[0].id);

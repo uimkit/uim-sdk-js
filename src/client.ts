@@ -1,6 +1,5 @@
 import axios, { AxiosError, AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
 import EventEmitter from 'eventemitter3';
-import invariant from 'invariant';
 import { nanoid } from 'nanoid';
 import { Logger, LogLevel, logLevelSeverity, makeConsoleLogger } from './logging';
 import { createQueryParams, fileExt, pick, omit, popup } from './helpers';
@@ -60,12 +59,9 @@ import {
   ImageMomentContent,
   VideoMomentContent,
 } from './models';
-import { Plugin, PluginType, UploadOptions } from './plugins';
-import { UIMUploadPlugin } from './plugins/upload';
+import { UploadOptions, UIMUploadPlugin, UploadPlugin } from './upload';
 import { decodeBase64 } from './base64';
 import { APIErrorResponse, ErrorFromResponse, isErrorResponse } from './errors';
-
-type PlainQueryParams = Record<string, string | number | boolean>;
 
 /**
  * 账号授权结果
@@ -88,6 +84,7 @@ export interface UIMClientOptions {
   timeoutMs?: number;
   logLevel?: LogLevel;
   axiosRequestConfig?: AxiosRequestConfig;
+  upload?: UploadPlugin
 }
 
 export class UIMClient {
@@ -102,7 +99,7 @@ export class UIMClient {
   private axiosRequestConfig?: AxiosRequestConfig;
   private axiosInstance: AxiosInstance;
   private pubsub: SupportedPubSub;
-  private plugins: Partial<Record<PluginType, Plugin>>;
+  private uploadPlugin: UploadPlugin
   private userAgent?: string;
   private nextRequestAbortController: AbortController | null = null;
   private messageEventListener?: (msgEvent: MessageEvent) => void;
@@ -112,7 +109,11 @@ export class UIMClient {
     this.uuid = userFromToken(token);
     this.logLevel = options?.logLevel ?? LogLevel.INFO;
     this.logger = makeConsoleLogger('uim-js');
-    this.baseUrl = options?.baseUrl ?? 'https://api.uimkit.chat/client/v1';
+    let baseUrl = options?.baseUrl ?? 'https://api.uimkit.chat/client/v1'
+    if (baseUrl.endsWith("/")) {
+      baseUrl = baseUrl.slice(0, -1)
+    }
+    this.baseUrl = baseUrl;
     this.timeoutMs = options?.timeoutMs ?? 60_000;
     this.channels = [];
     this.eventEmitter = new EventEmitter();
@@ -127,9 +128,7 @@ export class UIMClient {
       logVerbosity: this.logLevel === LogLevel.DEBUG,
     });
     this.pubsub.addListener(this.onEvent.bind(this));
-    this.plugins = {
-      upload: new UIMUploadPlugin(this.uuid, token, this.baseUrl),
-    };
+    this.uploadPlugin = options?.upload ?? new UIMUploadPlugin(this.uuid, this.baseUrl, this.token)
   }
 
   /**
@@ -207,26 +206,6 @@ export class UIMClient {
       this.messageEventListener = msgEventListener;
       window.addEventListener('message', msgEventListener);
     });
-  }
-
-  /**
-   * 注册插件
-   *
-   * @param type
-   * @param plugin
-   */
-  public registerPlugin(type: PluginType, plugin: Plugin) {
-    this.plugins[type] = plugin;
-  }
-
-  /**
-   * 获取插件
-   *
-   * @param type
-   * @returns
-   */
-  public getPlugin(type: PluginType): Plugin | undefined {
-    return this.plugins[type];
   }
 
   /**
@@ -666,14 +645,11 @@ export class UIMClient {
   public async sendMessage(parameters: SendMessageParameters): Promise<Message> {
     // 先上传文件
     if (parameters.file) {
-      const plugin = this.getPlugin('upload');
-      invariant(plugin, 'must have upload plugin');
-
       const options: UploadOptions = {
         onProgress: parameters.on_progress,
         message: parameters as Message,
       };
-      const payload = await plugin.upload(parameters.file, options);
+      const payload = await this.uploadPlugin.upload(parameters.file, options);
 
       switch (parameters.type) {
         case MessageType.Image: {
@@ -704,7 +680,9 @@ export class UIMClient {
    * @returns
    */
   public createTextMessage(parameters: CreateMessageParameters): SendMessageParameters {
-    invariant(parameters.text, 'must have text payload');
+    if (!parameters.text) {
+      throw new Error('must have text payload')
+    }
     const message = pick(parameters, ['from', 'to', 'conversation_id', 'text', 'mentioned_users']) as Partial<Message>;
     setCreatedMessageData(message);
     return { type: MessageType.Text, ...message };
@@ -717,7 +695,9 @@ export class UIMClient {
    * @returns
    */
   public createImageMessage(parameters: CreateMessageParameters): SendMessageParameters {
-    invariant(parameters.image || parameters.file, 'must have image payload or file');
+    if (!parameters.image && !parameters.file) {
+      throw new Error('must have image payload or file')
+    }
     const message = pick(parameters, ['from', 'to', 'conversation_id', 'image']) as Partial<Message>;
     setCreatedMessageData(message);
 
@@ -728,7 +708,9 @@ export class UIMClient {
 
     // 需要上传文件，拿到文件句柄
     const file = parameters.file instanceof HTMLInputElement ? parameters.file?.files?.item(0) : parameters.file;
-    invariant(file, 'must select files');
+    if (!file) {
+      throw new Error('must select files')
+    }
     const { on_progress } = parameters;
 
     // 构造图片信息，方便占位显示
@@ -755,7 +737,9 @@ export class UIMClient {
    * @returns
    */
   public createAudioMessage(parameters: CreateMessageParameters): SendMessageParameters {
-    invariant(parameters.audio || parameters.file, 'must have audio payload or file');
+    if (!parameters.audio && !parameters.file) {
+      throw new Error('must have audio payload or file')
+    }
     const message = pick(parameters, ['from', 'to', 'conversation_id', 'audio']) as Partial<Message>;
     setCreatedMessageData(message);
 
@@ -766,7 +750,9 @@ export class UIMClient {
 
     // 需要上传文件，拿到文件句柄
     const file = parameters.file instanceof HTMLInputElement ? parameters.file?.files?.item(0) : parameters.file;
-    invariant(file, 'must select files');
+    if (!file) {
+      throw new Error('must select files')
+    }
     const { on_progress } = parameters;
 
     // 构造音频信息，方便占位显示
@@ -788,7 +774,9 @@ export class UIMClient {
    * @returns
    */
   public createVideoMessage(parameters: CreateMessageParameters): SendMessageParameters {
-    invariant(parameters.video || parameters.file, 'must have video payload or file');
+    if (!parameters.video && !parameters.file) {
+      throw new Error('must have video payload or file')
+    }
     const message = pick(parameters, ['from', 'to', 'conversation_id', 'video']) as Partial<Message>;
     setCreatedMessageData(message);
 
@@ -799,7 +787,9 @@ export class UIMClient {
 
     // 需要上传文件，拿到文件句柄
     const file = parameters.file instanceof HTMLInputElement ? parameters.file?.files?.item(0) : parameters.file;
-    invariant(file, 'must select files');
+    if (!file) {
+      throw new Error('must select files')
+    }
     const { on_progress } = parameters;
 
     // 构造视频信息，方便占位显示
@@ -824,16 +814,13 @@ export class UIMClient {
   public async publishMoment(parameters: PublishMomentParameters): Promise<Moment> {
     // 先上传文件
     if (parameters.files && parameters.files.length > 0) {
-      const plugin = this.getPlugin('upload');
-      invariant(plugin, 'must have upload plugin');
-
       const contents = await Promise.all(
         parameters.files.map((f, idx) => {
           const options: UploadOptions = {
             onProgress: (percent) => parameters.on_progress && parameters.on_progress(idx, percent),
             moment: parameters as Moment,
           };
-          return plugin.upload(f, options);
+          return this.uploadPlugin.upload(f, options);
         }),
       );
 
@@ -862,7 +849,9 @@ export class UIMClient {
    * @returns
    */
   public createTextMoment(parameters: CreateMomentParameters): PublishMomentParameters {
-    invariant(parameters.text, 'must have text');
+    if (!parameters.text) {
+      throw new Error('must have text')
+    }
     const moment = pick(parameters, ['user_id', 'text']) as Partial<Moment>;
     // 由前端生成id
     moment.id = nanoid();
@@ -876,7 +865,9 @@ export class UIMClient {
    * @returns
    */
   public createImageMoment(parameters: CreateMomentParameters): PublishMomentParameters {
-    invariant(parameters.images || parameters.files, 'must have images or files');
+    if (!parameters.images && !parameters.files) {
+      throw new Error('must have images or files')
+    }
     const moment = pick(parameters, ['user_id', 'images']) as Partial<Moment>;
 
     // 由前端生成id
@@ -890,7 +881,9 @@ export class UIMClient {
     // 需要上传文件，拿到文件句柄
     const files =
       parameters.files instanceof HTMLInputElement ? convertFileListToArray(parameters.files?.files) : parameters.files;
-    invariant(files && files.length > 0, 'must select files');
+    if (!files || files.length === 0) {
+      throw new Error('must select files')
+    }
     const { on_progress } = parameters;
 
     // 构造图片信息，方便占位显示
@@ -922,7 +915,9 @@ export class UIMClient {
    * @returns
    */
   public createVideoMoment(parameters: CreateMomentParameters): PublishMomentParameters {
-    invariant(parameters.video || parameters.files, 'must have video or files');
+    if (!parameters.video && !parameters.files) {
+      throw new Error('must have images or files')
+    }
     const moment = pick(parameters, ['user_id', 'video']) as Partial<Moment>;
 
     // 由前端生成id
@@ -936,7 +931,9 @@ export class UIMClient {
     // 需要上传文件，拿到文件句柄
     const file =
       parameters.files instanceof HTMLInputElement ? parameters.files?.files?.item(0) : parameters.files?.at(0);
-    invariant(file, 'must select files');
+    if (!file) {
+      throw new Error('must have images or files')
+    }
     const { on_progress } = parameters;
 
     // 构造视频信息，方便占位显示
@@ -992,26 +989,23 @@ export class UIMClient {
       config?: AxiosRequestConfig & { maxBodyLength?: number };
     },
   ) {
-    this.log(LogLevel.DEBUG, `client: ${type} - Request - ${url}`, {
+    this.log(LogLevel.DEBUG, `${type} - Request - ${url}`, {
       tags: ['api', 'api_request', 'client'],
-      url,
       payload: data,
       config,
     });
   }
 
   private logApiResponse<T>(type: string, url: string, response: AxiosResponse<T>) {
-    this.log(LogLevel.DEBUG, `client:${type} - Response - url: ${url} > status ${response.status}`, {
+    this.log(LogLevel.DEBUG, `${type} - Response - ${url} > status ${response.status}`, {
       tags: ['api', 'api_response', 'client'],
-      url,
       response,
     });
   }
 
   private logApiError(type: string, url: string, error: unknown) {
-    this.log(LogLevel.ERROR, `client:${type} - Error - url: ${url}`, {
+    this.log(LogLevel.ERROR, `${type} - Error - ${url}`, {
       tags: ['api', 'api_response', 'client'],
-      url,
       error,
     });
   }

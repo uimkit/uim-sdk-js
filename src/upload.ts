@@ -1,5 +1,5 @@
+import axios from 'axios';
 import { nanoid } from 'nanoid';
-import invariant from 'invariant';
 import COS from 'cos-js-sdk-v5';
 import { Configuration, StorageApi, Provider } from '@xopenapi/xapis-js';
 import {
@@ -14,8 +14,8 @@ import {
   MomentType,
   Message,
   Moment
-} from '../models';
-import { fileExt } from '../helpers';
+} from './models';
+import { fileExt } from './helpers';
 
 const TOKEN_KEY = 'uim-js:upload:token:';
 const TOKEN_EXPIRY_KEY = 'uim-js:upload:token_expiry:';
@@ -36,33 +36,37 @@ export interface UploadOptions {
  * 上传文件插件接口
  */
 export interface UploadPlugin {
+
   /**
    * 上传文件
    *
    * @param file
    * @param options
    */
-  upload(file: any, options: UploadOptions): Promise<MessagePayload | MomentContent>;
+  upload(file: File, options: UploadOptions): Promise<MessagePayload | MomentContent>;
 }
 
 /**
  * 默认的上传插件
  */
 export class UIMUploadPlugin implements UploadPlugin {
-  _uuid: string;
-  _token: string;
-  _tokenBasePath: string;
-  _client?: StorageApi;
 
-  constructor(uuid: string, token: string, tokenBasePath: string) {
-    this._uuid = uuid;
-    this._token = token;
-    this._tokenBasePath = tokenBasePath;
+  private uuid: string
+  private baseUrl: string
+  private token: string
+  private client?: StorageApi;
+
+  constructor(uuid: string, baseUrl: string, token: string) {
+    this.uuid = uuid;
+    this.baseUrl = baseUrl
+    this.token = token
   }
 
-  async upload(file: any, options: UploadOptions): Promise<MessagePayload | MomentContent> {
+  async upload(file: File, options: UploadOptions): Promise<MessagePayload | MomentContent> {
     const { message, moment } = options;
-    invariant(message || moment, 'must have message or moment');
+    if (!message && !moment) {
+      throw new Error('must have message or moment')
+    }
 
     if (message) {
       switch (message.type) {
@@ -98,7 +102,7 @@ export class UIMUploadPlugin implements UploadPlugin {
     throw new Error('must have message or moment');
   }
 
-  async uploadImage(file: any, options: UploadOptions): Promise<ImageMessagePayload | ImageMomentContent> {
+  async uploadImage(file: File, options: UploadOptions): Promise<ImageMessagePayload | ImageMomentContent> {
     const filename = typeof file === 'string' ? file : file.name;
     const ext = fileExt(filename);
     const path = `${nanoid()}.${ext}`;
@@ -115,7 +119,7 @@ export class UIMUploadPlugin implements UploadPlugin {
     };
   }
 
-  async uploadVideo(file: any, options: UploadOptions): Promise<VideoMessagePayload | VideoMomentContent> {
+  async uploadVideo(file: File, options: UploadOptions): Promise<VideoMessagePayload | VideoMomentContent> {
     const filename = typeof file === 'string' ? file : file.name;
     const ext = fileExt(filename);
     const path = `${nanoid()}.${ext}`;
@@ -125,7 +129,7 @@ export class UIMUploadPlugin implements UploadPlugin {
     return { url, ...videoInfo, snapshot };
   }
 
-  async uploadAudio(file: any, options: UploadOptions): Promise<AudioMessagePayload> {
+  async uploadAudio(file: File, options: UploadOptions): Promise<AudioMessagePayload> {
     const filename = typeof file === 'string' ? file : file.name;
     const ext = fileExt(filename);
     const path = `${nanoid()}.${ext}`;
@@ -194,12 +198,12 @@ export class UIMUploadPlugin implements UploadPlugin {
   }
 
   async getImageInfo(url: string): Promise<ImageInfo> {
-    const result = await this.httpGet<QCloudImageInfo>(`${url}?imageInfo`);
+    const { data } = await axios.get<QCloudImageInfo>(`${url}?imageInfo`)
     return {
-      width: parseInt(result.width, 10),
-      height: parseInt(result.height, 10),
-      size: parseInt(result.size, 10),
-      format: result.format ?? '',
+      width: parseInt(data.width, 10),
+      height: parseInt(data.height, 10),
+      size: parseInt(data.size, 10),
+      format: data.format ?? '',
     };
   }
 
@@ -207,7 +211,7 @@ export class UIMUploadPlugin implements UploadPlugin {
     return `${url}?imageView2/3/w/${size}/h/${size}`;
   }
 
-  async uploadFile(file: any, path: string, onProgress?: (percent: number) => void): Promise<string> {
+  async uploadFile(file: File, path: string, onProgress?: (percent: number) => void): Promise<string> {
     const client = await this.getClient();
     const tmpCredentials = await client.getStorageTemporaryCredentials({ path });
     const credentials = tmpCredentials.credentials as any;
@@ -237,8 +241,8 @@ export class UIMUploadPlugin implements UploadPlugin {
 
 
   async getClient(): Promise<StorageApi> {
-    const tokenKey = TOKEN_KEY + this._uuid;
-    const tokenExpiryKey = TOKEN_EXPIRY_KEY + this._uuid;
+    const tokenKey = TOKEN_KEY + this.uuid;
+    const tokenExpiryKey = TOKEN_EXPIRY_KEY + this.uuid;
     let token = localStorage.getItem(tokenKey);
     const expiryStr = localStorage.getItem(tokenExpiryKey);
     let expiry = expiryStr ? new Date(expiryStr) : new Date();
@@ -246,40 +250,27 @@ export class UIMUploadPlugin implements UploadPlugin {
 
     if (needRefresh) {
       // 需要刷新 accessToken
-      const result = await this.httpGet<{
+      const { data } = await axios.get<{
         access_token: string;
-        expiry: string;
-      }>(this._tokenBasePath + 'xapis_token', this._token);
-      token = result.access_token;
-      expiry = new Date(result.expiry);
+        expiry: string
+      }>(`${this.baseUrl}/xapis_token`, {
+        headers: {
+          Authorization: `Bearer ${this.token}`
+        }
+      })
+      token = data.access_token;
+      expiry = new Date(data.expiry);
       localStorage.setItem(tokenKey, token);
       localStorage.setItem(tokenExpiryKey, expiry.toISOString());
-      this._client = undefined;
+      this.client = undefined;
     }
 
-    if (!this._client) {
-      this._client = new StorageApi(
+    if (!this.client) {
+      this.client = new StorageApi(
         new Configuration({ accessToken: `Bearer ${token}` }),
       );
     }
-    return this._client!;
-  }
-
-  async httpGet<T>(url: string, token?: string): Promise<T> {
-    const headers: HeadersInit = { 'content-type': 'application/json' };
-    if (token) {
-      headers['authorization'] = `Bearer ${token}`;
-    }
-    const resp = await fetch(url, {
-      method: 'get',
-      headers,
-    });
-    const respText = await resp.text();
-    if (resp.ok) {
-      return JSON.parse(respText) as T;
-    } else {
-      throw new Error(respText);
-    }
+    return this.client!;
   }
 }
 
