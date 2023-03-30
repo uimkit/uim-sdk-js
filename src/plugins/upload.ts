@@ -1,8 +1,7 @@
 import { nanoid } from 'nanoid';
-import { last } from 'lodash';
 import invariant from 'invariant';
-import { StorageApi, Provider } from '@xopenapi/xapis-js';
-import { SupportedFetch } from '../../fetch-types';
+import COS from 'cos-js-sdk-v5';
+import { Configuration, StorageApi, Provider } from '@xopenapi/xapis-js';
 import {
   ImageMessagePayload,
   AudioMessagePayload,
@@ -13,17 +12,47 @@ import {
   VideoMomentContent,
   MomentContent,
   MomentType,
-} from '../../models';
-import { UploadOptions, UploadPlugin } from './types';
+  Message,
+  Moment
+} from '../models';
+import { fileExt } from 'helpers';
+
+const TOKEN_KEY = 'uim-js:upload:token:';
+const TOKEN_EXPIRY_KEY = 'uim-js:upload:token_expiry:';
 
 /**
- * 默认的上传插件，支持web
+ * 上传文件参数
  */
-export class BaseUploadPlugin implements UploadPlugin {
+export interface UploadOptions {
+  // 为消息上传时指定消息
+  message?: Message;
+  // 为动态上传时指定动态
+  moment?: Moment;
+  // 上传进度回调
+  onProgress?: (percent: number) => void;
+}
+
+/**
+ * 上传文件插件接口
+ */
+export interface UploadPlugin {
+  /**
+   * 上传文件
+   *
+   * @param file
+   * @param options
+   */
+  upload(file: any, options: UploadOptions): Promise<MessagePayload | MomentContent>;
+}
+
+/**
+ * 默认的上传插件
+ */
+export class UIMUploadPlugin implements UploadPlugin {
   _uuid: string;
   _token: string;
   _tokenBasePath: string;
-  _fetch?: SupportedFetch;
+  _client?: StorageApi;
 
   constructor(uuid: string, token: string, tokenBasePath: string) {
     this._uuid = uuid;
@@ -71,7 +100,7 @@ export class BaseUploadPlugin implements UploadPlugin {
 
   async uploadImage(file: any, options: UploadOptions): Promise<ImageMessagePayload | ImageMomentContent> {
     const filename = typeof file === 'string' ? file : file.name;
-    const ext = last(filename.split('.'));
+    const ext = fileExt(filename);
     const path = `${nanoid()}.${ext}`;
 
     const url = await this.uploadFile(file, path, options.onProgress);
@@ -88,7 +117,7 @@ export class BaseUploadPlugin implements UploadPlugin {
 
   async uploadVideo(file: any, options: UploadOptions): Promise<VideoMessagePayload | VideoMomentContent> {
     const filename = typeof file === 'string' ? file : file.name;
-    const ext = last(filename.split('.'));
+    const ext = fileExt(filename);
     const path = `${nanoid()}.${ext}`;
     const url = await this.uploadFile(file, path, options.onProgress);
     const videoInfo = await this.getVideoInfo(path);
@@ -98,7 +127,7 @@ export class BaseUploadPlugin implements UploadPlugin {
 
   async uploadAudio(file: any, options: UploadOptions): Promise<AudioMessagePayload> {
     const filename = typeof file === 'string' ? file : file.name;
-    const ext = last(filename.split('.'));
+    const ext = fileExt(filename);
     const path = `${nanoid()}.${ext}`;
     const url = await this.uploadFile(file, path, options.onProgress);
     const audioInfo = await this.getAudioInfo(path);
@@ -138,7 +167,7 @@ export class BaseUploadPlugin implements UploadPlugin {
       height: result.height,
       size: result.size,
       duration: result.duration,
-      format: last(path.split('.'))!,
+      format: fileExt(path),
     };
   }
 
@@ -160,7 +189,7 @@ export class BaseUploadPlugin implements UploadPlugin {
     return {
       size: result.size,
       duration: result.duration,
-      format: last(path.split('.'))!,
+      format: fileExt(path),
     };
   }
 
@@ -179,20 +208,69 @@ export class BaseUploadPlugin implements UploadPlugin {
   }
 
   async uploadFile(file: any, path: string, onProgress?: (percent: number) => void): Promise<string> {
-    throw new Error('not implemented');
+    const client = await this.getClient();
+    const tmpCredentials = await client.getStorageTemporaryCredentials({ path });
+    const credentials = tmpCredentials.credentials as any;
+
+    const cos = new COS({
+      getAuthorization(_options, callback) {
+        callback({
+          TmpSecretId: credentials.tmpSecretId,
+          TmpSecretKey: credentials.tmpSecretKey,
+          SecurityToken: credentials.sessionToken,
+          StartTime: credentials.startTime,
+          ExpiredTime: credentials.expiredTime,
+        });
+      },
+    });
+    await cos.sliceUploadFile({
+      Bucket: tmpCredentials.bucket,
+      Region: tmpCredentials.region,
+      Key: path,
+      Body: file as File,
+      onProgress: (params) => {
+        onProgress && onProgress(params.percent);
+      },
+    });
+    return tmpCredentials.url!;
   }
 
+
   async getClient(): Promise<StorageApi> {
-    throw new Error('not implemented');
+    const tokenKey = TOKEN_KEY + this._uuid;
+    const tokenExpiryKey = TOKEN_EXPIRY_KEY + this._uuid;
+    let token = localStorage.getItem(tokenKey);
+    const expiryStr = localStorage.getItem(tokenExpiryKey);
+    let expiry = expiryStr ? new Date(expiryStr) : new Date();
+    const needRefresh = !token || expiry <= new Date();
+
+    if (needRefresh) {
+      // 需要刷新 accessToken
+      const result = await this.httpGet<{
+        access_token: string;
+        expiry: string;
+      }>(this._tokenBasePath + 'xapis_token', this._token);
+      token = result.access_token;
+      expiry = new Date(result.expiry);
+      localStorage.setItem(tokenKey, token);
+      localStorage.setItem(tokenExpiryKey, expiry.toISOString());
+      this._client = undefined;
+    }
+
+    if (!this._client) {
+      this._client = new StorageApi(
+        new Configuration({ accessToken: `Bearer ${token}` }),
+      );
+    }
+    return this._client!;
   }
 
   async httpGet<T>(url: string, token?: string): Promise<T> {
-    invariant(this._fetch, 'must setup fetch instance');
     const headers: HeadersInit = { 'content-type': 'application/json' };
     if (token) {
       headers['authorization'] = `Bearer ${token}`;
     }
-    const resp = await this._fetch(url, {
+    const resp = await fetch(url, {
       method: 'get',
       headers,
     });

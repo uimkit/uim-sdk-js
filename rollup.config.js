@@ -11,13 +11,7 @@ import pkg from './package.json';
 import process from 'process';
 process.env.NODE_ENV = 'production';
 
-const externalPackages = ['axios', 'form-data', 'isomorphic-ws', 'base64-js', /@babel\/runtime/];
-
-const browserIgnore = {
-	name: 'browser-remapper',
-	resolveId: (importee) => (['jsonwebtoken', 'https', 'crypto'].includes(importee) ? importee : null),
-	load: (id) => (['jsonwebtoken', 'https', 'crypto'].includes(id) ? 'export default null;' : null),
-};
+const externalPackages = ["webpubsub-js", "eventemitter3", "cos-js-sdk-v5", /@xopenapi\/xapis-js/, /@babel\/runtime/];
 
 const extensions = ['.mjs', '.json', '.node', '.js', '.ts'];
 
@@ -33,9 +27,10 @@ const baseConfig = {
 		chokidar: false,
 	},
 };
+
 const normalBundle = {
 	...baseConfig,
-	input: 'src/index.node.ts',
+	input: 'src/index.ts',
 	output: [
 		{
 			file: pkg.main,
@@ -48,12 +43,11 @@ const normalBundle = {
 			sourcemap: true,
 		},
 	],
-	external: externalPackages.concat(['https', 'jsonwebtoken', 'crypto']),
+	external: externalPackages,
 	plugins: [
 		json(),
 		replace({ preventAssignment: true, 'process.env.PKG_VERSION': JSON.stringify(pkg.version) }),
 		external(),
-		// TODO formidable 中的代码 if (global.GENTLY) require = GENTLY.hijack(require); 必须要设置 browser: true
 		nodeResolve({ extensions, browser: true }),
 		babel(babelConfig),
 		commonjs(),
@@ -79,9 +73,7 @@ const browserBundle = {
 	plugins: [
 		json(),
 		replace({ preventAssignment: true, 'process.env.PKG_VERSION': JSON.stringify(pkg.version) }),
-		browserIgnore,
 		external(),
-		// TODO formidable 中的代码 if (global.GENTLY) require = GENTLY.hijack(require); 必须要设置 browser: true
 		nodeResolve({ extensions, browser: true }),
 		babel(babelConfig),
 		commonjs(),
@@ -102,7 +94,6 @@ const fullBrowserBundle = {
 	plugins: [
 		json(),
 		replace({ preventAssignment: true, 'process.env.PKG_VERSION': JSON.stringify(pkg.version) }),
-		browserIgnore,
 		external(),
 		nodeResolve({ extensions, browser: true }),
 		babel(babelConfig),

@@ -1,6 +1,8 @@
-import { SupportedResponse } from './fetch-types';
 import { isObject } from './helpers';
-import { Assert } from './type-utils';
+import { Assert, Await } from './type-utils';
+
+type FetchFn = typeof fetch;
+type FetchResponse = Await<ReturnType<FetchFn>>;
 
 /**
  * Error codes returned in responses from the API.
@@ -113,12 +115,12 @@ class HTTPResponseError<Code extends HTTPResponseErrorCode> extends UIMClientErr
   readonly name: string = 'HTTPResponseError';
   readonly code: Code;
   readonly status: number;
-  readonly headers: SupportedResponse['headers'];
+  readonly headers: FetchResponse['headers'];
   readonly body: string;
 
   constructor(args: {
     code: Code;
-    headers: SupportedResponse['headers'];
+    headers: FetchResponse['headers'];
     message: string;
     rawBodyText: string;
     status: number;
@@ -159,7 +161,7 @@ export class UnknownHTTPResponseError extends HTTPResponseError<ClientErrorCode.
   readonly name = 'UnknownHTTPResponseError';
 
   constructor(args: {
-    headers: SupportedResponse['headers'];
+    headers: FetchResponse['headers'];
     message: string | undefined;
     rawBodyText: string;
     status: number;
@@ -205,7 +207,7 @@ export class APIResponseError extends HTTPResponseError<APIErrorCode> {
 }
 
 export function buildRequestError(
-  response: SupportedResponse,
+  response: FetchResponse,
   bodyText: string,
 ): APIResponseError | UnknownHTTPResponseError {
   const apiErrorResponseBody = parseAPIErrorResponseBody(bodyText);

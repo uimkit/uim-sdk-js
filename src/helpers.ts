@@ -9,26 +9,21 @@ export function assertNever(value: never): never {
   throw new Error(`Unexpected value should never occur: ${value}`);
 }
 
-type AllKeys<T> = T extends unknown ? keyof T : never;
+type AllKeys<T> = T extends object ? keyof T : never;
 
-export function pick<O extends unknown, K extends AllKeys<O>>(base: O, keys: readonly K[]): Pick<O, K> {
+export function pick<O extends object, K extends AllKeys<O>>(base: O, keys: readonly K[]): Pick<O, K> {
   const entries = keys.map((key) => [key, base?.[key]]);
   return Object.fromEntries(entries);
 }
 
+export function omit<O extends object, K extends AllKeys<O>>(base: O, keys: readonly K[]): Omit<O, K> {
+  const _ = { ...base }
+  keys.forEach((key) => delete _[key])
+  return _
+}
+
 export function isObject(o: unknown): o is Record<PropertyKey, unknown> {
   return typeof o === 'object' && o !== null;
-}
-
-export function createRandomString(length: number): string {
-  const charset = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
-  const randomValues = Array.from(getCrypto().getRandomValues(new Uint8Array(length)));
-  return randomValues.map((v) => charset[v % charset.length]).join('');
-}
-
-export function getCrypto(): Crypto {
-  //ie 11.x uses msCrypto
-  return (window.crypto || (window as unknown as { msCrypto: Crypto }).msCrypto) as Crypto;
 }
 
 export function createQueryParams(params: Record<string, string | number>): string {
@@ -36,6 +31,10 @@ export function createQueryParams(params: Record<string, string | number>): stri
     .filter((k) => params[k] !== null && params[k] !== undefined)
     .map((k) => encodeURIComponent(k) + '=' + encodeURIComponent(params[k]!))
     .join('&');
+}
+
+export function fileExt(filename: string): string {
+  return filename.substring(filename.lastIndexOf('.') + 1, filename.length) || filename
 }
 
 /**
