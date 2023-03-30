@@ -235,7 +235,7 @@ export class UIMClient {
    * @param {string} id 账号ID
    */
   public async logout(id: string) {
-    await this.post(`im_accounts/${id}/logout`)
+    await this.post(`/im_accounts/${id}/logout`)
     // 取消订阅账号
     if (this.channels.indexOf(id) >= 0) {
       this.pubsub.unsubscribe([id]);
@@ -249,7 +249,7 @@ export class UIMClient {
    * @returns
    */
   public async getAccountList(parameters: GetAccountListParameters): Promise<GetAccountListResponse> {
-    const resp = await this.get<GetAccountListResponse>('im_accounts', parameters)
+    const resp = await this.get<GetAccountListResponse>('/im_accounts', parameters)
     if (resp.data.length > 0) {
       // 只需要订阅之前没有订阅过的，账号id作为channel名字
       const channels = resp.data.map(it => it.id).filter(it => this.channels.indexOf(it) < 0);
@@ -267,7 +267,7 @@ export class UIMClient {
    * @returns
    */
   public async getAccount(id: string, subscribe?: boolean): Promise<Account> {
-    const account = await this.get<Account>(`im_accounts/${id}`)
+    const account = await this.get<Account>(`/im_accounts/${id}`)
     if (subscribe) {
       // 注意不需要重复订阅
       const notSubscribed = this.channels.indexOf(account.id) < 0;

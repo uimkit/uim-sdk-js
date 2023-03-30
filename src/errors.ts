@@ -1,13 +1,13 @@
 import { AxiosResponse } from 'axios';
 
 export type APIErrorResponse = {
-  code: string;
+  code: number;
   message: string;
 };
 
 
 export class ErrorFromResponse<T> extends Error {
-  code?: string;
+  code?: number;
   response?: AxiosResponse<T>;
   status?: number;
 }
