@@ -11,7 +11,7 @@ import pkg from './package.json';
 import process from 'process';
 process.env.NODE_ENV = 'production';
 
-const externalPackages = ["webpubsub-js", "eventemitter3", "cos-js-sdk-v5", /@xopenapi\/xapis-js/, /@babel\/runtime/];
+const externalPackages = ["axios", "base64-js", "cos-js-sdk-v5", "eventemitter3", "invariant", "nanoid", "webpubsub-js", /@xopenapi\/xapis-js/, /@babel\/runtime/];
 
 const extensions = ['.mjs', '.json', '.node', '.js', '.ts'];
 

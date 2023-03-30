@@ -1,9 +1,8 @@
-import jwtdecode, { JwtPayload } from 'jwt-decode';
+import axios, { AxiosError, AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
 import EventEmitter from 'eventemitter3';
 import invariant from 'invariant';
 import { nanoid } from 'nanoid';
 import { Logger, LogLevel, logLevelSeverity, makeConsoleLogger } from './logging';
-import { buildRequestError, isHTTPResponseError, isUIMClientError, RequestTimeoutError } from './errors';
 import { createQueryParams, fileExt, pick, omit, popup } from './helpers';
 import {
   GetAccountListParameters,
@@ -39,8 +38,8 @@ import {
   CreateMessageParameters,
   PublishMomentParameters,
   CreateMomentParameters,
-} from './api';
-import { SupportedPubSub, PubSubOptions, default as PubSub } from './pubsub';
+} from './types';
+import { SupportedPubSub, default as PubSub } from './pubsub';
 import { EventHandler, UIMEventType, UIMEvent } from './events';
 import {
   Account,
@@ -63,23 +62,10 @@ import {
 } from './models';
 import { Plugin, PluginType, UploadOptions } from './plugins';
 import { UIMUploadPlugin } from './plugins/upload';
-
-/*
- * Type aliases to support the generic request interface.
- */
-type Method = 'get' | 'post' | 'patch' | 'delete';
+import { decodeBase64 } from './base64';
+import { APIErrorResponse, ErrorFromResponse, isErrorResponse } from './errors';
 
 type PlainQueryParams = Record<string, string | number | boolean>;
-
-type QueryParams = PlainQueryParams | URLSearchParams;
-
-interface RequestParameters {
-  method: Method;
-  path: string;
-  auth?: string;
-  body?: Record<string, unknown>;
-  query?: QueryParams;
-}
 
 /**
  * 账号授权结果
@@ -98,47 +84,51 @@ interface AuthorizeResult {
  */
 export interface UIMClientOptions {
   baseUrl?: string;
-  errorHandler?: (e: unknown) => void;
-  logLevel?: LogLevel;
   subscribeKey?: string;
   timeoutMs?: number;
+  logLevel?: LogLevel;
+  axiosRequestConfig?: AxiosRequestConfig;
 }
 
 export class UIMClient {
-  _uuid: string;
-  _auth?: string;
-  _logLevel: LogLevel;
-  _logger: Logger;
-  _prefixUrl: string;
-  _timeoutMs: number;
-  _pubsub: SupportedPubSub;
-  _channels: Array<string>;
-  _errorHandler?: (e: unknown) => void;
-  _plugins: Partial<Record<PluginType, Plugin>>;
-  _eventEmitter: EventEmitter;
-  _messageEventListener?: (msgEvent: MessageEvent) => void;
+  private token: string;
+  private uuid: string;
+  private logLevel: LogLevel;
+  private logger: Logger;
+  private baseUrl: string;
+  private timeoutMs: number;
+  private channels: Array<string>;
+  private eventEmitter: EventEmitter;
+  private axiosRequestConfig?: AxiosRequestConfig;
+  private axiosInstance: AxiosInstance;
+  private pubsub: SupportedPubSub;
+  private plugins: Partial<Record<PluginType, Plugin>>;
+  private userAgent?: string;
+  private nextRequestAbortController: AbortController | null = null;
+  private messageEventListener?: (msgEvent: MessageEvent) => void;
 
   public constructor(token: string, options?: UIMClientOptions) {
-    this._auth = token;
-    this._logLevel = options?.logLevel ?? LogLevel.WARN;
-    this._logger = makeConsoleLogger('uim-js');
-    this._prefixUrl = options?.baseUrl ?? 'https://api.uimkit.chat/client/v1/';
-    this._timeoutMs = options?.timeoutMs ?? 60_000;
-    this._channels = [];
-    this._errorHandler = options?.errorHandler;
-    const jwt = jwtdecode<JwtPayload>(token);
-    this._uuid = jwt.sub ?? '';
-    const pubsubOptions: PubSubOptions = {
-      uuid: this._uuid,
+    this.token = token;
+    this.uuid = userFromToken(token);
+    this.logLevel = options?.logLevel ?? LogLevel.INFO;
+    this.logger = makeConsoleLogger('uim-js');
+    this.baseUrl = options?.baseUrl ?? 'https://api.uimkit.chat/client/v1';
+    this.timeoutMs = options?.timeoutMs ?? 60_000;
+    this.channels = [];
+    this.eventEmitter = new EventEmitter();
+    this.axiosRequestConfig = options?.axiosRequestConfig
+    this.axiosInstance = axios.create({
+      timeout: this.timeoutMs,
+      baseURL: this.baseUrl
+    });
+    this.pubsub = new PubSub({
+      uuid: this.uuid,
       subscribeKey: options?.subscribeKey ?? 'sub-c-ba96530f-177f-4fdb-8ab0-2e0108e0ea36',
-      logVerbosity: this._logLevel === LogLevel.DEBUG,
-    };
-    this._pubsub = new PubSub(pubsubOptions);
-    this._pubsub.addListener(this.onEvent.bind(this));
-    this._eventEmitter = new EventEmitter();
-    // 默认的插件
-    this._plugins = {
-      upload: new UIMUploadPlugin(this._uuid, token, this._prefixUrl),
+      logVerbosity: this.logLevel === LogLevel.DEBUG,
+    });
+    this.pubsub.addListener(this.onEvent.bind(this));
+    this.plugins = {
+      upload: new UIMUploadPlugin(this.uuid, token, this.baseUrl),
     };
   }
 
@@ -151,9 +141,10 @@ export class UIMClient {
    */
   public async authorize(provider: string, cb?: (id?: string) => void): Promise<string | undefined> {
     const state = nanoid();
-    const token = this._auth ?? '';
+    const token = this.token;
     const params = { provider, token, state };
-    const url = `${this._prefixUrl}authorize?${createQueryParams(params)}`;
+    // TODO  trim /
+    const url = `${this.baseUrl}/authorize?${createQueryParams(params)}`;
     const win = popup(url, 'uim-authorize-window');
     if (!win) {
       throw new Error('open authorize window error');
@@ -173,10 +164,10 @@ export class UIMClient {
         }, 500);
       }),
     ]);
-    if (this._messageEventListener) {
-      window.removeEventListener('message', this._messageEventListener);
+    if (this.messageEventListener) {
+      window.removeEventListener('message', this.messageEventListener);
     }
-    this._messageEventListener = undefined;
+    this.messageEventListener = undefined;
 
     if (!res) {
       // 授权页窗口被用户关闭了
@@ -202,96 +193,20 @@ export class UIMClient {
    * @returns
    */
   private async listenToAuthorizeResult(): Promise<AuthorizeResult> {
-    const { origin } = new URL(this._prefixUrl);
+    const { origin } = new URL(this.baseUrl);
     return new Promise<AuthorizeResult>((resolve) => {
       const msgEventListener = (msgEvent: MessageEvent) => {
         if (msgEvent.origin !== origin || msgEvent.data?.type !== 'authorization_response') {
           return;
         }
         window.removeEventListener('message', msgEventListener);
-        this._messageEventListener = undefined;
+        this.messageEventListener = undefined;
         return resolve(msgEvent.data);
       };
 
-      this._messageEventListener = msgEventListener;
+      this.messageEventListener = msgEventListener;
       window.addEventListener('message', msgEventListener);
     });
-  }
-
-  /**
-   * 发起HTTP请求调用
-   *
-   * @param parameters
-   * @returns
-   */
-  public async request<T>(parameters: RequestParameters): Promise<T> {
-    const { path, method, query, body, auth } = parameters;
-    this.log(LogLevel.INFO, 'request start', { method, path });
-
-    // If the body is empty, don't send the body in the HTTP request
-    const bodyAsJsonString = !body || Object.entries(body).length === 0 ? undefined : JSON.stringify(body);
-
-    const url = new URL(`${this._prefixUrl}${path}`);
-    if (query) {
-      for (const [key, value] of Object.entries(query)) {
-        if (value !== undefined) {
-          url.searchParams.append(key, String(value));
-        }
-      }
-    }
-
-    const authHeaders = await this.authAsHeaders(auth);
-    const headers: Record<string, string> = { ...authHeaders };
-    if (bodyAsJsonString !== undefined) {
-      headers['content-type'] = 'application/json';
-    }
-
-    try {
-      const response = await RequestTimeoutError.rejectAfterTimeout(
-        fetch(url.toString(), {
-          method,
-          headers,
-          body: bodyAsJsonString,
-        }),
-        this._timeoutMs,
-      );
-
-      const responseText = await response.text();
-      if (!response.ok) {
-        throw buildRequestError(response, responseText);
-      }
-
-      if (responseText !== '') {
-        const responseJson: T = JSON.parse(responseText);
-        this.log(LogLevel.INFO, `request success`, { method, path });
-        return responseJson;
-      } else {
-        return {} as T;
-      }
-    } catch (error: unknown) {
-      if (this._errorHandler) {
-        this._errorHandler(error);
-      }
-
-      if (!isUIMClientError(error)) {
-        throw error;
-      }
-
-      // Log the error if it's one of our known error types
-      this.log(LogLevel.WARN, `request fail`, {
-        code: error.code,
-        message: error.message,
-      });
-
-      if (isHTTPResponseError(error)) {
-        // The response body may contain sensitive information so it is logged separately at the DEBUG level
-        this.log(LogLevel.DEBUG, `failed response body`, {
-          body: error.body,
-        });
-      }
-
-      throw error;
-    }
   }
 
   /**
@@ -301,7 +216,7 @@ export class UIMClient {
    * @param plugin
    */
   public registerPlugin(type: PluginType, plugin: Plugin) {
-    this._plugins[type] = plugin;
+    this.plugins[type] = plugin;
   }
 
   /**
@@ -311,7 +226,7 @@ export class UIMClient {
    * @returns
    */
   public getPlugin(type: PluginType): Plugin | undefined {
-    return this._plugins[type];
+    return this.plugins[type];
   }
 
   /**
@@ -320,10 +235,10 @@ export class UIMClient {
    * @param {string} id 账号ID
    */
   public async logout(id: string) {
-    await this.request({ path: `im_accounts/${id}/logout`, method: 'post' });
+    await this.post(`im_accounts/${id}/logout`)
     // 取消订阅账号
-    if (this._channels.indexOf(id) >= 0) {
-      this._pubsub.unsubscribe([id]);
+    if (this.channels.indexOf(id) >= 0) {
+      this.pubsub.unsubscribe([id]);
     }
   }
 
@@ -334,16 +249,12 @@ export class UIMClient {
    * @returns
    */
   public async getAccountList(parameters: GetAccountListParameters): Promise<GetAccountListResponse> {
-    const resp = await this.request<GetAccountListResponse>({
-      method: 'get',
-      path: 'im_accounts',
-      query: parameters as PlainQueryParams,
-    });
+    const resp = await this.get<GetAccountListResponse>('im_accounts', parameters)
     if (resp.data.length > 0) {
       // 只需要订阅之前没有订阅过的，账号id作为channel名字
-      const channels = resp.data.map(it => it.id).filter(it => this._channels.indexOf(it) < 0);
-      this._channels = [...channels, ...this._channels];
-      this._pubsub.subscribe(this._channels);
+      const channels = resp.data.map(it => it.id).filter(it => this.channels.indexOf(it) < 0);
+      this.channels = [...channels, ...this.channels];
+      this.pubsub.subscribe(this.channels);
     }
     return resp;
   }
@@ -356,16 +267,13 @@ export class UIMClient {
    * @returns
    */
   public async getAccount(id: string, subscribe?: boolean): Promise<Account> {
-    const account = await this.request<Account>({
-      path: `im_accounts/${id}`,
-      method: 'get',
-    });
+    const account = await this.get<Account>(`im_accounts/${id}`)
     if (subscribe) {
       // 注意不需要重复订阅
-      const notSubscribed = this._channels.indexOf(account.id) < 0;
+      const notSubscribed = this.channels.indexOf(account.id) < 0;
       if (notSubscribed) {
-        this._channels = [account.id, ...this._channels];
-        this._pubsub.subscribe(this._channels);
+        this.channels = [account.id, ...this.channels];
+        this.pubsub.subscribe(this.channels);
       }
     }
     return account;
@@ -378,11 +286,7 @@ export class UIMClient {
    * @returns
    */
   public getContactList(parameters: GetContactListParameters): Promise<GetContactListResponse> {
-    return this.request<GetContactListResponse>({
-      path: `im_accounts/${parameters.account_id}/contacts`,
-      method: 'get',
-      query: omit(parameters, ['account_id']) as PlainQueryParams,
-    });
+    return this.get(`/im_accounts/${parameters.account_id}/contacts`, omit(parameters, ['account_id']))
   }
 
   /**
@@ -392,10 +296,7 @@ export class UIMClient {
    * @returns
    */
   public getContact(id: string): Promise<Contact> {
-    return this.request<Contact>({
-      path: `contacts/${id}`,
-      method: 'get',
-    });
+    return this.get<Contact>(`/contacts/${id}`)
   }
 
   /**
@@ -404,7 +305,7 @@ export class UIMClient {
    * @param id
    */
   public async deleteContact(id: string) {
-    await this.request({ path: `contacts/${id}`, method: 'delete' });
+    return this.delete(`/contacts/${id}`)
   }
 
   /**
@@ -415,11 +316,7 @@ export class UIMClient {
    * @returns
    */
   public markContact(id: string, marked: boolean): Promise<Contact> {
-    return this.request<Contact>({
-      path: `contacts/${id}/mark`,
-      method: 'post',
-      body: { marked },
-    });
+    return this.post<Contact>(`/contacts/${id}/mark`, { marked })
   }
 
   /**
@@ -429,11 +326,7 @@ export class UIMClient {
    * @returns 返回好友申请发送结果，成功仅代表好友申请发送成功
    */
   public addContact(parameters: AddContactParameters): Promise<AddContactResponse> {
-    return this.request<AddContactResponse>({
-      path: `im_accounts/${parameters.account_id}/contacts/add`,
-      method: 'post',
-      body: omit(parameters, ['account_id']),
-    });
+    return this.post<AddContactResponse>(`/im_accounts/${parameters.account_id}/contacts/add`, omit(parameters, ['account_id']))
   }
 
   /**
@@ -445,11 +338,7 @@ export class UIMClient {
   public getFriendApplicationList(
     parameters: GetFriendApplicationListParameters,
   ): Promise<GetFriendApplicationListResponse> {
-    return this.request<GetFriendApplicationListResponse>({
-      path: `im_accounts/${parameters.account_id}/friend_applications`,
-      method: 'get',
-      query: omit(parameters, ['account_id']) as PlainQueryParams,
-    });
+    return this.get<GetFriendApplicationListResponse>(`/im_accounts/${parameters.account_id}/friend_applications`, omit(parameters, ['account_id']))
   }
 
   /**
@@ -458,10 +347,7 @@ export class UIMClient {
    * @param {string} application_id 好友申请ID
    */
   public async acceptFriendApplication(application_id: string) {
-    await this.request({
-      path: `friend_applications/${application_id}/accept`,
-      method: 'post',
-    });
+    await this.post(`/friend_applications/${application_id}/accept`)
   }
 
   /**
@@ -471,11 +357,7 @@ export class UIMClient {
    * @returns
    */
   public getGroupList(parameters: GetGroupListParameters): Promise<GetGroupListResponse> {
-    return this.request<GetGroupListResponse>({
-      path: `im_accounts/${parameters.account_id}/groups`,
-      method: 'get',
-      query: omit(parameters, ['account_id']) as PlainQueryParams,
-    });
+    return this.get<GetGroupListResponse>(`/im_accounts/${parameters.account_id}/groups`, omit(parameters, ['account_id']))
   }
 
   /**
@@ -485,10 +367,7 @@ export class UIMClient {
    * @returns
    */
   public getGroup(id: string): Promise<Group> {
-    return this.request<Group>({
-      path: `groups/${id}`,
-      method: 'get',
-    });
+    return this.get<Group>(`/groups/${id}`)
   }
 
   /**
@@ -499,11 +378,7 @@ export class UIMClient {
    * @returns
    */
   public markGroup(id: string, marked: boolean): Promise<Group> {
-    return this.request<Group>({
-      path: `groups/${id}/mark`,
-      method: 'post',
-      body: { marked },
-    });
+    return this.post<Group>(`/groups/${id}/mark`, { marked })
   }
 
   /**
@@ -514,11 +389,7 @@ export class UIMClient {
    * @returns
    */
   public setGroupMute(id: string, mute: boolean): Promise<Group> {
-    return this.request<Group>({
-      path: `groups/${id}/mute`,
-      method: 'post',
-      body: { mute },
-    });
+    return this.post<Group>(`/groups/${id}/mute`, { mute })
   }
 
   /**
@@ -527,11 +398,7 @@ export class UIMClient {
    * @param parameters
    */
   public createGroup(parameters: CreateGroupParameters): Promise<Group> {
-    return this.request<Group>({
-      path: `im_accounts/${parameters.account_id}/groups`,
-      method: 'post',
-      body: omit(parameters, ['account_id']),
-    });
+    return this.post<Group>(`/im_accounts/${parameters.account_id}/groups`, omit(parameters, ['account_id']))
   }
 
   /**
@@ -545,10 +412,7 @@ export class UIMClient {
    * @param group_id
    */
   public async quitGroup(account_id: string, group_id: string) {
-    await this.request({
-      path: `im_accounts/${account_id}/groups/${group_id}/quit`,
-      method: 'post',
-    });
+    await this.post(`/im_accounts/${account_id}/groups/${group_id}/quit`)
   }
 
   /**
@@ -558,10 +422,7 @@ export class UIMClient {
    * @returns
    */
   public async dismissGroup(group_id: string) {
-    await this.request({
-      path: `groups/${group_id}/dismiss`,
-      method: 'post',
-    });
+    await this.post(`/groups/${group_id}/dismiss`)
   }
 
   /**
@@ -570,11 +431,7 @@ export class UIMClient {
    * @param parameters
    */
   public async transferGroup(parameters: TransferGroupParameters) {
-    await this.request({
-      path: `groups/${parameters.group_id}/transfer`,
-      method: 'post',
-      body: omit(parameters, ['group_id']),
-    });
+    await this.post(`/groups/${parameters.group_id}/transfer`, omit(parameters, ['group_id']))
   }
 
   /**
@@ -584,11 +441,7 @@ export class UIMClient {
    * @returns
    */
   public getGroupMemberList(parameters: GetGroupMemberListParameters): Promise<GetGroupMemberListResponse> {
-    return this.request<GetGroupMemberListResponse>({
-      path: `groups/${parameters.group_id}/members`,
-      method: 'get',
-      query: omit(parameters, ['group_id']) as PlainQueryParams,
-    });
+    return this.get<GetGroupMemberListResponse>(`/groups/${parameters.group_id}/members`, omit(parameters, ['group_id']))
   }
 
   /**
@@ -598,10 +451,7 @@ export class UIMClient {
    * @returns
    */
   public getGroupMember(member_id: string): Promise<GroupMember> {
-    return this.request<GroupMember>({
-      path: `group_members/${member_id}`,
-      method: 'get',
-    });
+    return this.get<GroupMember>(`/group_members/${member_id}`)
   }
 
   /**
@@ -610,11 +460,7 @@ export class UIMClient {
    * @param parameters
    */
   public inviteGroupMembers(parameters: InviteGroupMembersParameters): Promise<InviteGroupMembersResponse> {
-    return this.request<InviteGroupMembersResponse>({
-      path: `im_accounts/${parameters.account_id}/groups/${parameters.group_id}/invite`,
-      method: 'post',
-      body: omit(parameters, ['account_id', 'group_id']),
-    });
+    return this.post<InviteGroupMembersResponse>(`/im_accounts/${parameters.account_id}/groups/${parameters.group_id}/invite`, omit(parameters, ['account_id', 'group_id']))
   }
 
   /**
@@ -625,10 +471,7 @@ export class UIMClient {
    * @param member_id
    */
   public async kickGroupMember(account_id: string, group_id: string, member_id: string) {
-    await this.request<InviteGroupMembersResponse>({
-      path: `im_accounts/${account_id}/groups/${group_id}/members/${member_id}/kick`,
-      method: 'post',
-    });
+    return this.post<InviteGroupMembersResponse>(`/im_accounts/${account_id}/groups/${group_id}/members/${member_id}/kick`)
   }
 
   /**
@@ -637,11 +480,7 @@ export class UIMClient {
    * @param parameters
    */
   public async setGroupMemberRole(parameters: SetGroupMemberRoleParameters) {
-    await this.request({
-      path: `im_accounts/${parameters.account_id}/groups/${parameters.group_id}/members/${parameters.member_id}/set_role`,
-      method: 'post',
-      body: { role: parameters.role },
-    });
+    await this.post(`/im_accounts/${parameters.account_id}/groups/${parameters.group_id}/members/${parameters.member_id}/set_role`, { role: parameters.role })
   }
 
   /**
@@ -653,11 +492,7 @@ export class UIMClient {
   public getGroupApplicationList(
     parameters: GetGroupApplicationListParameters,
   ): Promise<GetGruopApplicationListResponse> {
-    return this.request<GetGruopApplicationListResponse>({
-      path: `groups/${parameters.group_id}/group_applications`,
-      method: 'get',
-      query: omit(parameters, ['group_id']) as PlainQueryParams,
-    });
+    return this.get<GetGruopApplicationListResponse>(`/groups/${parameters.group_id}/group_applications`, omit(parameters, ['group_id']))
   }
 
   /**
@@ -667,11 +502,7 @@ export class UIMClient {
    * @param application_id
    */
   public async acceptGroupApplication(account_id: string, application_id: string) {
-    await this.request({
-      path: `group_applications/${application_id}/accept`,
-      method: 'post',
-      body: { account_id },
-    });
+    await this.post(`/group_applications/${application_id}/accept`, { account_id })
   }
 
   /**
@@ -681,11 +512,7 @@ export class UIMClient {
    * @returns
    */
   public getConversationList(parameters: GetConversationListParameters): Promise<GetConversationListResponse> {
-    return this.request<GetConversationListResponse>({
-      path: `im_accounts/${parameters.account_id}/conversations`,
-      method: 'get',
-      query: omit(parameters, ['account_id']) as PlainQueryParams,
-    });
+    return this.get<GetConversationListResponse>(`/im_accounts/${parameters.account_id}/conversations`, omit(parameters, ['account_id']))
   }
 
   /**
@@ -695,10 +522,7 @@ export class UIMClient {
    * @returns
    */
   public getConversation(id: string): Promise<Conversation> {
-    return this.request<Conversation>({
-      path: `conversations/${id}`,
-      method: 'get',
-    });
+    return this.get<Conversation>(`/conversations/${id}`)
   }
 
   /**
@@ -708,10 +532,7 @@ export class UIMClient {
    * @returns
    */
   public getContactConversation(contact_id: string): Promise<Conversation> {
-    return this.request<Conversation>({
-      path: `contacts/${contact_id}/conversations`,
-      method: 'get',
-    });
+    return this.get<Conversation>(`/contacts/${contact_id}/conversations`)
   }
 
   /**
@@ -721,10 +542,7 @@ export class UIMClient {
    * @returns
    */
   public getGroupConversation(group_id: string): Promise<Conversation> {
-    return this.request<Conversation>({
-      path: `groups/${group_id}/conversations`,
-      method: 'get',
-    });
+    return this.get<Conversation>(`/groups/${group_id}/conversations`)
   }
 
   /**
@@ -734,11 +552,7 @@ export class UIMClient {
    * @returns
    */
   public setConversationRead(id: string): Promise<Conversation> {
-    return this.request<Conversation>({
-      path: `conversations/${id}/read`,
-      method: 'post',
-      body: {},
-    });
+    return this.post<Conversation>(`/conversations/${id}/read`)
   }
 
   /**
@@ -749,11 +563,7 @@ export class UIMClient {
    * @returns
    */
   public pinConversation(id: string, pinned: boolean): Promise<Conversation> {
-    return this.request<Conversation>({
-      path: `conversations/${id}/pin`,
-      method: 'post',
-      body: { pinned },
-    });
+    return this.post<Conversation>(`/conversations/${id}/pin`, { pinned })
   }
 
   /**
@@ -762,10 +572,7 @@ export class UIMClient {
    * @param id
    */
   public async deleteConversation(id: string) {
-    await this.request({
-      path: `conversations/${id}`,
-      method: 'delete',
-    });
+    await this.delete(`/conversations/${id}`)
   }
 
   /**
@@ -775,11 +582,7 @@ export class UIMClient {
    * @returns
    */
   public getMessageList(parameters: GetMessageListParameters): Promise<GetMessageListResponse> {
-    return this.request<GetMessageListResponse>({
-      path: `conversations/${parameters.conversation_id}/messages`,
-      method: 'get',
-      query: omit(parameters, ['conversation_id']) as PlainQueryParams,
-    });
+    return this.get<GetMessageListResponse>(`/conversations/${parameters.conversation_id}/messages`, omit(parameters, ['conversation_id']))
   }
 
   /**
@@ -789,11 +592,7 @@ export class UIMClient {
    * @returns
    */
   public resendMessage(message_id: string): Promise<Message> {
-    return this.request<Message>({
-      path: 'resend_message',
-      method: 'post',
-      body: { message_id },
-    });
+    return this.post('/resend_message', { message_id })
   }
 
   /**
@@ -802,10 +601,7 @@ export class UIMClient {
    * @param id
    */
   public async deleteMessage(id: string) {
-    await this.request({
-      path: `messages/${id}`,
-      method: 'delete',
-    });
+    await this.delete(`/messages/${id}`)
   }
 
   /**
@@ -815,11 +611,7 @@ export class UIMClient {
    * @returns
    */
   public getAccountMomentListInbox(parameters: GetAccountMomentListInboxParameters): Promise<GetMomentListResponse> {
-    return this.request<GetMomentListResponse>({
-      path: `im_accounts/${parameters.account_id}/moments`,
-      method: 'get',
-      query: omit(parameters, ['account_id']) as PlainQueryParams,
-    });
+    return this.get<GetMomentListResponse>(`/im_accounts/${parameters.account_id}/moments`)
   }
 
   /**
@@ -833,11 +625,7 @@ export class UIMClient {
    * @returns
    */
   public getUserMomentList(parameters: GetUserMomentListParameters): Promise<GetMomentListResponse> {
-    return this.request<GetMomentListResponse>({
-      path: `im_accounts/${parameters.account_id}/moments`,
-      method: 'get',
-      query: omit(parameters, ['account_id']) as PlainQueryParams,
-    });
+    return this.get<GetMomentListResponse>(`/im_accounts/${parameters.account_id}/moments`, omit(parameters, ['account_id']))
   }
 
   /**
@@ -847,11 +635,7 @@ export class UIMClient {
    * @returns
    */
   public getMomentCommentList(parameters: GetMomentCommentListParameters): Promise<GetCommentListResponse> {
-    return this.request<GetCommentListResponse>({
-      path: `moments/${parameters.moment_id}/comments`,
-      method: 'get',
-      query: omit(parameters, ['moment_id']) as PlainQueryParams,
-    });
+    return this.get<GetCommentListResponse>(`/moments/${parameters.moment_id}/comments`, omit(parameters, ['moment_id']))
   }
 
   /**
@@ -861,11 +645,7 @@ export class UIMClient {
    * @returns
    */
   public commentOnMoment(parameters: CommentOnMomentParameters): Promise<Comment> {
-    return this.request<Comment>({
-      path: `moments/${parameters.moment_id}/comments`,
-      method: 'post',
-      body: omit(parameters, ['moment_id']),
-    });
+    return this.post<Comment>(`/moments/${parameters.moment_id}/comments`, omit(parameters, ['moment_id']))
   }
 
   /**
@@ -874,10 +654,7 @@ export class UIMClient {
    * @param id
    */
   public async deleteMoment(id: string) {
-    await this.request({
-      path: `moments/${id}`,
-      method: 'delete',
-    });
+    await this.delete(`/moments/${id}`)
   }
 
   /**
@@ -917,11 +694,7 @@ export class UIMClient {
       }
     }
 
-    return this.request<Message>({
-      path: 'send_message',
-      method: 'post',
-      body: omit(parameters, ['file', 'on_progress']),
-    });
+    return this.post('/send_message', omit(parameters, ['file', 'on_progress']))
   }
 
   /**
@@ -1079,11 +852,7 @@ export class UIMClient {
       }
     }
 
-    return this.request<Moment>({
-      path: 'publish_moment',
-      method: 'post',
-      body: omit(parameters, ['files', 'on_progress']),
-    });
+    return this.post('/publish_moment', omit(parameters, ['files', 'on_progress']))
   }
 
   /**
@@ -1190,7 +959,7 @@ export class UIMClient {
    * @returns
    */
   public on(type: UIMEventType, handler: EventHandler) {
-    this._eventEmitter.on(type, handler);
+    this.eventEmitter.on(type, handler);
   }
 
   /**
@@ -1200,7 +969,7 @@ export class UIMClient {
    * @param handler
    */
   public off(type: UIMEventType, handler: EventHandler) {
-    this._eventEmitter.off(type, handler);
+    this.eventEmitter.off(type, handler);
   }
 
   /**
@@ -1212,7 +981,182 @@ export class UIMClient {
    */
   private onEvent(_channel: string, e: unknown, _extra?: unknown) {
     const evt = e as UIMEvent;
-    this._eventEmitter.emit(evt.type, evt);
+    this.eventEmitter.emit(evt.type, evt);
+  }
+
+  private logApiRequest(
+    type: string,
+    url: string,
+    data: unknown,
+    config: AxiosRequestConfig & {
+      config?: AxiosRequestConfig & { maxBodyLength?: number };
+    },
+  ) {
+    this.log(LogLevel.DEBUG, `client: ${type} - Request - ${url}`, {
+      tags: ['api', 'api_request', 'client'],
+      url,
+      payload: data,
+      config,
+    });
+  }
+
+  private logApiResponse<T>(type: string, url: string, response: AxiosResponse<T>) {
+    this.log(LogLevel.DEBUG, `client:${type} - Response - url: ${url} > status ${response.status}`, {
+      tags: ['api', 'api_response', 'client'],
+      url,
+      response,
+    });
+  }
+
+  private logApiError(type: string, url: string, error: unknown) {
+    this.log(LogLevel.ERROR, `client:${type} - Error - url: ${url}`, {
+      tags: ['api', 'api_response', 'client'],
+      url,
+      error,
+    });
+  }
+
+  private doAxiosRequest = async <T>(
+    type: string,
+    url: string,
+    data?: unknown,
+    options: AxiosRequestConfig & {
+      config?: AxiosRequestConfig & { maxBodyLength?: number };
+    } = {},
+  ): Promise<T> => {
+    const requestConfig = this._enrichAxiosOptions(options);
+    try {
+      let response: AxiosResponse<T>;
+      this.logApiRequest(type, url, data, requestConfig);
+      switch (type) {
+        case 'get':
+          response = await this.axiosInstance.get(url, requestConfig);
+          break;
+        case 'delete':
+          response = await this.axiosInstance.delete(url, requestConfig);
+          break;
+        case 'post':
+          response = await this.axiosInstance.post(url, data, requestConfig);
+          break;
+        case 'put':
+          response = await this.axiosInstance.put(url, data, requestConfig);
+          break;
+        case 'patch':
+          response = await this.axiosInstance.patch(url, data, requestConfig);
+          break;
+        case 'options':
+          response = await this.axiosInstance.options(url, requestConfig);
+          break;
+        default:
+          throw new Error('Invalid request type');
+      }
+      this.logApiResponse<T>(type, url, response);
+      return this.handleResponse(response);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (e: any /**TODO: generalize error types  */) {
+      e.client_request_id = requestConfig.headers?.['x-client-request-id'];
+      this.logApiError(type, url, e);
+      if (e.response) {
+        return this.handleResponse(e.response);
+      } else {
+        throw e as AxiosError<APIErrorResponse>;
+      }
+    }
+  };
+
+  private get<T>(url: string, params?: AxiosRequestConfig['params']) {
+    return this.doAxiosRequest<T>('get', url, null, { params });
+  }
+
+  private put<T>(url: string, data?: unknown) {
+    return this.doAxiosRequest<T>('put', url, data);
+  }
+
+  private post<T>(url: string, data?: unknown) {
+    return this.doAxiosRequest<T>('post', url, data);
+  }
+
+  private patch<T>(url: string, data?: unknown) {
+    return this.doAxiosRequest<T>('patch', url, data);
+  }
+
+  private delete<T>(url: string, params?: AxiosRequestConfig['params']) {
+    return this.doAxiosRequest<T>('delete', url, null, { params });
+  }
+
+  private handleResponse<T>(response: AxiosResponse<T>) {
+    const data = response.data;
+    if (isErrorResponse(response)) {
+      throw this.errorFromResponse(response);
+    }
+    return data;
+  }
+
+  private errorFromResponse(response: AxiosResponse<APIErrorResponse>): ErrorFromResponse<APIErrorResponse> {
+    let err: ErrorFromResponse<APIErrorResponse>;
+    err = new ErrorFromResponse(`UIM error HTTP code: ${response.status}`);
+    if (response.data && response.data.code) {
+      err = new Error(`UIM error code ${response.data.code}: ${response.data.message}`);
+      err.code = response.data.code;
+    }
+    err.response = response;
+    err.status = response.status;
+    return err;
+  }
+
+
+  private _enrichAxiosOptions(
+    options: AxiosRequestConfig & { config?: AxiosRequestConfig } = {
+      params: {},
+      headers: {},
+      config: {},
+    },
+  ): AxiosRequestConfig {
+    const authorization = this.token ? { Authorization: `Bearer ${this.token}` } : undefined;
+    let signal: AbortSignal | null = null;
+    if (this.nextRequestAbortController !== null) {
+      signal = this.nextRequestAbortController.signal;
+      this.nextRequestAbortController = null;
+    }
+
+    if (!options.headers?.['x-client-request-id']) {
+      options.headers = {
+        ...options.headers,
+        'x-client-request-id': nanoid(),
+      };
+    }
+
+    const { params: axiosRequestConfigParams, headers: axiosRequestConfigHeaders, ...axiosRequestConfigRest } =
+      this.axiosRequestConfig || {};
+
+    return {
+      params: {
+        ...options.params,
+        ...(axiosRequestConfigParams || {}),
+      },
+      headers: {
+        ...authorization,
+        'X-UIM-Client': this.getUserAgent(),
+        ...options.headers,
+        ...(axiosRequestConfigHeaders || {}),
+      },
+      ...(signal ? { signal } : {}),
+      ...options.config,
+      ...(axiosRequestConfigRest || {}),
+    };
+  }
+
+  getUserAgent() {
+    return (
+      this.userAgent || `uim-javascript-client-browser-${process.env.PKG_VERSION}`
+    );
+  }
+
+  /**
+   * creates an abort controller that will be used by the next HTTP Request.
+   */
+  createAbortControllerForNextRequest() {
+    return (this.nextRequestAbortController = new AbortController());
   }
 
   /**
@@ -1222,26 +1166,9 @@ export class UIMClient {
    * @param args Arguments to send to the console
    */
   private log(level: LogLevel, message: string, extraInfo: Record<string, unknown>) {
-    if (logLevelSeverity(level) >= logLevelSeverity(this._logLevel)) {
-      this._logger(level, message, extraInfo);
+    if (logLevelSeverity(level) >= logLevelSeverity(this.logLevel)) {
+      this.logger(level, message, extraInfo);
     }
-  }
-
-  /**
-   * Transforms an API key or access token into a headers object suitable for an HTTP request.
-   *
-   * This method uses the instance's value as the default when the input is undefined. If neither are defined, it returns
-   * an empty object
-   *
-   * @param auth API key or access token
-   * @returns headers key-value object
-   */
-  private async authAsHeaders(auth?: string): Promise<Record<string, string>> {
-    const headers: Record<string, string> = {};
-    const authHeaderValue = auth ?? this._auth;
-    if (!authHeaderValue) return headers;
-    headers['authorization'] = `Bearer ${authHeaderValue}`;
-    return headers;
   }
 }
 
@@ -1269,3 +1196,14 @@ const convertFileListToArray = (files?: FileList | null): Array<File> => {
   }
   return f;
 };
+
+function userFromToken(token: string): string {
+  const fragments = token.split('.');
+  if (fragments.length !== 3) {
+    return '';
+  }
+  const b64Payload = fragments[1];
+  const payload = decodeBase64(b64Payload);
+  const data = JSON.parse(payload);
+  return data.sub as string;
+}
