@@ -357,13 +357,13 @@ export interface Message {
   // 消息类型
   type: MessageType;
   // 语音消息内容
-  audio?: AudioMessagePayload;
+  audio?: AudioAttachment;
   // 发送人头像
   avatar?: string;
   // 创建时间
   created_at?: number;
   // 图片消息内容
-  image?: ImageMessagePayload;
+  image?: ImageAttachment;
   // 群文本消息@用户ID列表，如果是 @all 则是 MESSAGE_MENTIONED_ALL
   mentioned_users?: Array<string>;
   // 扩展信息
@@ -377,11 +377,11 @@ export interface Message {
   // 最后更新时间
   updated_at?: number;
   // 视频消息内容
-  video?: VideoMessagePayload;
+  video?: VideoAttachment;
 }
 
 // 图片消息内容
-export interface ImageMessagePayload {
+export interface ImageAttachment {
   // 图片信息，索引0是原图，1是中图，2是小图
   infos: Array<{
     // 图片地址
@@ -400,7 +400,7 @@ export interface ImageMessagePayload {
 }
 
 // 语音消息内容
-export interface AudioMessagePayload {
+export interface AudioAttachment {
   // 语音地址
   url: string;
   // 时长（秒）
@@ -414,7 +414,7 @@ export interface AudioMessagePayload {
 }
 
 // 视频消息内容
-export interface VideoMessagePayload {
+export interface VideoAttachment {
   // 视频地址
   url: string;
   // 时长（秒）
@@ -433,8 +433,22 @@ export interface VideoMessagePayload {
   width?: number;
 }
 
+// 链接动态内容
+export interface LinkAttachment {
+  // 链接地址
+  url: string;
+  // 描述
+  description?: string;
+  // 图片
+  image?: string;
+  // 缩略图片
+  thumbnail?: string;
+  // 标题
+  title?: string;
+}
+
 // 消息内容
-export type MessagePayload = string | ImageMessagePayload | AudioMessagePayload | VideoMessagePayload;
+export type MessagePayload = string | ImageAttachment | AudioAttachment | VideoAttachment;
 
 // 群组
 export interface Group {
@@ -620,13 +634,13 @@ export interface Moment {
   // 创建时间
   created_at?: number;
   // 图片
-  images?: Array<ImageMomentContent>;
+  images?: Array<ImageAttachment>;
   // 点赞数
   like_count?: number;
   // 点赞列表
   likes?: CursorList<Like>;
   // 链接
-  link?: LinkMomentContent;
+  link?: LinkAttachment;
   // 扩展信息
   metadata?: Record<string, unknown>;
   // 发布人昵称
@@ -636,64 +650,11 @@ export interface Moment {
   // 最后更新时间
   updated_at?: number;
   // 视频
-  video?: VideoMomentContent;
-}
-
-// 图片动态内容
-export interface ImageMomentContent {
-  // 图片信息，索引0是原图，1是中图，2是小图
-  infos: Array<{
-    // 图片地址
-    url: string;
-    // 高度（像素）
-    height?: number;
-    // 宽度（像素）
-    width?: number;
-  }>;
-  // 格式
-  format?: string;
-  // 文件md5校验
-  md5?: string;
-  // 原图大小（字节）
-  size?: number;
-}
-
-// 视频动态内容
-export interface VideoMomentContent {
-  // 视频地址
-  url: string;
-  // 时长（秒）
-  duration?: number;
-  // 格式
-  format?: string;
-  // 高度（像素）
-  height?: number;
-  // 文件md5校验
-  md5?: string;
-  // 大小（字节）
-  size?: number;
-  // 封面图
-  snapshot?: string;
-  // 宽度（像素）
-  width?: number;
-}
-
-// 链接动态内容
-export interface LinkMomentContent {
-  // 链接地址
-  url: string;
-  // 描述
-  description?: string;
-  // 图片
-  image?: string;
-  // 缩略图片
-  thumbnail?: string;
-  // 标题
-  title?: string;
+  video?: VideoAttachment;
 }
 
 // 动态内容类型
-export type MomentContent = ImageMomentContent | VideoMomentContent | LinkMomentContent;
+export type MomentContent = ImageAttachment | VideoAttachment | LinkAttachment;
 
 // 评论
 export interface Comment {

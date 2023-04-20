@@ -2,13 +2,11 @@ import axios from 'axios';
 import { nanoid } from 'nanoid';
 import COS from 'cos-js-sdk-v5';
 import {
-  ImageMessagePayload,
-  AudioMessagePayload,
-  VideoMessagePayload,
+  ImageAttachment,
+  AudioAttachment,
+  VideoAttachment,
   MessagePayload,
   MessageType,
-  ImageMomentContent,
-  VideoMomentContent,
   MomentContent,
   MomentType,
   Message,
@@ -99,7 +97,7 @@ export class UIMUploadPlugin implements UploadPlugin {
     throw new Error('must have message or moment');
   }
 
-  async uploadImage(file: File, options: UploadOptions): Promise<ImageMessagePayload | ImageMomentContent> {
+  async uploadImage(file: File, options: UploadOptions): Promise<ImageAttachment> {
     const filename = typeof file === 'string' ? file : file.name;
     const ext = fileExt(filename);
     const path = ext ? `${nanoid()}.${ext}` : nanoid();
@@ -116,7 +114,7 @@ export class UIMUploadPlugin implements UploadPlugin {
     };
   }
 
-  async uploadVideo(file: File, options: UploadOptions): Promise<VideoMessagePayload | VideoMomentContent> {
+  async uploadVideo(file: File, options: UploadOptions): Promise<VideoAttachment> {
     const filename = typeof file === 'string' ? file : file.name;
     const ext = fileExt(filename);
     const path = ext ? `${nanoid()}.${ext}` : nanoid();
@@ -126,7 +124,7 @@ export class UIMUploadPlugin implements UploadPlugin {
     return { url, ...videoInfo, snapshot };
   }
 
-  async uploadAudio(file: File, options: UploadOptions): Promise<AudioMessagePayload> {
+  async uploadAudio(file: File, options: UploadOptions): Promise<AudioAttachment> {
     const filename = typeof file === 'string' ? file : file.name;
     const ext = fileExt(filename);
     const path = ext ? `${nanoid()}.${ext}` : nanoid();
