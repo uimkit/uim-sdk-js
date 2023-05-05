@@ -362,12 +362,16 @@ export interface Message {
   avatar?: string;
   // 创建时间
   created_at?: number;
+  // 文件消息内容
+  file?: FileAttachment;
   // 图片消息内容
   image?: ImageAttachment;
   // 群文本消息@用户ID列表，如果是 @all 则是 MESSAGE_MENTIONED_ALL
   mentioned_users?: Array<string>;
   // 扩展信息
   metadata?: Record<string, unknown>;
+  // 小程序
+  miniprogram?: MiniProgramAttachment;
   // 发送人昵称
   nickname?: string;
   // 是否撤回
@@ -378,10 +382,6 @@ export interface Message {
   updated_at?: number;
   // 视频消息内容
   video?: VideoAttachment;
-  // 小程序
-  miniprogram?: MiniProgramAttachment;
-  // 文件消息内容
-  file?: FileAttachment;
 }
 
 // 图片消息内容
@@ -441,24 +441,24 @@ export interface VideoAttachment {
 export interface MiniProgramAttachment {
   // 小程序内容
   content: string;
-  // 标题
-  title?: string;
-  // 描述
-  description?: string;
   // 封面图
   cover?: string;
+  // 描述
+  description?: string;
+  // 标题
+  title?: string;
 }
 
 // 文件内容
 export interface FileAttachment {
   // 文件地址
   url: string;
-  // 文件名
-  name?: string;
   // 格式
   format?: string;
   // 文件md5校验
   md5?: string;
+  // 文件名
+  name?: string;
   // 大小（字节）
   size?: number;
 }
@@ -478,7 +478,13 @@ export interface LinkAttachment {
 }
 
 // 消息内容
-export type MessagePayload = string | ImageAttachment | AudioAttachment | VideoAttachment | MiniProgramAttachment | FileAttachment;
+export type MessagePayload =
+  | string
+  | ImageAttachment
+  | AudioAttachment
+  | VideoAttachment
+  | MiniProgramAttachment
+  | FileAttachment;
 
 // 群组
 export interface Group {
@@ -663,6 +669,8 @@ export interface Moment {
   comments?: CursorList<Comment>;
   // 创建时间
   created_at?: number;
+  // 文件消息内容
+  file?: FileAttachment;
   // 图片
   images?: Array<ImageAttachment>;
   // 点赞数
@@ -673,6 +681,8 @@ export interface Moment {
   link?: LinkAttachment;
   // 扩展信息
   metadata?: Record<string, unknown>;
+  // 小程序消息内容
+  miniprogram?: MiniProgramAttachment;
   // 发布人昵称
   nickname?: string;
   // 文案
@@ -681,10 +691,6 @@ export interface Moment {
   updated_at?: number;
   // 视频
   video?: VideoAttachment;
-  // 小程序消息内容
-  miniprogram?: MiniProgramAttachment;
-  // 文件消息内容
-  file?: FileAttachment;
 }
 
 // 动态内容类型

@@ -745,7 +745,10 @@ export class UIMClient {
     }
 
     // 需要上传文件，拿到文件句柄
-    const upload_file = parameters.upload_file instanceof HTMLInputElement ? parameters.upload_file?.files?.item(0) : parameters.upload_file;
+    const upload_file =
+      parameters.upload_file instanceof HTMLInputElement
+        ? parameters.upload_file?.files?.item(0)
+        : parameters.upload_file;
     if (!upload_file) {
       throw new Error('must select files');
     }
@@ -787,7 +790,10 @@ export class UIMClient {
     }
 
     // 需要上传文件，拿到文件句柄
-    const upload_file = parameters.upload_file instanceof HTMLInputElement ? parameters.upload_file?.files?.item(0) : parameters.upload_file;
+    const upload_file =
+      parameters.upload_file instanceof HTMLInputElement
+        ? parameters.upload_file?.files?.item(0)
+        : parameters.upload_file;
     if (!upload_file) {
       throw new Error('must select files');
     }
@@ -824,7 +830,10 @@ export class UIMClient {
     }
 
     // 需要上传文件，拿到文件句柄
-    const upload_file = parameters.upload_file instanceof HTMLInputElement ? parameters.upload_file?.files?.item(0) : parameters.upload_file;
+    const upload_file =
+      parameters.upload_file instanceof HTMLInputElement
+        ? parameters.upload_file?.files?.item(0)
+        : parameters.upload_file;
     if (!upload_file) {
       throw new Error('must select files');
     }
@@ -845,13 +854,19 @@ export class UIMClient {
 
   /**
    * 创建小程序消息
-   * @param parameters 
+   * @param parameters
    */
   public createMiniProgramMessage(parameters: CreateMessageParameters): SendMessageParameters {
     if (!parameters.miniprogram) {
       throw new Error('must have miniprogram payload');
     }
-    const message = pick(parameters, ['from', 'to', 'conversation_id', 'miniprogram', 'mentioned_users']) as Partial<Message>;
+    const message = pick(parameters, [
+      'from',
+      'to',
+      'conversation_id',
+      'miniprogram',
+      'mentioned_users',
+    ]) as Partial<Message>;
     setCreatedMessageData(message);
     return { type: MessageType.Miniprogram, ...message };
   }
@@ -874,7 +889,10 @@ export class UIMClient {
     }
 
     // 需要上传文件，拿到文件句柄
-    const upload_file = parameters.upload_file instanceof HTMLInputElement ? parameters.upload_file?.files?.item(0) : parameters.upload_file;
+    const upload_file =
+      parameters.upload_file instanceof HTMLInputElement
+        ? parameters.upload_file?.files?.item(0)
+        : parameters.upload_file;
     if (!upload_file) {
       throw new Error('must select files');
     }
@@ -886,7 +904,7 @@ export class UIMClient {
     if (size > 104857600) {
       throw new Error('文件大小超过限制');
     }
-    const name = upload_file.name
+    const name = upload_file.name;
     const format = fileExt(name);
     message.file = { url, size, name, format };
 
@@ -968,7 +986,9 @@ export class UIMClient {
 
     // 需要上传文件，拿到文件句柄
     const upload_files =
-      parameters.upload_files instanceof HTMLInputElement ? convertFileListToArray(parameters.upload_files?.files) : parameters.upload_files;
+      parameters.upload_files instanceof HTMLInputElement
+        ? convertFileListToArray(parameters.upload_files?.files)
+        : parameters.upload_files;
     if (!upload_files || upload_files.length === 0) {
       throw new Error('must select files');
     }
@@ -1018,7 +1038,9 @@ export class UIMClient {
 
     // 需要上传文件，拿到文件句柄
     const file =
-      parameters.upload_files instanceof HTMLInputElement ? parameters.upload_files?.files?.item(0) : parameters.upload_files?.at(0);
+      parameters.upload_files instanceof HTMLInputElement
+        ? parameters.upload_files?.files?.item(0)
+        : parameters.upload_files?.at(0);
     if (!file) {
       throw new Error('must have images or files');
     }
