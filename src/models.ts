@@ -380,6 +380,8 @@ export interface Message {
   video?: VideoAttachment;
   // 小程序
   miniprogram?: MiniProgramAttachment;
+  // 文件消息内容
+  file?: FileAttachment;
 }
 
 // 图片消息内容
@@ -447,6 +449,20 @@ export interface MiniProgramAttachment {
   cover?: string;
 }
 
+// 文件内容
+export interface FileAttachment {
+  // 文件地址
+  url: string;
+  // 文件名
+  name?: string;
+  // 格式
+  format?: string;
+  // 文件md5校验
+  md5?: string;
+  // 大小（字节）
+  size?: number;
+}
+
 // 链接动态内容
 export interface LinkAttachment {
   // 链接地址
@@ -462,7 +478,7 @@ export interface LinkAttachment {
 }
 
 // 消息内容
-export type MessagePayload = string | ImageAttachment | AudioAttachment | VideoAttachment | MiniProgramAttachment;
+export type MessagePayload = string | ImageAttachment | AudioAttachment | VideoAttachment | MiniProgramAttachment | FileAttachment;
 
 // 群组
 export interface Group {
@@ -667,10 +683,12 @@ export interface Moment {
   video?: VideoAttachment;
   // 小程序消息内容
   miniprogram?: MiniProgramAttachment;
+  // 文件消息内容
+  file?: FileAttachment;
 }
 
 // 动态内容类型
-export type MomentContent = ImageAttachment | VideoAttachment | MiniProgramAttachment | LinkAttachment;
+export type MomentContent = ImageAttachment | VideoAttachment | MiniProgramAttachment | FileAttachment | LinkAttachment;
 
 // 评论
 export interface Comment {

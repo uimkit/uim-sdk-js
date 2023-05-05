@@ -11,6 +11,7 @@ import {
   MomentType,
   Message,
   Moment,
+  FileAttachment,
 } from './models';
 import { fileExt } from './helpers';
 
@@ -74,6 +75,9 @@ export class UIMUploadPlugin implements UploadPlugin {
         case MessageType.Audio: {
           return await this.uploadAudio(file, options);
         }
+        case MessageType.File: {
+          return await this.uploadFile(file, options);
+        }
         default: {
           throw new Error('unsupported message type');
         }
@@ -98,11 +102,11 @@ export class UIMUploadPlugin implements UploadPlugin {
   }
 
   async uploadImage(file: File, options: UploadOptions): Promise<ImageAttachment> {
-    const filename = typeof file === 'string' ? file : file.name;
+    const filename = file.name;
     const ext = fileExt(filename);
     const path = ext ? `${nanoid()}.${ext}` : nanoid();
 
-    const url = await this.uploadFile(file, path, options.onProgress);
+    const url = await this.doUpload(file, path, options.onProgress);
     const { width, height, size, format } = await this.getImageInfo(url);
     const large = this.getImageThumbnail(url, width, height, 720);
     const thumnail = this.getImageThumbnail(url, width, height, 198);
@@ -115,22 +119,31 @@ export class UIMUploadPlugin implements UploadPlugin {
   }
 
   async uploadVideo(file: File, options: UploadOptions): Promise<VideoAttachment> {
-    const filename = typeof file === 'string' ? file : file.name;
+    const filename = file.name;
     const ext = fileExt(filename);
     const path = ext ? `${nanoid()}.${ext}` : nanoid();
-    const url = await this.uploadFile(file, path, options.onProgress);
+    const url = await this.doUpload(file, path, options.onProgress);
     const videoInfo = await this.getVideoInfo(path);
     const snapshot = await this.getVideoSnapshot(path);
     return { url, ...videoInfo, snapshot };
   }
 
   async uploadAudio(file: File, options: UploadOptions): Promise<AudioAttachment> {
-    const filename = typeof file === 'string' ? file : file.name;
+    const filename = file.name;
     const ext = fileExt(filename);
     const path = ext ? `${nanoid()}.${ext}` : nanoid();
-    const url = await this.uploadFile(file, path, options.onProgress);
+    const url = await this.doUpload(file, path, options.onProgress);
     const audioInfo = await this.getAudioInfo(path);
     return { url, ...audioInfo };
+  }
+
+  async uploadFile(file: File, options: UploadOptions): Promise<FileAttachment> {
+    const name = file.name;
+    const size = file.size;
+    const format = fileExt(name);
+    const path = format ? `${nanoid()}.${format}` : nanoid();
+    const url = await this.doUpload(file, path, options.onProgress);
+    return { url, name, size, format };
   }
 
   getImageThumbnail(url: string, width: number, height: number, thumbSize: number): ThumbnailInfo {
@@ -217,7 +230,7 @@ export class UIMUploadPlugin implements UploadPlugin {
     return `${url}?imageView2/3/w/${size}/h/${size}`;
   }
 
-  async uploadFile(file: File, path: string, onProgress?: (percent: number) => void): Promise<string> {
+  async doUpload(file: File, path: string, onProgress?: (percent: number) => void): Promise<string> {
     const token = await this.getStorageApiToken();
     const { data } = await axios.get<TemporaryCredentials>(STORAGE_BASE_URL + '/temporary_credentials', {
       params: {

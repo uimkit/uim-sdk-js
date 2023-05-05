@@ -56,6 +56,7 @@ import {
   VideoAttachment,
   Moment,
   MomentType,
+  FileAttachment,
 } from './models';
 import { UploadOptions, UIMUploadPlugin, UploadPlugin } from './upload';
 import { decodeBase64 } from './base64';
@@ -677,12 +678,12 @@ export class UIMClient {
    */
   public async sendMessage(parameters: SendMessageParameters): Promise<Message> {
     // 先上传文件
-    if (parameters.file) {
+    if (parameters.upload_file) {
       const options: UploadOptions = {
         onProgress: parameters.on_progress,
         message: parameters as Message,
       };
-      const payload = await this.uploadPlugin.upload(parameters.file, options);
+      const payload = await this.uploadPlugin.upload(parameters.upload_file, options);
 
       switch (parameters.type) {
         case MessageType.Image: {
@@ -697,13 +698,17 @@ export class UIMClient {
           parameters.video = payload as VideoAttachment;
           break;
         }
+        case MessageType.File: {
+          parameters.file = payload as FileAttachment;
+          break;
+        }
         default: {
           throw new Error('unsupported message type');
         }
       }
     }
 
-    return this.post('/send_message', omit(parameters, ['file', 'on_progress']));
+    return this.post('/send_message', omit(parameters, ['upload_file', 'on_progress']));
   }
 
   /**
@@ -728,8 +733,8 @@ export class UIMClient {
    * @returns
    */
   public createImageMessage(parameters: CreateMessageParameters): SendMessageParameters {
-    if (!parameters.image && !parameters.file) {
-      throw new Error('must have image payload or file');
+    if (!parameters.image && !parameters.upload_file) {
+      throw new Error('must have image payload or upload_file');
     }
     const message = pick(parameters, ['from', 'to', 'conversation_id', 'image']) as Partial<Message>;
     setCreatedMessageData(message);
@@ -740,27 +745,27 @@ export class UIMClient {
     }
 
     // 需要上传文件，拿到文件句柄
-    const file = parameters.file instanceof HTMLInputElement ? parameters.file?.files?.item(0) : parameters.file;
-    if (!file) {
+    const upload_file = parameters.upload_file instanceof HTMLInputElement ? parameters.upload_file?.files?.item(0) : parameters.upload_file;
+    if (!upload_file) {
       throw new Error('must select files');
     }
     const { on_progress } = parameters;
 
     // 构造图片信息，方便占位显示
-    const url = URL.createObjectURL(file);
+    const url = URL.createObjectURL(upload_file);
     // 检查图片大小
-    const size = file.size;
+    const size = upload_file.size;
     if (size > 20971520) {
       throw new Error('图片大小超过限制');
     }
     // 图片格式
-    const format = fileExt(file.name);
+    const format = fileExt(upload_file.name);
     // 图片信息，包含原图、中图、小图
     message.image = { size, format, infos: [] };
     for (let i = 0; i < 3; i++) {
       message.image.infos.push({ url, width: 0, height: 0 });
     }
-    return { type: MessageType.Image, ...message, file, on_progress };
+    return { type: MessageType.Image, ...message, upload_file, on_progress };
   }
 
   /**
@@ -770,8 +775,8 @@ export class UIMClient {
    * @returns
    */
   public createAudioMessage(parameters: CreateMessageParameters): SendMessageParameters {
-    if (!parameters.audio && !parameters.file) {
-      throw new Error('must have audio payload or file');
+    if (!parameters.audio && !parameters.upload_file) {
+      throw new Error('must have audio payload or upload_file');
     }
     const message = pick(parameters, ['from', 'to', 'conversation_id', 'audio']) as Partial<Message>;
     setCreatedMessageData(message);
@@ -782,23 +787,23 @@ export class UIMClient {
     }
 
     // 需要上传文件，拿到文件句柄
-    const file = parameters.file instanceof HTMLInputElement ? parameters.file?.files?.item(0) : parameters.file;
-    if (!file) {
+    const upload_file = parameters.upload_file instanceof HTMLInputElement ? parameters.upload_file?.files?.item(0) : parameters.upload_file;
+    if (!upload_file) {
       throw new Error('must select files');
     }
     const { on_progress } = parameters;
 
     // 构造音频信息，方便占位显示
-    const url = URL.createObjectURL(file);
-    const size = file.size;
+    const url = URL.createObjectURL(upload_file);
+    const size = upload_file.size;
     if (size > 20971520) {
       throw new Error('音频大小超过限制');
     }
     const duration = 0; // TODO 要实时录制可以获取时长
-    const format = fileExt(file.name);
+    const format = fileExt(upload_file.name);
     message.audio = { url, duration, size, format };
 
-    return { type: MessageType.Audio, ...message, file, on_progress };
+    return { type: MessageType.Audio, ...message, upload_file, on_progress };
   }
 
   /**
@@ -807,8 +812,8 @@ export class UIMClient {
    * @returns
    */
   public createVideoMessage(parameters: CreateMessageParameters): SendMessageParameters {
-    if (!parameters.video && !parameters.file) {
-      throw new Error('must have video payload or file');
+    if (!parameters.video && !parameters.upload_file) {
+      throw new Error('must have video payload or upload_file');
     }
     const message = pick(parameters, ['from', 'to', 'conversation_id', 'video']) as Partial<Message>;
     setCreatedMessageData(message);
@@ -819,23 +824,23 @@ export class UIMClient {
     }
 
     // 需要上传文件，拿到文件句柄
-    const file = parameters.file instanceof HTMLInputElement ? parameters.file?.files?.item(0) : parameters.file;
-    if (!file) {
+    const upload_file = parameters.upload_file instanceof HTMLInputElement ? parameters.upload_file?.files?.item(0) : parameters.upload_file;
+    if (!upload_file) {
       throw new Error('must select files');
     }
     const { on_progress } = parameters;
 
     // 构造视频信息，方便占位显示
-    const url = URL.createObjectURL(file);
-    const size = file.size;
+    const url = URL.createObjectURL(upload_file);
+    const size = upload_file.size;
     if (size > 104857600) {
       throw new Error('视频大小超过限制');
     }
     const duration = 0;
-    const format = fileExt(file.name);
+    const format = fileExt(upload_file.name);
     message.video = { url, duration, size, format };
 
-    return { type: MessageType.Video, ...message, file, on_progress };
+    return { type: MessageType.Video, ...message, upload_file, on_progress };
   }
 
   /**
@@ -852,6 +857,43 @@ export class UIMClient {
   }
 
   /**
+   * 创建文件消息
+   * @param parameters
+   * @returns
+   */
+  public createFileMessage(parameters: CreateMessageParameters): SendMessageParameters {
+    if (!parameters.file && !parameters.upload_file) {
+      throw new Error('must have file payload or upload_file');
+    }
+    const message = pick(parameters, ['from', 'to', 'conversation_id', 'file']) as Partial<Message>;
+    setCreatedMessageData(message);
+
+    // 直接传入已经构造好的 video 参数
+    if (message.file) {
+      return { type: MessageType.File, ...message };
+    }
+
+    // 需要上传文件，拿到文件句柄
+    const upload_file = parameters.upload_file instanceof HTMLInputElement ? parameters.upload_file?.files?.item(0) : parameters.upload_file;
+    if (!upload_file) {
+      throw new Error('must select files');
+    }
+    const { on_progress } = parameters;
+
+    // 构造视频信息，方便占位显示
+    const url = URL.createObjectURL(upload_file);
+    const size = upload_file.size;
+    if (size > 104857600) {
+      throw new Error('文件大小超过限制');
+    }
+    const name = upload_file.name
+    const format = fileExt(name);
+    message.file = { url, size, name, format };
+
+    return { type: MessageType.File, ...message, upload_file, on_progress };
+  }
+
+  /**
    * 发布动态
    *
    * @param parameters
@@ -859,9 +901,9 @@ export class UIMClient {
    */
   public async publishMoment(parameters: PublishMomentParameters): Promise<Moment> {
     // 先上传文件
-    if (parameters.files && parameters.files.length > 0) {
+    if (parameters.upload_files && parameters.upload_files.length > 0) {
       const contents = await Promise.all(
-        parameters.files.map((f, idx) => {
+        parameters.upload_files.map((f, idx) => {
           const options: UploadOptions = {
             onProgress: (percent) => parameters.on_progress && parameters.on_progress(idx, percent),
             moment: parameters as Moment,
@@ -885,7 +927,7 @@ export class UIMClient {
       }
     }
 
-    return this.post('/publish_moment', omit(parameters, ['files', 'on_progress']));
+    return this.post('/publish_moment', omit(parameters, ['upload_files', 'on_progress']));
   }
 
   /**
@@ -911,8 +953,8 @@ export class UIMClient {
    * @returns
    */
   public createImageMoment(parameters: CreateMomentParameters): PublishMomentParameters {
-    if (!parameters.images && !parameters.files) {
-      throw new Error('must have images or files');
+    if (!parameters.images && !parameters.upload_files) {
+      throw new Error('must have images or upload_files');
     }
     const moment = pick(parameters, ['user_id', 'images']) as Partial<Moment>;
 
@@ -925,16 +967,16 @@ export class UIMClient {
     }
 
     // 需要上传文件，拿到文件句柄
-    const files =
-      parameters.files instanceof HTMLInputElement ? convertFileListToArray(parameters.files?.files) : parameters.files;
-    if (!files || files.length === 0) {
+    const upload_files =
+      parameters.upload_files instanceof HTMLInputElement ? convertFileListToArray(parameters.upload_files?.files) : parameters.upload_files;
+    if (!upload_files || upload_files.length === 0) {
       throw new Error('must select files');
     }
     const { on_progress } = parameters;
 
     // 构造图片信息，方便占位显示
     moment.images = [];
-    files.forEach((file) => {
+    upload_files.forEach((file) => {
       const url = URL.createObjectURL(file);
       // 检查图片大小
       const size = file.size;
@@ -944,14 +986,14 @@ export class UIMClient {
       // 图片格式
       const format = fileExt(file.name);
       // 图片信息，包含原图、中图、小图
-      const image: ImageAttachment= { size, format, infos: [] };
+      const image: ImageAttachment = { size, format, infos: [] };
       for (let i = 0; i < 3; i++) {
         image.infos.push({ url, width: 0, height: 0 });
       }
       moment.images?.push(image);
     });
 
-    return { type: MomentType.Image, ...moment, files, on_progress };
+    return { type: MomentType.Image, ...moment, upload_files, on_progress };
   }
 
   /**
@@ -961,8 +1003,8 @@ export class UIMClient {
    * @returns
    */
   public createVideoMoment(parameters: CreateMomentParameters): PublishMomentParameters {
-    if (!parameters.video && !parameters.files) {
-      throw new Error('must have images or files');
+    if (!parameters.video && !parameters.upload_files) {
+      throw new Error('must have images or upload_files');
     }
     const moment = pick(parameters, ['user_id', 'video']) as Partial<Moment>;
 
@@ -976,7 +1018,7 @@ export class UIMClient {
 
     // 需要上传文件，拿到文件句柄
     const file =
-      parameters.files instanceof HTMLInputElement ? parameters.files?.files?.item(0) : parameters.files?.at(0);
+      parameters.upload_files instanceof HTMLInputElement ? parameters.upload_files?.files?.item(0) : parameters.upload_files?.at(0);
     if (!file) {
       throw new Error('must have images or files');
     }
@@ -992,7 +1034,7 @@ export class UIMClient {
     const format = fileExt(file.name);
     moment.video = { url, duration, size, format };
 
-    return { type: MomentType.Video, ...moment, files: [file], on_progress };
+    return { type: MomentType.Video, ...moment, upload_files: [file], on_progress };
   }
   /**
    * 监听事件
