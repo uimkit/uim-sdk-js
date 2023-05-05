@@ -233,7 +233,7 @@ export type SendMessageParameters = Partial<Message> & {
 
 // 创建消息参数
 export type CreateMessageParameters = MessageTargetParameters &
-  Partial<Pick<Message, 'text' | 'image' | 'audio' | 'video' | 'mentioned_users'>> & {
+  Partial<Pick<Message, 'text' | 'image' | 'audio' | 'video' | 'miniprogram' | 'mentioned_users'>> & {
     // 待上传的文件
     file?: HTMLInputElement | File;
     // 文件上传进度回调
@@ -254,7 +254,7 @@ export type PublishMomentParameters = Partial<Moment> & {
 };
 
 // 创建动态参数
-export type CreateMomentParameters = Pick<Moment, 'user_id' | 'text' | 'images' | 'video'> & {
+export type CreateMomentParameters = Pick<Moment, 'user_id' | 'text' | 'images' | 'video' | 'miniprogram'> & {
   // 待上传的文件
   files?: HTMLInputElement | Array<File>;
   /**

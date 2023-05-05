@@ -839,6 +839,19 @@ export class UIMClient {
   }
 
   /**
+   * 创建小程序消息
+   * @param parameters 
+   */
+  public createMiniProgramMessage(parameters: CreateMessageParameters): SendMessageParameters {
+    if (!parameters.miniprogram) {
+      throw new Error('must have miniprogram payload');
+    }
+    const message = pick(parameters, ['from', 'to', 'conversation_id', 'miniprogram', 'mentioned_users']) as Partial<Message>;
+    setCreatedMessageData(message);
+    return { type: MessageType.Miniprogram, ...message };
+  }
+
+  /**
    * 发布动态
    *
    * @param parameters

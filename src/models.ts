@@ -378,6 +378,8 @@ export interface Message {
   updated_at?: number;
   // 视频消息内容
   video?: VideoAttachment;
+  // 小程序
+  miniprogram?: MiniProgramAttachment;
 }
 
 // 图片消息内容
@@ -433,6 +435,18 @@ export interface VideoAttachment {
   width?: number;
 }
 
+// 小程序消息内容
+export interface MiniProgramAttachment {
+  // 小程序内容
+  content: string;
+  // 标题
+  title?: string;
+  // 描述
+  description?: string;
+  // 封面图
+  cover?: string;
+}
+
 // 链接动态内容
 export interface LinkAttachment {
   // 链接地址
@@ -448,7 +462,7 @@ export interface LinkAttachment {
 }
 
 // 消息内容
-export type MessagePayload = string | ImageAttachment | AudioAttachment | VideoAttachment;
+export type MessagePayload = string | ImageAttachment | AudioAttachment | VideoAttachment | MiniProgramAttachment;
 
 // 群组
 export interface Group {
@@ -651,10 +665,12 @@ export interface Moment {
   updated_at?: number;
   // 视频
   video?: VideoAttachment;
+  // 小程序消息内容
+  miniprogram?: MiniProgramAttachment;
 }
 
 // 动态内容类型
-export type MomentContent = ImageAttachment | VideoAttachment | LinkAttachment;
+export type MomentContent = ImageAttachment | VideoAttachment | MiniProgramAttachment | LinkAttachment;
 
 // 评论
 export interface Comment {
