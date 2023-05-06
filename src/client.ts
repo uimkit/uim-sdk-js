@@ -912,6 +912,19 @@ export class UIMClient {
   }
 
   /**
+   * 创建链接消息
+   * @param parameters 
+   */
+  public createLinkMessage(parameters: CreateMessageParameters): SendMessageParameters {
+    if (!parameters.link) {
+      throw new Error('must have link payload');
+    }
+    const message = pick(parameters, ['from', 'to', 'conversation_id', 'link', 'mentioned_users']) as Partial<Message>;
+    setCreatedMessageData(message);
+    return { type: MessageType.Link, ...message };
+  }
+
+  /**
    * 发布动态
    *
    * @param parameters

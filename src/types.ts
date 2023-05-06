@@ -233,7 +233,7 @@ export type SendMessageParameters = Partial<Message> & {
 
 // 创建消息参数
 export type CreateMessageParameters = MessageTargetParameters &
-  Partial<Pick<Message, 'text' | 'image' | 'audio' | 'video' | 'miniprogram' | 'file' | 'mentioned_users'>> & {
+  Partial<Pick<Message, 'text' | 'image' | 'audio' | 'video' | 'miniprogram' | 'file' | 'link' | 'mentioned_users'>> & {
     // 文件上传进度回调
     on_progress?: (percent: number) => void;
     // 待上传的文件
@@ -254,7 +254,7 @@ export type PublishMomentParameters = Partial<Moment> & {
 };
 
 // 创建动态参数
-export type CreateMomentParameters = Pick<Moment, 'user_id' | 'text' | 'images' | 'video' | 'miniprogram' | 'file'> & {
+export type CreateMomentParameters = Pick<Moment, 'user_id' | 'text' | 'images' | 'video' | 'miniprogram' | 'file' | 'link'> & {
   /**
    * 上传进度回调
    * @param {number} idx 上传的第几个文件

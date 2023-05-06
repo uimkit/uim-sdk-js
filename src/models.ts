@@ -382,6 +382,8 @@ export interface Message {
   updated_at?: number;
   // 视频消息内容
   video?: VideoAttachment;
+  // 链接
+  link?: LinkAttachment;
 }
 
 // 图片消息内容
