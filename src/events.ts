@@ -1,5 +1,5 @@
 // cspell_disable-file
-import { Account, Contact, Conversation, FriendApplication, Group, Message } from './models';
+import { Account, Contact, Conversation, FriendApplication, Group, Message, User } from './models';
 
 export interface Event<T> {
   // 事件数据
@@ -30,7 +30,11 @@ export enum UIMEventType {
 }
 
 // 收到新消息
-export type MessageReceivedEvent = Event<Message>;
+export type MessageReceivedEvent = Event<{
+  account: User
+  conversation: Conversation
+  message: Message
+}>;
 // 消息被撤回
 export type MessageRevokedEvent = Event<Message>;
 // 收到会话
