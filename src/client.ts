@@ -62,6 +62,8 @@ import { UploadOptions, UIMUploadPlugin, UploadPlugin } from './upload';
 import { decodeBase64 } from './base64';
 import { APIErrorResponse, ErrorFromResponse, isErrorResponse } from './errors';
 
+export type AuthorizeCallback = (id?: string) => void;
+
 /**
  * 账号授权结果
  */
@@ -134,13 +136,20 @@ export class UIMClient {
    * 开始授权账号流程
    *
    * @param provider
+   * @param strategy
    * @param cb
    * @returns
    */
-  public async authorize(provider: string, cb?: (id?: string) => void): Promise<string | undefined> {
+  public async authorize(provider: string, strategy?: string | AuthorizeCallback, cb?: AuthorizeCallback): Promise<string | undefined> {
+    if (typeof strategy === 'function') {
+      cb = strategy as AuthorizeCallback
+      strategy = undefined
+    }
+
+    strategy = strategy ?? ""
     const state = nanoid();
     const token = this.token;
-    const params = { provider, token, state };
+    const params = { provider, strategy, token, state };
     // TODO  trim /
     const url = `${this.baseUrl}/authorize?${createQueryParams(params)}`;
     const win = popup(url, 'uim-authorize-window');
